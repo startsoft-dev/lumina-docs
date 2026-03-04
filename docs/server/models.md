@@ -7,6 +7,82 @@ title: Models
 
 Lumina models are standard Laravel Eloquent models enhanced with declarative static properties and traits that control how REST API endpoints are generated and behave. By configuring these properties directly on your model, Lumina automatically builds fully-featured API endpoints with filtering, sorting, searching, pagination, validation, and authorization -- all without writing controllers or routes.
 
+## LuminaModel Base Class
+
+The recommended way to create Lumina models is to extend `LuminaModel` — a convenience base class that pre-includes all the core traits you need:
+
+```php
+use Lumina\LaravelApi\Models\LuminaModel;
+
+class Post extends LuminaModel
+{
+    protected $fillable = ['title', 'content', 'status'];
+
+    public static $allowedFilters  = ['status', 'user_id'];
+    public static $allowedSorts    = ['created_at', 'title'];
+    public static $allowedSearch   = ['title', 'content'];
+}
+```
+
+`LuminaModel` extends `Illuminate\Database\Eloquent\Model` and includes these traits automatically:
+
+| Trait | Purpose |
+|---|---|
+| `HasFactory` | Laravel factory support for testing |
+| `SoftDeletes` | Trash, restore, and force-delete endpoints |
+| `HasValidation` | Role-based validation rules |
+| `HidableColumns` | Dynamic column hiding from API responses |
+| `HasAutoScope` | Auto-discovery of `App\Models\Scopes\{Model}Scope` classes |
+
+You no longer need to manually `use` these traits on every model.
+
+### Optional Traits
+
+These traits are **not** included in `LuminaModel` because they require additional database columns or configuration. Add them manually when needed:
+
+```php
+use Lumina\LaravelApi\Models\LuminaModel;
+use Lumina\LaravelApi\Traits\HasAuditTrail;
+use Lumina\LaravelApi\Traits\BelongsToOrganization;
+
+class Post extends LuminaModel
+{
+    use HasAuditTrail, BelongsToOrganization;
+    // ...
+}
+```
+
+| Trait | Purpose |
+|---|---|
+| `HasAuditTrail` | Automatic change logging to `audit_logs` table |
+| `HasUuid` | Auto-generated UUID on creation |
+| `BelongsToOrganization` | Multi-tenant organization scoping |
+| `HasPermissions` | Permission checking (User model only) |
+
+### Customizing LuminaModel
+
+You can publish and customize the base class for your application:
+
+```bash
+php artisan vendor:publish --tag=lumina-model
+```
+
+This creates `app/Models/LuminaModel.php` in your project, which extends the package's base class. Add your own traits or configuration that should apply to all Lumina models:
+
+```php
+// app/Models/LuminaModel.php
+use Lumina\LaravelApi\Models\LuminaModel as BaseLuminaModel;
+
+class LuminaModel extends BaseLuminaModel
+{
+    use HasAuditTrail; // Now all models get audit trail by default
+}
+```
+
+:::tip
+You can still extend `Illuminate\Database\Eloquent\Model` directly and apply traits manually if you prefer full control. `LuminaModel` is a convenience, not a requirement.
+:::
+
 ## Model Configuration Properties
 
 Below is a complete model example demonstrating **all** available static properties that Lumina recognizes:
@@ -16,15 +92,13 @@ Below is a complete model example demonstrating **all** available static propert
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Models\LuminaModel;
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
 
-class Post extends Model
+class Post extends LuminaModel
 {
-    use SoftDeletes, HasValidation, HasAuditTrail, BelongsToOrganization;
+    use HasAuditTrail, BelongsToOrganization;
 
     protected $fillable = [
         'title', 'content', 'status', 'user_id', 'category_id',
@@ -81,11 +155,13 @@ You only need to declare properties that differ from their defaults. For example
 
 ## Available Traits
 
-Lumina provides a collection of traits that add specific behaviors to your models. Mix and match them as needed.
+Lumina provides a collection of traits that add specific behaviors to your models. When using `LuminaModel`, the core traits (HasValidation, HidableColumns, HasAutoScope, SoftDeletes) are already included. The traits documented below can be added individually when needed.
 
 ### HasValidation
 
 Adds declarative validation to your model via `validateStore()` and `validateUpdate()` methods that Lumina calls automatically during `store` and `update` actions.
+
+**Included in LuminaModel** — no need to add manually.
 
 **Model properties:**
 
@@ -97,12 +173,10 @@ Adds declarative validation to your model via `validateStore()` and `validateUpd
 | `$validationRulesMessages` | `array` | Custom error messages, following the Laravel validation message format. |
 
 ```php
-use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Models\LuminaModel;
 
-class Post extends Model
+class Post extends LuminaModel
 {
-    use HasValidation;
-
     protected $validationRules = [
         'title'   => 'string|max:255',
         'content' => 'string',
@@ -156,7 +230,7 @@ Permissions follow the pattern of the resource slug (the key in your `config/lum
 ```php
 use Lumina\LaravelApi\Traits\HasPermissions;
 
-class User extends Model
+class User extends LuminaModel
 {
     use HasPermissions;
 }
@@ -194,7 +268,7 @@ Automatically records changes to your model in an audit log. Lumina tracks creat
 ```php
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 
-class User extends Model
+class User extends LuminaModel
 {
     use HasAuditTrail;
 
@@ -228,7 +302,7 @@ Automatically generates a UUID for the model when it is created. The trait hooks
 ```php
 use Lumina\LaravelApi\Traits\HasUuid;
 
-class Invoice extends Model
+class Invoice extends LuminaModel
 {
     use HasUuid;
 
@@ -263,7 +337,7 @@ Provides multi-tenant organization scoping. This trait automatically filters all
 ```php
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
 
-class Post extends Model
+class Post extends LuminaModel
 {
     use BelongsToOrganization;
 
@@ -277,7 +351,7 @@ class Post extends Model
 Not every model has a direct `organization_id` column. For nested models, use the `$owner` static property to define the dot-notation path to the nearest model that holds the organization reference.
 
 ```php
-class Comment extends Model
+class Comment extends LuminaModel
 {
     use BelongsToOrganization;
 
@@ -311,11 +385,8 @@ Controls which columns are hidden from API responses. This trait provides multip
 3. **Policy-level hidden columns** via the `hiddenColumns()` method on the model's policy: per-user dynamic hiding
 
 ```php
-use Lumina\LaravelApi\Traits\HidableColumns;
-
-class User extends Model
+class User extends LuminaModel
 {
-    use HidableColumns;
 
     // Always hide these columns from API responses (in addition to base defaults)
     public static $additionalHiddenColumns = ['api_token', 'stripe_id'];
@@ -337,11 +408,8 @@ For policy-based column hiding (showing different fields to different users), se
 Automatically applies a global scope to the model based on a naming convention. When this trait is used, Lumina looks for a scope class at `App\Models\Scopes\{ModelName}Scope` and applies it if found. No manual registration is needed.
 
 ```php
-use Lumina\LaravelApi\Traits\HasAutoScope;
-
-class Post extends Model
+class Post extends LuminaModel
 {
-    use HasAutoScope;
 
     // Automatically loads App\Models\Scopes\PostScope (if it exists)
 }
@@ -396,7 +464,7 @@ Adds utility methods for formatting data in API responses. Currently provides cu
 use Lumina\LaravelApi\Traits\ViewModelHelpers;
 use Lumina\LaravelApi\Enums\CurrencyOption;
 
-class Product extends Model
+class Product extends LuminaModel
 {
     use ViewModelHelpers;
 }
@@ -420,17 +488,14 @@ Below is a full real-world model that combines multiple Lumina traits into a fea
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Models\LuminaModel;
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 use Lumina\LaravelApi\Traits\HasUuid;
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
-use Lumina\LaravelApi\Traits\HidableColumns;
 
-class BlogPost extends Model
+class BlogPost extends LuminaModel
 {
-    use SoftDeletes, HasValidation, HasAuditTrail, HasUuid, BelongsToOrganization, HidableColumns;
+    use HasAuditTrail, HasUuid, BelongsToOrganization;
 
     protected $fillable = [
         'title', 'slug', 'content', 'excerpt',

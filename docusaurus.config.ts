@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Lumina',
-  tagline: 'Built for the AI era. Automatic REST APIs for any framework.',
+  tagline: 'Built for the AI era. Automatic REST APIs for Laravel, Rails, AdonisJS & Django.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -22,7 +22,17 @@ const config: Config = {
   markdown: {
     mermaid: true,
   },
-  themes: ['@docusaurus/theme-mermaid'],
+  themes: [
+    '@docusaurus/theme-mermaid',
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      {
+        hashed: true,
+        docsRouteBasePath: '/docs',
+        indexBlog: false,
+      },
+    ],
+  ],
 
   i18n: {
     defaultLocale: 'en',
@@ -60,18 +70,6 @@ const config: Config = {
           position: 'left',
         },
         {
-          type: 'docSidebar',
-          sidebarId: 'serverSidebar',
-          position: 'left',
-          label: 'Laravel Server',
-        },
-        {
-          type: 'docSidebar',
-          sidebarId: 'reactSidebar',
-          position: 'left',
-          label: 'React Client',
-        },
-        {
           href: 'https://github.com/startsoft-dev/lumina-server',
           label: 'GitHub',
           position: 'right',
@@ -85,12 +83,16 @@ const config: Config = {
           title: 'Servers',
           items: [
             { label: 'Laravel Server', to: '/docs/server/getting-started' },
+            { label: 'Rails Server', to: '/docs/rails/getting-started' },
+            { label: 'AdonisJS Server', to: '/docs/adonis-server/getting-started' },
+            { label: 'Django Server', to: '/docs/django/getting-started' },
           ],
         },
         {
           title: 'Clients',
           items: [
             { label: 'React Client', to: '/docs/react/getting-started' },
+            { label: 'React Native', to: '/docs/react-native/getting-started' },
           ],
         },
         {
@@ -108,7 +110,7 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
-      additionalLanguages: ['php', 'bash', 'json'],
+      additionalLanguages: ['php', 'ruby', 'bash', 'json', 'typescript', 'python'],
     },
   } satisfies Preset.ThemeConfig,
 };

@@ -101,15 +101,10 @@ Create a model (or use the [generator](./generator)):
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Lumina\LaravelApi\Traits\HasValidation;
-use Lumina\LaravelApi\Traits\BelongsToOrganization;
+use Lumina\LaravelApi\Models\LuminaModel;
 
-class Post extends Model
+class Post extends LuminaModel
 {
-    use SoftDeletes, HasValidation, BelongsToOrganization;
-
     protected $fillable = ['title', 'content', 'status', 'user_id'];
 
     // Validation
@@ -142,6 +137,22 @@ class Post extends Model
     }
 }
 ```
+
+:::tip LuminaModel
+`LuminaModel` extends `Model` and includes `SoftDeletes`, `HasValidation`, `HidableColumns`, and `HasAutoScope` out of the box. Open the base class to see all available properties with documentation and examples.
+
+For additional features, add traits manually:
+```php
+use Lumina\LaravelApi\Traits\HasAuditTrail;
+use Lumina\LaravelApi\Traits\BelongsToOrganization;
+
+class Post extends LuminaModel
+{
+    use HasAuditTrail, BelongsToOrganization;
+    // ...
+}
+```
+:::
 
 Register it in `config/lumina.php`:
 

@@ -92,9 +92,50 @@
 .lp-hero-description {
   font-size: 15px;
   color: #8b949e;
-  max-width: 600px;
-  margin: 0 auto 30px;
+  max-width: 650px;
+  margin: 0 auto 24px;
   line-height: 1.6;
+}
+
+.lp-hero-description strong {
+  color: #e6edf3;
+  -webkit-text-fill-color: #e6edf3;
+}
+
+/* ===== FRAMEWORK LOGOS BAR ===== */
+.lp-framework-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.lp-fw-logo {
+  color: #8b949e;
+  padding: 4px 10px;
+  border: 1px solid #21262d;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lp-fw-logo:hover {
+  border-color: #484f58;
+  color: #e6edf3;
+}
+
+.lp-fw-logo svg {
+  flex-shrink: 0;
+}
+
+.lp-fw-logo-sep {
+  color: #30363d;
+  font-size: 14px;
 }
 
 .lp-hero-buttons {
@@ -174,6 +215,59 @@
   background: linear-gradient(90deg, transparent, #30363d, transparent);
 }
 
+.lp-install-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-install-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #484f58;
+  font-weight: 600;
+}
+
+.lp-install-tabs {
+  display: flex;
+  gap: 4px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.lp-install-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #8b949e;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lp-install-tab:hover {
+  color: #c9d1d9;
+}
+
+.lp-install-tab--active {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+}
+
+.lp-install-tab svg {
+  flex-shrink: 0;
+}
+
 .lp-install-box {
   display: inline-flex;
   align-items: center;
@@ -183,6 +277,7 @@
   border-radius: 8px;
   padding: 16px 24px;
   font-size: 15px;
+  min-width: 400px;
 }
 
 .lp-install-box code {
@@ -207,6 +302,7 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   transition: all 0.2s;
+  margin-left: auto;
 }
 
 .lp-copy-btn:hover {
@@ -336,7 +432,47 @@
   font-size: 11px;
 }
 
-/* ===== CODE DEMO / POLICIES / QUERY SECTIONS ===== */
+/* ===== FRAMEWORK TABS (CODE WINDOWS) ===== */
+.lp-fw-tabs {
+  display: flex;
+  gap: 0;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  overflow-x: auto;
+}
+
+.lp-fw-tab {
+  padding: 10px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #8b949e;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lp-fw-tab:hover {
+  color: #c9d1d9;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lp-fw-tab--active {
+  color: #00ffff;
+  border-bottom-color: #00ffff;
+  background: rgba(0, 255, 255, 0.04);
+}
+
+.lp-fw-tab svg {
+  flex-shrink: 0;
+}
+
+/* ===== CODE DEMO / POLICIES / QUERY / CLIENT SECTIONS ===== */
 .lp-demo-section {
   padding: 70px 20px;
   max-width: 900px;
@@ -403,14 +539,14 @@
 }
 
 /* Syntax highlighting tokens */
-.lp-kw { color: #ff7b72; }    /* keyword */
-.lp-str { color: #a5d6ff; }   /* string */
-.lp-fn { color: #d2a8ff; }    /* function */
-.lp-var { color: #ffa657; }   /* variable */
-.lp-cn { color: #7ee787; }    /* class-name */
-.lp-op { color: #ff7b72; }    /* operator */
-.lp-num { color: #79c0ff; }   /* number */
-.lp-cm { color: #8b949e; }    /* comment */
+.lp-kw { color: #ff7b72; }
+.lp-str { color: #a5d6ff; }
+.lp-fn { color: #d2a8ff; }
+.lp-var { color: #ffa657; }
+.lp-cn { color: #7ee787; }
+.lp-op { color: #ff7b72; }
+.lp-num { color: #79c0ff; }
+.lp-cm { color: #8b949e; }
 
 /* ===== ENDPOINTS ===== */
 .lp-endpoints-section {
@@ -527,6 +663,16 @@
   padding: 12px 16px;
   background: #161b22;
   border-bottom: 1px solid #30363d;
+}
+
+.lp-gen-fw-badge {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  font-weight: 500;
 }
 
 .lp-gen-stage {
@@ -768,6 +914,28 @@
   .lp-ascii-logo {
     font-size: clamp(4px, 2.5vw, 10px);
   }
+
+  .lp-install-box {
+    min-width: unset;
+    width: 100%;
+    max-width: 400px;
+    font-size: 12px;
+    padding: 12px 16px;
+  }
+
+  .lp-framework-logos {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .lp-fw-logo {
+    padding: 3px 6px;
+  }
+
+  .lp-fw-tab {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -784,5 +952,19 @@
   .lp-install-box {
     flex-direction: column;
     text-align: center;
+    gap: 8px;
+  }
+
+  .lp-install-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .lp-framework-logos {
+    font-size: 10px;
+  }
+
+  .lp-fw-logo-sep {
+    display: none;
   }
 }

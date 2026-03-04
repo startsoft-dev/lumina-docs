@@ -99,14 +99,10 @@ This generates:
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Models\LuminaModel;
 
-class BlogPost extends Model
+class BlogPost extends LuminaModel
 {
-    use SoftDeletes, HasValidation;
-
     protected $fillable = [
         'title', 'content', 'status', 'user_id', 'published_at',
     ];

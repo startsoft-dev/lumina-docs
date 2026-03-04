@@ -1,0 +1,224 @@
+---
+sidebar_position: 6
+title: Policies
+---
+
+# Policies
+
+Lumina uses a policy-based authorization system that automatically checks permissions before every CRUD action. Policies extend the `ResourcePolicy` base class and use a permission format of `{slug}.{action}` to determine access.
+
+## ResourcePolicy Base Class
+
+The `ResourcePolicy` class provides default implementations for all CRUD authorization methods. Each method checks whether the authenticated user holds the required permission string:
+
+```ts
+import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
+
+export default class PostPolicy extends ResourcePolicy {
+  static resourceSlug = 'posts'
+}
+```
+
+With this minimal setup, Lumina automatically checks these permissions:
+
+| Action | Policy Method | Permission Checked |
+|--------|--------------|-------------------|
+| Index (list) | `viewAny(user)` | `posts.index` |
+| Show (single) | `view(user, record)` | `posts.show` |
+| Store (create) | `create(user)` | `posts.store` |
+| Update | `update(user, record)` | `posts.update` |
+| Destroy (delete) | `delete(user, record)` | `posts.destroy` |
+| Trashed (list deleted) | `viewTrashed(user)` | `posts.trashed` |
+| Restore | `restore(user, record)` | `posts.restore` |
+| Force Delete | `forceDelete(user, record)` | `posts.forceDelete` |
+
+## Permission Format
+
+Permissions follow the pattern `{resource_slug}.{action}`:
+
+- `posts.index` -- can list posts
+- `posts.store` -- can create posts
+- `blogs.update` -- can update blogs
+- `comments.destroy` -- can delete comments
+
+The `resource_slug` matches the key you use in `config/lumina.ts` when registering models:
+
+```ts
+// config/lumina.ts
+models: {
+  posts: () => import('#models/post'),       // slug = 'posts'
+  'blog-posts': () => import('#models/blog_post'),  // slug = 'blog-posts'
+}
+```
+
+### Wildcard Support
+
+Permissions support two levels of wildcards:
+
+- `*` -- grants access to **everything** across all resources and all actions
+- `posts.*` -- grants access to **all actions** on the `posts` resource
+
+```ts
+// Full admin access
+const isAdmin = await user.hasPermission('*', organization)
+
+// All post actions
+const hasAllPostPerms = await user.hasPermission('posts.*', organization)
+
+// Specific action
+const canCreate = await user.hasPermission('posts.store', organization)
+```
+
+## HasPermissions Mixin
+
+The `HasPermissions` mixin is applied to your **User** model and provides the `hasPermission()` and `getRoleSlugForValidation()` methods:
+
+```ts
+import { compose } from '@adonisjs/core/helpers'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
+import { HasPermissions } from '@startsoft/lumina-adonis/mixins/has_permissions'
+import UserRole from '#models/user_role'
+
+export default class User extends compose(BaseModel, HasPermissions) {
+  @column({ isPrimary: true })
+  declare id: number
+
+  @column()
+  declare name: string
+
+  @column()
+  declare email: string
+
+  @hasMany(() => UserRole)
+  declare userRoles: HasMany<typeof UserRole>
+}
+```
+
+### How Permission Checking Works
+
+When `hasPermission(permission, organization?)` is called:
+
+1. The `userRoles` relationship is loaded (with the nested `role`) if not already preloaded
+2. Each `UserRole` is filtered by the given organization (if provided)
+3. Each role's `permissions` array is checked for exact matches and wildcard matches
+4. Returns `true` if any permission matches
+
+The `permissions` property on a `UserRole` can be either a JSON string or a plain array of permission strings:
+
+```json
+["posts.index", "posts.show", "posts.store", "comments.*"]
+```
+
+### Methods
+
+| Method | Description |
+|---|---|
+| `hasPermission(permission, organization?)` | Returns `true` if the user has the given permission within the specified organization. |
+| `getRoleSlugForValidation(organization?)` | Returns the user's role slug within an organization, used for role-based validation rules. |
+
+## Custom Policies
+
+Extend `ResourcePolicy` to add custom authorization logic. Override any method to implement your own checks:
+
+```ts
+import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
+
+export default class PostPolicy extends ResourcePolicy {
+  static resourceSlug = 'posts'
+
+  // Only allow the author to update their own posts
+  async update(user: any, record: any): Promise<boolean> {
+    if (record.userId === user.id) {
+      return true
+    }
+    return super.update(user, record)
+  }
+
+  // Restrict deletion to admins only
+  async delete(user: any, record: any): Promise<boolean> {
+    const isAdmin = await user.hasPermission('*')
+    if (isAdmin) {
+      return true
+    }
+    return false
+  }
+
+  // Custom logic for viewing trashed records
+  async viewTrashed(user: any): Promise<boolean> {
+    return this.checkPermission(user, 'trashed')
+  }
+}
+```
+
+You can call `super.methodName()` to compose your custom logic with the default permission check, or call `this.checkPermission(user, action)` directly to perform a permission lookup.
+
+### Registering a Policy
+
+Register your policy on the model via the static `$policy` property:
+
+```ts
+export default class Post extends compose(BaseModel, HasLumina) {
+  static $policy = () => import('#policies/post_policy')
+
+  // ... model definition
+}
+```
+
+The `$policy` property can be:
+- An async import function (recommended): `() => import('#policies/post_policy')`
+- A policy class reference: `PostPolicy`
+- A policy instance: `new PostPolicy()`
+
+## hiddenColumns Method
+
+Policies can define which columns are hidden from API responses on a per-user basis via the `hiddenColumns()` method:
+
+```ts
+import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
+
+export default class UserPolicy extends ResourcePolicy {
+  static resourceSlug = 'users'
+
+  hiddenColumns(user: any | null): string[] {
+    if (!user) {
+      // Hide sensitive fields from unauthenticated requests
+      return ['email', 'phone', 'api_token']
+    }
+
+    // Admins see everything
+    if (user.isAdmin) {
+      return []
+    }
+
+    // Regular users cannot see other users' emails
+    return ['api_token']
+  }
+}
+```
+
+These columns are additive -- they are merged with the base hidden columns (`password`, `rememberToken`, etc.) and any static `$additionalHiddenColumns` defined on the model.
+
+## No Policy Behavior
+
+If a model does not define a `$policy` property, **all actions are allowed**. This is useful during development or for public resources. Once you are ready to add authorization, create a policy and register it on the model.
+
+## Slug Resolution
+
+The `resourceSlug` static property on the policy tells Lumina which permission prefix to use. If you do not set it, Lumina attempts to resolve the slug automatically by matching the model class against the `models` map in `config/lumina.ts`.
+
+```ts
+// Explicit slug (recommended)
+export default class PostPolicy extends ResourcePolicy {
+  static resourceSlug = 'posts'
+}
+
+// Auto-resolved from config (works, but explicit is clearer)
+export default class PostPolicy extends ResourcePolicy {
+  // Lumina resolves 'posts' from config/lumina.ts models map
+}
+```
+
+:::tip
+Always set `resourceSlug` explicitly on your policy classes to avoid ambiguity and make permissions easy to audit.
+:::

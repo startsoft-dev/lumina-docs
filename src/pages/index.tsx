@@ -2,6 +2,7 @@ import {useState, useEffect, useRef, useCallback} from 'react';
 import type {ReactNode} from 'react';
 import Link from '@docusaurus/Link';
 import Layout from '@theme/Layout';
+import {LaravelIcon, RailsIcon, ReactIcon, AdonisIcon} from '../components/FrameworkIcons';
 import './landing.css';
 
 const GITHUB_URL = 'https://github.com/startsoft-dev/lumina-server';
@@ -19,16 +20,32 @@ const FEATURES = [
   {cmd: 'ai', title: 'AI-Native Architecture', desc: 'Declarative, config-driven models that AI agents can read, scaffold, and extend. Built to be prompted, not hand-coded.', tag: 'ai-ready'},
   {cmd: 'crud', title: 'Automatic CRUD API', desc: 'Register a model, get full REST endpoints instantly. Index, show, store, update, delete — zero controller code.', tag: 'zero-boilerplate'},
   {cmd: 'auth', title: 'Built-in Authentication', desc: 'Login, logout, register, password recovery and reset. Token-based auth ready out of the box.', tag: 'security'},
-  {cmd: 'policy', title: 'Authorization & Policies', desc: 'Laravel Policy integration with permission-based access control. Fine-grained resource authorization.', tag: 'access-control'},
+  {cmd: 'policy', title: 'Authorization & Policies', desc: 'Convention-based policies with permission-based access control. Fine-grained resource authorization.', tag: 'access-control'},
   {cmd: 'validate', title: 'Smart Validation', desc: 'Role-based validation rules. Separate rules for store and update. Custom error messages per field.', tag: 'data-integrity'},
   {cmd: 'query', title: 'Advanced Querying', desc: 'Filtering, sorting, search, pagination, field selection, and eager loading — all via query parameters.', tag: 'spatie-query-builder'},
   {cmd: 'softdelete', title: 'Soft Deletes', desc: 'Automatic trash, restore, and force-delete endpoints. Full soft-delete lifecycle managed for you.', tag: 'data-safety'},
   {cmd: 'nested', title: 'Nested Operations', desc: 'Multi-model atomic transactions in a single request. Create parent and children together safely.', tag: 'transactions'},
   {cmd: 'audit', title: 'Audit Trail', desc: 'Automatic change logging for compliance. Track who changed what and when across all resources.', tag: 'compliance'},
   {cmd: 'tenant', title: 'Multi-Tenancy', desc: 'Organization-based data isolation built-in. Subdomain or route-prefix resolution strategies.', tag: 'saas-ready'},
-  {cmd: 'generate', title: 'Interactive Generator', desc: 'Scaffold models, migrations, factories, policies, and scopes with a single artisan command.', tag: 'dx'},
+  {cmd: 'generate', title: 'Interactive Generator', desc: 'Scaffold models, migrations, factories, policies, and scopes with a single command in any framework.', tag: 'dx'},
   {cmd: 'postman', title: 'Postman Export', desc: 'Auto-generate a complete Postman Collection v2.1 for all your registered API endpoints.', tag: 'api-testing'},
   {cmd: 'invite', title: 'Invitation System', desc: 'Built-in user invitation workflow with email and acceptance flow. Perfect for team-based apps.', tag: 'collaboration'},
+];
+
+type ServerFramework = 'laravel' | 'rails' | 'adonis';
+type ClientFramework = 'react' | 'react-native';
+
+type TabDef<T extends string> = {id: T; label: string; icon: React.FC};
+
+const SERVER_TABS: TabDef<ServerFramework>[] = [
+  {id: 'laravel', label: 'Laravel', icon: LaravelIcon},
+  {id: 'rails', label: 'Rails', icon: RailsIcon},
+  {id: 'adonis', label: 'AdonisJS', icon: AdonisIcon},
+];
+
+const CLIENT_TABS: TabDef<ClientFramework>[] = [
+  {id: 'react', label: 'React', icon: ReactIcon},
+  {id: 'react-native', label: 'React Native', icon: ReactIcon},
 ];
 
 function TerminalDots() {
@@ -66,7 +83,60 @@ function TypedText({text, speed = 40, delay = 0}: {text: string; speed?: number;
   );
 }
 
-// Generator animation — screen-based (fixed height container)
+function FwTabButton<T extends string>({tab, active, onChange}: {tab: TabDef<T>; active: boolean; onChange: () => void}) {
+  return (
+    <button
+      className={`lp-fw-tab ${active ? 'lp-fw-tab--active' : ''}`}
+      onClick={onChange}>
+      <tab.icon />
+      {tab.label}
+    </button>
+  );
+}
+
+function FrameworkTabs<T extends string>({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: TabDef<T>[];
+  active: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div className="lp-fw-tabs">
+      {tabs.map((tab) => (
+        <FwTabButton key={tab.id} tab={tab} active={active === tab.id} onChange={() => onChange(tab.id)} />
+      ))}
+    </div>
+  );
+}
+
+function TabbedCodeWindow<T extends string>({
+  tabs,
+  active,
+  onChange,
+  fileName,
+  children,
+}: {
+  tabs: TabDef<T>[];
+  active: T;
+  onChange: (id: T) => void;
+  fileName: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="lp-code-window">
+      <div className="lp-code-window-bar">
+        <TerminalDots />
+        <span className="lp-file-name">{fileName}</span>
+      </div>
+      <FrameworkTabs tabs={tabs} active={active} onChange={onChange} />
+      <div className="lp-code-content">{children}</div>
+    </div>
+  );
+}
+
 const GEN_COLUMNS = [
   {name: 'name', type: 'string', rule: 'required'},
   {name: 'price', type: 'decimal(10,2)', rule: 'required'},
@@ -75,13 +145,35 @@ const GEN_COLUMNS = [
   {name: 'is_active', type: 'boolean', rule: 'default:true'},
 ];
 
-const GEN_FILES = [
-  {path: 'app/Models/Product.php', label: 'Model'},
-  {path: 'database/migrations/create_products_table.php', label: 'Migration'},
-  {path: 'database/factories/ProductFactory.php', label: 'Factory'},
-  {path: 'app/Policies/ProductPolicy.php', label: 'Policy'},
-  {path: 'config/lumina.php', label: 'Config updated'},
-];
+const GEN_FILES: Record<ServerFramework, {path: string; label: string}[]> = {
+  laravel: [
+    {path: 'app/Models/Product.php', label: 'Model'},
+    {path: 'database/migrations/create_products_table.php', label: 'Migration'},
+    {path: 'database/factories/ProductFactory.php', label: 'Factory'},
+    {path: 'app/Policies/ProductPolicy.php', label: 'Policy'},
+    {path: 'config/lumina.php', label: 'Config updated'},
+  ],
+  rails: [
+    {path: 'app/models/product.rb', label: 'Model'},
+    {path: 'db/migrate/create_products.rb', label: 'Migration'},
+    {path: 'spec/factories/products.rb', label: 'Factory'},
+    {path: 'app/policies/product_policy.rb', label: 'Policy'},
+    {path: 'config/initializers/lumina.rb', label: 'Config updated'},
+  ],
+  adonis: [
+    {path: 'app/models/product.ts', label: 'Model'},
+    {path: 'database/migrations/create_products.ts', label: 'Migration'},
+    {path: 'database/factories/product_factory.ts', label: 'Factory'},
+    {path: 'app/policies/product_policy.ts', label: 'Policy'},
+    {path: 'config/lumina.ts', label: 'Config updated'},
+  ],
+};
+
+const GEN_COMMANDS: Record<ServerFramework, string> = {
+  laravel: 'php artisan lumina:generate',
+  rails: 'rails lumina:generate',
+  adonis: 'node ace lumina:generate',
+};
 
 const GEN_RESOURCE_OPTIONS = [
   'Model (with migration and factory)',
@@ -90,7 +182,6 @@ const GEN_RESOURCE_OPTIONS = [
   'Full resource (all files)',
 ];
 
-// Screens: 0=header, 1=resource type, 2=name, 3=columns, 4=toggles, 5=scaffolding+files
 type GenScreen = 0 | 1 | 2 | 3 | 4 | 5;
 
 function GeneratorAnimation() {
@@ -100,11 +191,14 @@ function GeneratorAnimation() {
   const [visibleColumns, setVisibleColumns] = useState(0);
   const [fileProgress, setFileProgress] = useState(0);
   const [showDone, setShowDone] = useState(false);
+  const [genFramework, setGenFramework] = useState<ServerFramework>('laravel');
   const containerRef = useRef<HTMLDivElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const hasStartedRef = useRef(false);
+  const cycleRef = useRef(0);
 
   const modelName = 'Product';
+  const frameworks: ServerFramework[] = ['laravel', 'rails', 'adonis'];
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach(clearTimeout);
@@ -119,6 +213,9 @@ function GeneratorAnimation() {
 
   const runAnimation = useCallback(() => {
     clearTimers();
+    const fw = frameworks[cycleRef.current % frameworks.length];
+    cycleRef.current++;
+    setGenFramework(fw);
     setScreen(0);
     setOptionSelected(false);
     setTypedName('');
@@ -126,46 +223,35 @@ function GeneratorAnimation() {
     setFileProgress(0);
     setShowDone(false);
 
+    const files = GEN_FILES[fw];
     let t = 0;
 
-    // Screen 0: header
-    // Screen 1: resource type question
     t += 800;
     schedule(() => setScreen(1), t);
-    // Highlight selection
     t += 1000;
     schedule(() => setOptionSelected(true), t);
-    // Transition to screen 2: name input
     t += 1000;
     schedule(() => setScreen(2), t);
-    // Type model name
     for (let i = 0; i < modelName.length; i++) {
       schedule(() => setTypedName(modelName.slice(0, i + 1)), t + 400 + i * 100);
     }
     t += 400 + modelName.length * 100;
-    // Transition to screen 3: columns
     t += 600;
     schedule(() => setScreen(3), t);
-    // Columns appear one by one
     for (let i = 0; i < GEN_COLUMNS.length; i++) {
       schedule(() => setVisibleColumns(i + 1), t + 400 + i * 400);
     }
     t += 400 + GEN_COLUMNS.length * 400;
-    // Transition to screen 4: toggles
     t += 600;
     schedule(() => setScreen(4), t);
-    // Transition to screen 5: scaffolding
     t += 1400;
     schedule(() => setScreen(5), t);
-    // Files appear one by one
-    for (let i = 0; i < GEN_FILES.length; i++) {
+    for (let i = 0; i < files.length; i++) {
       schedule(() => setFileProgress(i + 1), t + 600 + i * 400);
     }
-    t += 600 + GEN_FILES.length * 400;
-    // Show done
+    t += 600 + files.length * 400;
     t += 400;
     schedule(() => setShowDone(true), t);
-    // Restart loop
     t += 3500;
     schedule(() => runAnimation(), t);
   }, [clearTimers, schedule]);
@@ -191,31 +277,30 @@ function GeneratorAnimation() {
     };
   }, [runAnimation, clearTimers]);
 
+  const files = GEN_FILES[genFramework];
+  const cmd = GEN_COMMANDS[genFramework];
+  const fwLabel = SERVER_TABS.find((t) => t.id === genFramework)?.label ?? genFramework;
+
   return (
     <div ref={containerRef} className="lp-generator-window">
       <div className="lp-gen-bar">
         <TerminalDots />
-        <span className="lp-term-title">php artisan lumina:generate</span>
+        <span className="lp-term-title">{cmd}</span>
+        <span className="lp-gen-fw-badge">{fwLabel}</span>
       </div>
       <div className="lp-gen-stage">
-        {/* Screen 0: Header only */}
         {screen === 0 && (
-          <div className="lp-gen-screen lp-gen-fade" key="s0">
-            <div className="lp-gen-header">
-              + Lumina :: Generate :: Scaffold your resources +
-            </div>
+          <div className="lp-gen-screen lp-gen-fade" key={`s0-${genFramework}`}>
+            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
             <div className="lp-gen-waiting">
               <span className="lp-output-highlight">{'\u25B6'}</span> Initializing generator...
             </div>
           </div>
         )}
 
-        {/* Screen 1: Resource type selection */}
         {screen === 1 && (
-          <div className="lp-gen-screen lp-gen-fade" key="s1">
-            <div className="lp-gen-header">
-              + Lumina :: Generate :: Scaffold your resources +
-            </div>
+          <div className="lp-gen-screen lp-gen-fade" key={`s1-${genFramework}`}>
+            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
             <div className="lp-gen-label">What type of resource would you like to generate?</div>
             <div className="lp-gen-options">
               {GEN_RESOURCE_OPTIONS.map((opt, i) => (
@@ -230,12 +315,9 @@ function GeneratorAnimation() {
           </div>
         )}
 
-        {/* Screen 2: Resource name */}
         {screen === 2 && (
-          <div className="lp-gen-screen lp-gen-fade" key="s2">
-            <div className="lp-gen-header">
-              + Lumina :: Generate :: Scaffold your resources +
-            </div>
+          <div className="lp-gen-screen lp-gen-fade" key={`s2-${genFramework}`}>
+            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
             <div className="lp-gen-breadcrumb">
               <span className="lp-output-success">{'\u2713'}</span> Type: <span className="lp-output-highlight">Model (with migration and factory)</span>
             </div>
@@ -247,12 +329,9 @@ function GeneratorAnimation() {
           </div>
         )}
 
-        {/* Screen 3: Define columns */}
         {screen === 3 && (
-          <div className="lp-gen-screen lp-gen-fade" key="s3">
-            <div className="lp-gen-header">
-              + Lumina :: Generate :: Scaffold your resources +
-            </div>
+          <div className="lp-gen-screen lp-gen-fade" key={`s3-${genFramework}`}>
+            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
             <div className="lp-gen-breadcrumb">
               <span className="lp-output-success">{'\u2713'}</span> Type: <span className="lp-output-highlight">Model</span>
               {'  '}
@@ -276,12 +355,9 @@ function GeneratorAnimation() {
           </div>
         )}
 
-        {/* Screen 4: Feature toggles */}
         {screen === 4 && (
-          <div className="lp-gen-screen lp-gen-fade" key="s4">
-            <div className="lp-gen-header">
-              + Lumina :: Generate :: Scaffold your resources +
-            </div>
+          <div className="lp-gen-screen lp-gen-fade" key={`s4-${genFramework}`}>
+            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
             <div className="lp-gen-breadcrumb">
               <span className="lp-output-success">{'\u2713'}</span> Type: <span className="lp-output-highlight">Model</span>
               {'  '}
@@ -299,17 +375,14 @@ function GeneratorAnimation() {
           </div>
         )}
 
-        {/* Screen 5: Scaffolding + file output */}
         {screen === 5 && (
-          <div className="lp-gen-screen lp-gen-fade" key="s5">
-            <div className="lp-gen-header">
-              + Lumina :: Generate :: Scaffold your resources +
-            </div>
+          <div className="lp-gen-screen lp-gen-fade" key={`s5-${genFramework}`}>
+            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
             <div className="lp-gen-status-line">
               <span className="lp-output-highlight">{'\u25B6'}</span> Scaffolding <span className="lp-output-highlight">Product</span> resource...
             </div>
             <div className="lp-gen-divider" />
-            {GEN_FILES.slice(0, fileProgress).map((f, i) => (
+            {files.slice(0, fileProgress).map((f, i) => (
               <div key={i} className="lp-gen-file-line lp-gen-fade">
                 <span className="lp-output-success">{'\u2713'}</span>{' '}
                 <span className="lp-cm">{f.label.padEnd(16)}</span>{' '}
@@ -323,7 +396,10 @@ function GeneratorAnimation() {
                   <span className="lp-output-success">{'\u2713'} Done!</span> Product resource scaffolded successfully.
                 </div>
                 <div className="lp-gen-done-sub lp-gen-fade">
-                  5 files created. Run <span className="lp-output-highlight">php artisan migrate</span> to apply.
+                  5 files created.{' '}
+                  {genFramework === 'laravel' && <span>Run <span className="lp-output-highlight">php artisan migrate</span> to apply.</span>}
+                  {genFramework === 'rails' && <span>Run <span className="lp-output-highlight">rails db:migrate</span> to apply.</span>}
+                  {genFramework === 'adonis' && <span>Run <span className="lp-output-highlight">node ace migration:run</span> to apply.</span>}
                 </div>
               </>
             )}
@@ -348,11 +424,301 @@ function CopyButton({text}: {text: string}) {
   );
 }
 
+const INSTALL_COMMANDS: Record<ServerFramework, string> = {
+  laravel: 'composer require startsoft/lumina',
+  rails: 'bundle add lumina-rails',
+  adonis: 'npm install @startsoft/lumina-adonis',
+};
+
+const CLIENT_INSTALL_COMMANDS: Record<ClientFramework, string> = {
+  react: 'npm install @startsoft/lumina @tanstack/react-query axios',
+  'react-native': 'npm install @startsoft/lumina-rn @tanstack/react-query axios',
+};
+
+function InstallTab<T extends string>({tab, active, onClick}: {tab: TabDef<T>; active: boolean; onClick: () => void}) {
+  return (
+    <button className={`lp-install-tab ${active ? 'lp-install-tab--active' : ''}`} onClick={onClick}>
+      <tab.icon /> {tab.label}
+    </button>
+  );
+}
+
+function LaravelModelCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">&lt;?php</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">namespace</span> App\Models;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">use</span> Illuminate\Database\Eloquent\<span className="lp-cn">Model</span>;</span>
+      <span className="lp-line"><span className="lp-kw">use</span> Illuminate\Database\Eloquent\<span className="lp-cn">SoftDeletes</span>;</span>
+      <span className="lp-line"><span className="lp-kw">use</span> Lumina\LaravelApi\Traits\<span className="lp-cn">HasValidation</span>;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">Post</span> <span className="lp-kw">extends</span> <span className="lp-cn">Model</span></span>
+      <span className="lp-line">{'{'}</span>
+      <span className="lp-line">    <span className="lp-kw">use</span> <span className="lp-cn">SoftDeletes</span>, <span className="lp-cn">HasValidation</span>;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">protected</span> <span className="lp-var">$fillable</span> = [<span className="lp-str">'title'</span>, <span className="lp-str">'body'</span>, <span className="lp-str">'status'</span>];</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedFilters</span> = [<span className="lp-str">'status'</span>, <span className="lp-str">'user_id'</span>];</span>
+      <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedSorts</span>   = [<span className="lp-str">'created_at'</span>, <span className="lp-str">'title'</span>];</span>
+      <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedIncludes</span>= [<span className="lp-str">'user'</span>, <span className="lp-str">'comments'</span>];</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">protected</span> <span className="lp-var">$validationRules</span> = [</span>
+      <span className="lp-line">        <span className="lp-str">'title'</span>  <span className="lp-op">=&gt;</span> <span className="lp-str">'required|string|max:255'</span>,</span>
+      <span className="lp-line">        <span className="lp-str">'body'</span>   <span className="lp-op">=&gt;</span> <span className="lp-str">'required|string'</span>,</span>
+      <span className="lp-line">        <span className="lp-str">'status'</span> <span className="lp-op">=&gt;</span> <span className="lp-str">'in:draft,published'</span>,</span>
+      <span className="lp-line">    ];</span>
+      <span className="lp-line">{'}'}</span>
+    </>
+  );
+}
+
+function RailsModelCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">Post</span> <span className="lp-op">&lt;</span> <span className="lp-cn">ApplicationRecord</span></span>
+      <span className="lp-line">  <span className="lp-kw">include</span> <span className="lp-cn">Lumina::HasLumina</span></span>
+      <span className="lp-line">  <span className="lp-kw">include</span> <span className="lp-cn">Lumina::HasValidation</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-fn">has_discard</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-fn">lumina_validation_rules</span>(</span>
+      <span className="lp-line">    <span className="lp-var">title:</span>  <span className="lp-str">'required|string|max:255'</span>,</span>
+      <span className="lp-line">    <span className="lp-var">body:</span>   <span className="lp-str">'required|string'</span>,</span>
+      <span className="lp-line">    <span className="lp-var">status:</span> <span className="lp-str">'in:draft,published'</span></span>
+      <span className="lp-line">  )</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-fn">lumina_filters</span>  <span className="lp-var">:status</span>, <span className="lp-var">:user_id</span></span>
+      <span className="lp-line">  <span className="lp-fn">lumina_sorts</span>    <span className="lp-var">:created_at</span>, <span className="lp-var">:title</span></span>
+      <span className="lp-line">  <span className="lp-fn">lumina_includes</span> <span className="lp-var">:user</span>, <span className="lp-var">:comments</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">belongs_to</span> <span className="lp-var">:user</span></span>
+      <span className="lp-line">  <span className="lp-kw">has_many</span>   <span className="lp-var">:comments</span></span>
+      <span className="lp-line"><span className="lp-kw">end</span></span>
+    </>
+  );
+}
+
+function AdonisModelCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">BaseModel</span>, <span className="lp-cn">column</span>, <span className="lp-cn">belongsTo</span>, <span className="lp-cn">hasMany</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@adonisjs/lucid/orm'</span></span>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-fn">compose</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@adonisjs/core/helpers'</span></span>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">HasLumina</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina-adonis/mixins/has_lumina'</span></span>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">HasValidation</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina-adonis/mixins/has_validation'</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">export default class</span> <span className="lp-cn">Post</span> <span className="lp-kw">extends</span> <span className="lp-fn">compose</span>(<span className="lp-cn">BaseModel</span>, <span className="lp-cn">HasLumina</span>, <span className="lp-cn">HasValidation</span>) {'{'}</span>
+      <span className="lp-line">  <span className="lp-fn">@column</span>({'{'} <span className="lp-var">isPrimary</span>: <span className="lp-kw">true</span> {'}'}) <span className="lp-kw">declare</span> <span className="lp-var">id</span>: <span className="lp-cn">number</span></span>
+      <span className="lp-line">  <span className="lp-fn">@column</span>() <span className="lp-kw">declare</span> <span className="lp-var">title</span>: <span className="lp-cn">string</span></span>
+      <span className="lp-line">  <span className="lp-fn">@column</span>() <span className="lp-kw">declare</span> <span className="lp-var">body</span>: <span className="lp-cn">string</span></span>
+      <span className="lp-line">  <span className="lp-fn">@column</span>() <span className="lp-kw">declare</span> <span className="lp-var">status</span>: <span className="lp-cn">string</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">static</span> <span className="lp-var">$allowedFilters</span> = [<span className="lp-str">'status'</span>, <span className="lp-str">'user_id'</span>]</span>
+      <span className="lp-line">  <span className="lp-kw">static</span> <span className="lp-var">$allowedSorts</span>   = [<span className="lp-str">'created_at'</span>, <span className="lp-str">'title'</span>]</span>
+      <span className="lp-line">  <span className="lp-kw">static</span> <span className="lp-var">$allowedIncludes</span>= [<span className="lp-str">'user'</span>, <span className="lp-str">'comments'</span>]</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">static</span> <span className="lp-var">$validationRules</span> = {'{'}</span>
+      <span className="lp-line">    <span className="lp-var">title</span>:  <span className="lp-str">'required|string|max:255'</span>,</span>
+      <span className="lp-line">    <span className="lp-var">body</span>:   <span className="lp-str">'required|string'</span>,</span>
+      <span className="lp-line">    <span className="lp-var">status</span>: <span className="lp-str">'in:draft,published'</span>,</span>
+      <span className="lp-line">  {'}'}</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-fn">@belongsTo</span>(() =&gt; <span className="lp-cn">User</span>) <span className="lp-kw">declare</span> <span className="lp-var">user</span>: <span className="lp-cn">BelongsTo</span>&lt;<span className="lp-kw">typeof</span> <span className="lp-cn">User</span>&gt;</span>
+      <span className="lp-line">  <span className="lp-fn">@hasMany</span>(() =&gt; <span className="lp-cn">Comment</span>) <span className="lp-kw">declare</span> <span className="lp-var">comments</span>: <span className="lp-cn">HasMany</span>&lt;<span className="lp-kw">typeof</span> <span className="lp-cn">Comment</span>&gt;</span>
+      <span className="lp-line">{'}'}</span>
+    </>
+  );
+}
+
+function LaravelConfigCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">return</span> [</span>
+      <span className="lp-line">    <span className="lp-str">'models'</span> <span className="lp-op">=&gt;</span> [</span>
+      <span className="lp-line">        <span className="lp-str">'posts'</span> <span className="lp-op">=&gt;</span> \App\Models\<span className="lp-cn">Post</span>::<span className="lp-kw">class</span>,</span>
+      <span className="lp-line">    ],</span>
+      <span className="lp-line">];</span>
+    </>
+  );
+}
+
+function RailsConfigCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-cn">Lumina</span>.<span className="lp-fn">configure</span> <span className="lp-kw">do</span> |<span className="lp-var">c</span>|</span>
+      <span className="lp-line">  <span className="lp-var">c</span>.<span className="lp-fn">model</span> <span className="lp-var">:posts</span>, <span className="lp-str">'Post'</span></span>
+      <span className="lp-line"><span className="lp-kw">end</span></span>
+    </>
+  );
+}
+
+function AdonisConfigCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">export default</span> <span className="lp-fn">defineConfig</span>({'{'}</span>
+      <span className="lp-line">  <span className="lp-var">models</span>: {'{'}</span>
+      <span className="lp-line">    <span className="lp-var">posts</span>: () =&gt; <span className="lp-kw">import</span>(<span className="lp-str">'#models/post'</span>),</span>
+      <span className="lp-line">  {'}'},</span>
+      <span className="lp-line">{'}'});</span>
+    </>
+  );
+}
+
+function LaravelPolicyCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span></span>
+      <span className="lp-line">{'{'}</span>
+      <span className="lp-line">    <span className="lp-cm">{"// Convention-based CRUD authorization:"}</span></span>
+      <span className="lp-line">    <span className="lp-cm">{"//   viewAny  → checks \"posts.index\""}</span></span>
+      <span className="lp-line">    <span className="lp-cm">{"//   create   → checks \"posts.store\""}</span></span>
+      <span className="lp-line">    <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
+      <span className="lp-line">    <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenColumns</span>(<span className="lp-var">?Authenticatable</span> <span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+      <span className="lp-line">    {'{'}</span>
+      <span className="lp-line">        <span className="lp-kw">if</span> (!<span className="lp-var">$user</span>-&gt;<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
+      <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>];</span>
+      <span className="lp-line">        {'}'}</span>
+      <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
+      <span className="lp-line">    {'}'}</span>
+      <span className="lp-line">{'}'}</span>
+    </>
+  );
+}
+
+function RailsPolicyCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-op">&lt;</span> <span className="lp-cn">Lumina::ResourcePolicy</span></span>
+      <span className="lp-line">  <span className="lp-cm"># Convention-based CRUD authorization:</span></span>
+      <span className="lp-line">  <span className="lp-cm">#   viewAny  → checks "posts.index"</span></span>
+      <span className="lp-line">  <span className="lp-cm">#   create   → checks "posts.store"</span></span>
+      <span className="lp-line">  <span className="lp-cm">#   update   → checks "posts.update"</span></span>
+      <span className="lp-line">  <span className="lp-cm">#   delete   → checks "posts.destroy"</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">def</span> <span className="lp-fn">hidden_columns</span>(<span className="lp-var">user</span>)</span>
+      <span className="lp-line">    <span className="lp-kw">unless</span> <span className="lp-var">user</span>.<span className="lp-fn">has_permission?</span>(<span className="lp-str">'posts.*'</span>)</span>
+      <span className="lp-line">      <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>]</span>
+      <span className="lp-line">    <span className="lp-kw">end</span></span>
+      <span className="lp-line">    []</span>
+      <span className="lp-line">  <span className="lp-kw">end</span></span>
+      <span className="lp-line"><span className="lp-kw">end</span></span>
+    </>
+  );
+}
+
+function AdonisPolicyCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">ResourcePolicy</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina-adonis/policies/resource_policy'</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">export default class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span> {'{'}</span>
+      <span className="lp-line">  <span className="lp-cm">{"// Convention-based CRUD authorization:"}</span></span>
+      <span className="lp-line">  <span className="lp-cm">{"//   viewAny  → checks \"posts.index\""}</span></span>
+      <span className="lp-line">  <span className="lp-cm">{"//   create   → checks \"posts.store\""}</span></span>
+      <span className="lp-line">  <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
+      <span className="lp-line">  <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-fn">hiddenColumns</span>(<span className="lp-var">user</span>: <span className="lp-cn">User</span> | <span className="lp-kw">null</span>): <span className="lp-cn">string</span>[] {'{'}</span>
+      <span className="lp-line">    <span className="lp-kw">if</span> (!<span className="lp-var">user</span>?.<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
+      <span className="lp-line">      <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>]</span>
+      <span className="lp-line">    {'}'}</span>
+      <span className="lp-line">    <span className="lp-kw">return</span> []</span>
+      <span className="lp-line">  {'}'}</span>
+      <span className="lp-line">{'}'}</span>
+    </>
+  );
+}
+
+function ReactClientCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-fn">useModelIndex</span>, <span className="lp-fn">useModelStore</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina'</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">function</span> <span className="lp-cn">PostsList</span>() {'{'}</span>
+      <span className="lp-line">  <span className="lp-kw">const</span> {'{'} <span className="lp-var">data</span>, <span className="lp-var">isLoading</span> {'}'} = <span className="lp-fn">useModelIndex</span>(<span className="lp-str">'posts'</span>, {'{'}</span>
+      <span className="lp-line">    <span className="lp-var">sort</span>: <span className="lp-str">'-created_at'</span>,</span>
+      <span className="lp-line">    <span className="lp-var">includes</span>: [<span className="lp-str">'user'</span>],</span>
+      <span className="lp-line">    <span className="lp-var">perPage</span>: <span className="lp-num">20</span>,</span>
+      <span className="lp-line">  {'}'})</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">const</span> <span className="lp-var">createPost</span> = <span className="lp-fn">useModelStore</span>(<span className="lp-str">'posts'</span>)</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">if</span> (<span className="lp-var">isLoading</span>) <span className="lp-kw">return</span> &lt;<span className="lp-cn">Spinner</span> /&gt;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">return</span> (</span>
+      <span className="lp-line">    &lt;<span className="lp-cn">div</span>&gt;</span>
+      <span className="lp-line">      {'{'}data?.data.<span className="lp-fn">map</span>(post =&gt; (</span>
+      <span className="lp-line">        &lt;<span className="lp-cn">Card</span> <span className="lp-var">key</span>={'{'}post.id{'}'}&gt;{'{'}post.title{'}'}&lt;/<span className="lp-cn">Card</span>&gt;</span>
+      <span className="lp-line">      )){'}'}</span>
+      <span className="lp-line">    &lt;/<span className="lp-cn">div</span>&gt;</span>
+      <span className="lp-line">  )</span>
+      <span className="lp-line">{'}'}</span>
+    </>
+  );
+}
+
+function ReactNativeClientCode() {
+  return (
+    <>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">View</span>, <span className="lp-cn">FlatList</span>, <span className="lp-cn">Text</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'react-native'</span></span>
+      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-fn">useModelIndex</span>, <span className="lp-fn">useModelStore</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina-rn'</span></span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">function</span> <span className="lp-cn">PostsScreen</span>() {'{'}</span>
+      <span className="lp-line">  <span className="lp-kw">const</span> {'{'} <span className="lp-var">data</span>, <span className="lp-var">isLoading</span> {'}'} = <span className="lp-fn">useModelIndex</span>(<span className="lp-str">'posts'</span>, {'{'}</span>
+      <span className="lp-line">    <span className="lp-var">sort</span>: <span className="lp-str">'-created_at'</span>,</span>
+      <span className="lp-line">    <span className="lp-var">perPage</span>: <span className="lp-num">20</span>,</span>
+      <span className="lp-line">  {'}'})</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">const</span> <span className="lp-var">createPost</span> = <span className="lp-fn">useModelStore</span>(<span className="lp-str">'posts'</span>)</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">  <span className="lp-kw">return</span> (</span>
+      <span className="lp-line">    &lt;<span className="lp-cn">View</span> <span className="lp-var">style</span>={'{'}{'{'} <span className="lp-var">flex</span>: <span className="lp-num">1</span> {'}'}{'}'}{'&gt;'}</span>
+      <span className="lp-line">      &lt;<span className="lp-cn">FlatList</span></span>
+      <span className="lp-line">        <span className="lp-var">data</span>={'{'}data?.data{'}'}</span>
+      <span className="lp-line">        <span className="lp-var">keyExtractor</span>={'{'}<span className="lp-var">item</span> =&gt; String(item.id){'}'}</span>
+      <span className="lp-line">        <span className="lp-var">renderItem</span>={'{'}({'{'} <span className="lp-var">item</span> {'}'}) =&gt; (</span>
+      <span className="lp-line">          &lt;<span className="lp-cn">Text</span>&gt;{'{'}item.title{'}'}&lt;/<span className="lp-cn">Text</span>&gt;</span>
+      <span className="lp-line">        ){'}'}</span>
+      <span className="lp-line">      /&gt;</span>
+      <span className="lp-line">    &lt;/<span className="lp-cn">View</span>&gt;</span>
+      <span className="lp-line">  )</span>
+      <span className="lp-line">{'}'}</span>
+    </>
+  );
+}
+
+const CONFIG_FILES: Record<ServerFramework, string> = {
+  laravel: 'config/lumina.php',
+  rails: 'config/initializers/lumina.rb',
+  adonis: 'config/lumina.ts',
+};
+
+const POLICY_FILES: Record<ServerFramework, string> = {
+  laravel: 'app/Policies/PostPolicy.php',
+  rails: 'app/policies/post_policy.rb',
+  adonis: 'app/policies/post_policy.ts',
+};
+
+const MODEL_FILES: Record<ServerFramework, string> = {
+  laravel: 'app/Models/Post.php',
+  rails: 'app/models/post.rb',
+  adonis: 'app/models/post.ts',
+};
+
 export default function Home(): ReactNode {
+  const [serverFw, setServerFw] = useState<ServerFramework>('laravel');
+  const [clientFw, setClientFw] = useState<ClientFramework>('react');
+  const [policyFw, setPolicyFw] = useState<ServerFramework>('laravel');
+  const [installFw, setInstallFw] = useState<ServerFramework>('laravel');
+  const [installClientFw, setInstallClientFw] = useState<ClientFramework>('react');
+
   return (
     <Layout
-      title="Automatic REST API for Laravel"
-      description="Lumina — automatic REST API generation for Laravel. Built for the AI era.">
+      title="Automatic REST API for Laravel, Rails & AdonisJS"
+      description="Lumina — automatic REST API generation for Laravel, Rails, and AdonisJS. React & React Native client included. Built for the AI era.">
       <div className="lp">
         {/* Hero */}
         <section className="lp-hero">
@@ -382,9 +748,21 @@ export default function Home(): ReactNode {
           <h1 className="lp-hero-tagline">Built for the AI era.</h1>
           <p className="lp-hero-description">
             The API framework AI agents can scaffold, understand, and extend.
-            Automatic REST generation for Laravel with zero boilerplate — designed
-            to be prompted, not hand-coded.
+            Automatic REST generation for <strong>Laravel</strong>, <strong>Rails</strong>, and <strong>AdonisJS</strong> with
+            first-class <strong>React</strong> and <strong>React Native</strong> clients — designed to be prompted, not hand-coded.
           </p>
+
+          <div className="lp-framework-logos">
+            <span className="lp-fw-logo"><LaravelIcon /> Laravel</span>
+            <span className="lp-fw-logo-sep">/</span>
+            <span className="lp-fw-logo"><RailsIcon /> Rails</span>
+            <span className="lp-fw-logo-sep">/</span>
+            <span className="lp-fw-logo"><AdonisIcon /> AdonisJS</span>
+            <span className="lp-fw-logo-sep">+</span>
+            <span className="lp-fw-logo"><ReactIcon /> React</span>
+            <span className="lp-fw-logo-sep">/</span>
+            <span className="lp-fw-logo"><ReactIcon /> React Native</span>
+          </div>
 
           <div className="lp-hero-buttons">
             <Link className="lp-btn-primary" to="/docs/server/getting-started">
@@ -398,15 +776,31 @@ export default function Home(): ReactNode {
 
         {/* Install */}
         <section className="lp-install-section">
-          <div className="lp-install-box">
-            <span className="lp-dollar">$</span>
-            <code>composer require startsoft/lumina</code>
-            <CopyButton text="composer require startsoft/lumina" />
+          <div className="lp-install-group">
+            <div className="lp-install-label">Server</div>
+            <div className="lp-install-tabs">
+              {SERVER_TABS.map((t) => (
+                <InstallTab key={t.id} tab={t} active={installFw === t.id} onClick={() => setInstallFw(t.id)} />
+              ))}
+            </div>
+            <div className="lp-install-box">
+              <span className="lp-dollar">$</span>
+              <code>{INSTALL_COMMANDS[installFw]}</code>
+              <CopyButton text={INSTALL_COMMANDS[installFw]} />
+            </div>
           </div>
-          <div className="lp-install-box" style={{marginTop: 12}}>
-            <span className="lp-dollar">$</span>
-            <code>npm install lumina-laravel</code>
-            <CopyButton text="npm install lumina-laravel" />
+          <div className="lp-install-group" style={{marginTop: 24}}>
+            <div className="lp-install-label">Client</div>
+            <div className="lp-install-tabs">
+              {CLIENT_TABS.map((t) => (
+                <InstallTab key={t.id} tab={t} active={installClientFw === t.id} onClick={() => setInstallClientFw(t.id)} />
+              ))}
+            </div>
+            <div className="lp-install-box">
+              <span className="lp-dollar">$</span>
+              <code>{CLIENT_INSTALL_COMMANDS[installClientFw]}</code>
+              <CopyButton text={CLIENT_INSTALL_COMMANDS[installClientFw]} />
+            </div>
           </div>
         </section>
 
@@ -418,7 +812,7 @@ export default function Home(): ReactNode {
               <span className="lp-prompt-text">lumina --list-features</span>
             </div>
             <h2>Everything you need, built-in</h2>
-            <p>Ship your API in minutes, not days</p>
+            <p>Ship your API in minutes, not days — in any framework</p>
           </div>
           <div className="lp-features-grid">
             {FEATURES.map((f) => (
@@ -435,63 +829,36 @@ export default function Home(): ReactNode {
           </div>
         </section>
 
-        {/* Code Demo */}
+        {/* Code Demo — Server Model */}
         <section className="lp-demo-section" id="demo">
           <div className="lp-section-header">
             <div className="lp-prompt-line">
               <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">cat app/Models/Post.php</span>
+              <span className="lp-prompt-text">cat models/Post</span>
             </div>
             <h2>Register a model, get a full API</h2>
-            <p>This is all you need to write</p>
+            <p>Same concept, your preferred language</p>
           </div>
 
-          <div className="lp-code-window">
-            <div className="lp-code-window-bar">
-              <TerminalDots />
-              <span className="lp-file-name">app/Models/Post.php</span>
-            </div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-kw">&lt;?php</span></span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-kw">namespace</span> App\Models;</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-kw">use</span> Illuminate\Database\Eloquent\<span className="lp-cn">Model</span>;</span>
-              <span className="lp-line"><span className="lp-kw">use</span> Illuminate\Database\Eloquent\<span className="lp-cn">SoftDeletes</span>;</span>
-              <span className="lp-line"><span className="lp-kw">use</span> Lumina\LaravelApi\Traits\<span className="lp-cn">HasValidation</span>;</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">Post</span> <span className="lp-kw">extends</span> <span className="lp-cn">Model</span></span>
-              <span className="lp-line">{'{'}</span>
-              <span className="lp-line">    <span className="lp-kw">use</span> <span className="lp-cn">SoftDeletes</span>, <span className="lp-cn">HasValidation</span>;</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line">    <span className="lp-kw">protected</span> <span className="lp-var">$fillable</span> = [<span className="lp-str">'title'</span>, <span className="lp-str">'body'</span>, <span className="lp-str">'status'</span>];</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedFilters</span> = [<span className="lp-str">'status'</span>, <span className="lp-str">'user_id'</span>];</span>
-              <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedSorts</span>   = [<span className="lp-str">'created_at'</span>, <span className="lp-str">'title'</span>];</span>
-              <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedIncludes</span>= [<span className="lp-str">'user'</span>, <span className="lp-str">'comments'</span>];</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line">    <span className="lp-kw">protected</span> <span className="lp-var">$validationRules</span> = [</span>
-              <span className="lp-line">        <span className="lp-str">'title'</span>  <span className="lp-op">=&gt;</span> <span className="lp-str">'required|string|max:255'</span>,</span>
-              <span className="lp-line">        <span className="lp-str">'body'</span>   <span className="lp-op">=&gt;</span> <span className="lp-str">'required|string'</span>,</span>
-              <span className="lp-line">        <span className="lp-str">'status'</span> <span className="lp-op">=&gt;</span> <span className="lp-str">'in:draft,published'</span>,</span>
-              <span className="lp-line">    ];</span>
-              <span className="lp-line">{'}'}</span>
-            </div>
-          </div>
+          <TabbedCodeWindow
+            tabs={SERVER_TABS}
+            active={serverFw}
+            onChange={setServerFw}
+            fileName={MODEL_FILES[serverFw]}>
+            {serverFw === 'laravel' && <LaravelModelCode />}
+            {serverFw === 'rails' && <RailsModelCode />}
+            {serverFw === 'adonis' && <AdonisModelCode />}
+          </TabbedCodeWindow>
 
-          <div className="lp-code-window" style={{marginTop: 20}}>
-            <div className="lp-code-window-bar">
-              <TerminalDots />
-              <span className="lp-file-name">config/lumina.php</span>
-            </div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-kw">return</span> [</span>
-              <span className="lp-line">    <span className="lp-str">'models'</span> <span className="lp-op">=&gt;</span> [</span>
-              <span className="lp-line">        <span className="lp-str">'posts'</span> <span className="lp-op">=&gt;</span> \App\Models\<span className="lp-cn">Post</span>::<span className="lp-kw">class</span>,</span>
-              <span className="lp-line">    ],</span>
-              <span className="lp-line">];</span>
-            </div>
-          </div>
+          <TabbedCodeWindow
+            tabs={SERVER_TABS}
+            active={serverFw}
+            onChange={setServerFw}
+            fileName={CONFIG_FILES[serverFw]}>
+            {serverFw === 'laravel' && <LaravelConfigCode />}
+            {serverFw === 'rails' && <RailsConfigCode />}
+            {serverFw === 'adonis' && <AdonisConfigCode />}
+          </TabbedCodeWindow>
         </section>
 
         {/* Endpoints */}
@@ -499,10 +866,10 @@ export default function Home(): ReactNode {
           <div className="lp-section-header">
             <div className="lp-prompt-line">
               <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">php artisan route:list --path=api/posts</span>
+              <span className="lp-prompt-text">lumina routes --resource=posts</span>
             </div>
             <h2>Auto-generated endpoints</h2>
-            <p>All of these come free, for every registered model</p>
+            <p>All of these come free, for every registered model — regardless of framework</p>
           </div>
           <div className="lp-endpoints-terminal">
             <div className="lp-term-bar"><TerminalDots /><span className="lp-term-title">api routes</span></div>
@@ -529,35 +896,21 @@ export default function Home(): ReactNode {
           <div className="lp-section-header">
             <div className="lp-prompt-line">
               <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">cat app/Policies/PostPolicy.php</span>
+              <span className="lp-prompt-text">cat policies/PostPolicy</span>
             </div>
             <h2>Role-based authorization, built-in</h2>
             <p>Convention-based policies with wildcard permissions and org-scoping</p>
           </div>
 
-          <div className="lp-code-window">
-            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">app/Policies/PostPolicy.php</span></div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span></span>
-              <span className="lp-line">{'{'}</span>
-              <span className="lp-line">    <span className="lp-cm">{"// That's it. Convention-based CRUD authorization:"}</span></span>
-              <span className="lp-line">    <span className="lp-cm">{"//   viewAny  → checks \"posts.index\""}</span></span>
-              <span className="lp-line">    <span className="lp-cm">{"//   create   → checks \"posts.store\""}</span></span>
-              <span className="lp-line">    <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
-              <span className="lp-line">    <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
-              <span className="lp-line"> </span>
-              <span className="lp-line">    <span className="lp-cm">{"// Override for custom logic:"}</span></span>
-              <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenColumns</span>(<span className="lp-var">?Authenticatable</span> <span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
-              <span className="lp-line">    {'{'}</span>
-              <span className="lp-line">        <span className="lp-cm">{"// Hide sensitive fields from non-admins"}</span></span>
-              <span className="lp-line">        <span className="lp-kw">if</span> (!<span className="lp-var">$user</span>-&gt;<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
-              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>];</span>
-              <span className="lp-line">        {'}'}</span>
-              <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
-              <span className="lp-line">    {'}'}</span>
-              <span className="lp-line">{'}'}</span>
-            </div>
-          </div>
+          <TabbedCodeWindow
+            tabs={SERVER_TABS}
+            active={policyFw}
+            onChange={setPolicyFw}
+            fileName={POLICY_FILES[policyFw]}>
+            {policyFw === 'laravel' && <LaravelPolicyCode />}
+            {policyFw === 'rails' && <RailsPolicyCode />}
+            {policyFw === 'adonis' && <AdonisPolicyCode />}
+          </TabbedCodeWindow>
 
           <div className="lp-code-window" style={{marginTop: 20}}>
             <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">roles &amp; permissions</span></div>
@@ -570,23 +923,27 @@ export default function Home(): ReactNode {
               <span className="lp-line"><span className="lp-var">writer</span>   → <span className="lp-str">"posts.store"</span>, <span className="lp-str">"posts.update"</span> <span className="lp-cm"># create &amp; edit</span></span>
             </div>
           </div>
+        </section>
 
-          <div className="lp-code-window" style={{marginTop: 20}}>
-            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">terminal — authorization in action</span></div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-cm"># Admin — full access</span></span>
-              <span className="lp-line"><span className="lp-kw">$</span> <span className="lp-str">curl -H "Authorization: Bearer ADMIN_TOKEN" /api/acme/posts</span></span>
-              <span className="lp-line"><span className="lp-cn">→ 200</span> [{'{'}...{'}'}]</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-cm"># Viewer — tries to create → denied</span></span>
-              <span className="lp-line"><span className="lp-kw">$</span> <span className="lp-str">curl -X POST -d '{'"title":"Hello"'}' /api/acme/posts</span></span>
-              <span className="lp-line"><span className="lp-op">→ 403</span> {'{'} <span className="lp-str">"message"</span>: <span className="lp-str">"This action is unauthorized."</span> {'}'}</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-cm"># Multi-tenant — scoped per organization</span></span>
-              <span className="lp-line"><span className="lp-kw">$</span> <span className="lp-str">curl /api/other-co/posts</span></span>
-              <span className="lp-line"><span className="lp-op">→ 404</span> {'{'} <span className="lp-str">"message"</span>: <span className="lp-str">"Not found."</span> {'}'} <span className="lp-cm"># not a member</span></span>
+        {/* Client SDK */}
+        <section className="lp-demo-section" id="client">
+          <div className="lp-section-header">
+            <div className="lp-prompt-line">
+              <span className="lp-prompt-symbol">&#10095;</span>
+              <span className="lp-prompt-text">cat components/PostsList</span>
             </div>
+            <h2>First-class client SDKs</h2>
+            <p>Type-safe hooks for React and React Native — works with any Lumina backend</p>
           </div>
+
+          <TabbedCodeWindow
+            tabs={CLIENT_TABS}
+            active={clientFw}
+            onChange={setClientFw}
+            fileName={clientFw === 'react' ? 'src/components/PostsList.tsx' : 'src/screens/PostsScreen.tsx'}>
+            {clientFw === 'react' && <ReactClientCode />}
+            {clientFw === 'react-native' && <ReactNativeClientCode />}
+          </TabbedCodeWindow>
         </section>
 
         {/* Generator */}
@@ -594,10 +951,10 @@ export default function Home(): ReactNode {
           <div className="lp-section-header">
             <div className="lp-prompt-line">
               <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">php artisan lumina:generate</span>
+              <span className="lp-prompt-text">lumina:generate</span>
             </div>
             <h2>Interactive scaffolding</h2>
-            <p>Generate models, migrations, factories, policies, and scopes interactively</p>
+            <p>Generate models, migrations, factories, policies, and scopes — in Laravel, Rails, or AdonisJS</p>
           </div>
           <GeneratorAnimation />
         </section>
@@ -610,7 +967,7 @@ export default function Home(): ReactNode {
               <span className="lp-prompt-text">curl /api/posts?...</span>
             </div>
             <h2>Powerful querying, out of the box</h2>
-            <p>Filter, sort, include, search — all via query parameters</p>
+            <p>Filter, sort, include, search — all via query parameters. Same API surface, every framework.</p>
           </div>
           <div className="lp-code-window">
             <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">terminal</span></div>
@@ -633,7 +990,7 @@ export default function Home(): ReactNode {
         {/* CTA */}
         <section className="lp-cta-section">
           <h2>Stop writing boilerplate.</h2>
-          <p>Install Lumina and ship your Laravel API today.</p>
+          <p>Install Lumina and ship your API today — in Laravel, Rails, or AdonisJS.</p>
           <div className="lp-cta-buttons">
             <Link className="lp-btn-primary" to="/docs/server/getting-started">
               Read the Docs

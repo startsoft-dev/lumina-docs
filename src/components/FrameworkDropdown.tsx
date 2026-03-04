@@ -1,22 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-
-const LaravelIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M23.642 5.43a.364.364 0 01.014.1v5.149c0 .135-.073.26-.189.326l-4.323 2.49v4.934a.378.378 0 01-.188.326L9.93 23.949a.316.316 0 01-.066.027c-.008.002-.016.008-.024.01a.348.348 0 01-.192 0c-.011-.002-.02-.008-.03-.012-.02-.008-.042-.014-.062-.025L.533 18.755a.376.376 0 01-.189-.326V2.974c0-.033.005-.066.014-.098.003-.012.01-.02.014-.032a.369.369 0 01.023-.058c.004-.013.015-.022.023-.033l.033-.045c.012-.01.025-.018.037-.027.014-.012.027-.024.041-.034H.53L5.043.05a.375.375 0 01.375 0L9.93 2.647h.002c.015.01.027.021.04.033l.038.027c.013.014.02.03.033.045.008.011.02.021.025.033.01.02.017.038.024.058.003.011.01.021.013.032.01.031.014.064.014.098v9.652l3.76-2.164V5.527c0-.033.004-.066.013-.098.003-.01.01-.02.013-.032a.487.487 0 01.024-.059c.007-.012.018-.02.025-.033.012-.015.021-.03.033-.043.012-.012.025-.02.037-.028.014-.01.026-.023.041-.032h.001l4.513-2.598a.375.375 0 01.375 0l4.513 2.598c.016.01.027.021.042.031.012.01.025.018.036.028.013.014.022.03.034.044.008.012.019.021.024.033.011.02.018.04.024.06.006.01.012.021.015.032zm-.74 5.032V6.179l-1.578.908-2.182 1.256v4.283zm-4.51 7.75v-4.287l-2.147 1.225-6.126 3.498v4.325zM1.093 3.624v14.588l8.273 4.761v-4.325l-4.322-2.445-.002-.003H5.04c-.014-.01-.025-.021-.04-.031-.011-.01-.024-.018-.035-.027l-.001-.002c-.013-.012-.021-.025-.031-.04-.01-.011-.021-.022-.028-.036h-.002c-.008-.014-.013-.031-.02-.047-.006-.016-.014-.027-.018-.043a.49.49 0 01-.008-.057c-.002-.014-.006-.027-.006-.041V5.789l-2.18-1.257zM5.23.81L1.47 2.974l3.76 2.164 3.758-2.164zm1.956 13.505l2.182-1.256V3.624l-1.58.91-2.182 1.255v9.435zm11.581-10.95l-3.76 2.163 3.76 2.163 3.759-2.164zm-.376 4.978L16.21 7.087 14.63 6.18v4.283l2.182 1.256 1.58.908zm-8.65 9.654l5.514-3.148 2.756-1.572-3.757-2.163-4.323 2.489-3.941 2.27z" fill="#FF2D20"/>
-  </svg>
-);
-
-const RailsIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M.741 19.365h8.36s-1.598-7.291 3.693-10.243l.134-.066c1.286-.637 4.907-2.431 10.702 1.854.19-.159.37-.286.37-.286s-5.503-5.492-11.63-4.878c-3.079.275-6.867 3.079-9.09 6.783C1.058 16.233.741 19.365.741 19.365Zm8.804-.783a10.682 10.682 0 0 1-.127-1.333l1.143.412c.063.498.159.963.254 1.376l-1.27-.455Zm-7.799-4.317L.529 13.82c-.201.455-.423.984-.529 1.27l1.217.444c.137-.359.36-.878.529-1.269Zm7.831.296.857.677c.042-.413.116-.825.222-1.238l-.762-.603c-.137.391-.233.783-.317 1.164Zm2.042-2.646-.508-.762c.191-.243.413-.486.656-.709l.476.72a5.958 5.958 0 0 0-.624.751ZM4.19 8.878l.752.656c-.254.265-.498.551-.72.836l-.815-.698c.244-.265.508-.529.783-.794Zm9.799 1.027-.243-.73c.265-.117.571-.233.931-.339l.233.698a6.82 6.82 0 0 0-.921.371Zm3.122-.656.042-.667c.339.021.688.064 1.048.138l-.042.656a5.859 5.859 0 0 0-1.048-.127ZM8.942 6.392l-.476-.731c-.265.138-.54.286-.826.455l.487.741c.275-.169.54-.328.815-.465Zm9.217-.053.042-.709c-.095-.053-.36-.18-1.026-.371l-.043.699c.349.116.688.243 1.027.381ZM13.238 5.28h.106l-.212-.645c-.328 0-.666.021-1.016.063l.201.625a8.87 8.87 0 0 1 .921-.043Z" fill="#CC0000"/>
-  </svg>
-);
-
-const NodeIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.15c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z" fill="#5FA04E"/>
-  </svg>
-);
+import {useHistory, useLocation} from '@docusaurus/router';
+import { LaravelIcon, RailsIcon, ReactIcon, AdonisIcon } from './FrameworkIcons';
 
 const DjangoIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -39,16 +23,44 @@ const ChevronIcon = ({ open }: { open: boolean }) => (
   </svg>
 );
 
-const frameworks = [
-  { id: 'laravel', label: 'Laravel', icon: LaravelIcon, active: true },
-  { id: 'rails', label: 'Rails', icon: RailsIcon, comingSoon: true },
-  { id: 'node', label: 'Node.js', icon: NodeIcon, comingSoon: true },
-  { id: 'django', label: 'Django', icon: DjangoIcon, comingSoon: true },
+type Framework = {
+  id: string;
+  label: string;
+  icon: React.FC;
+  href?: string;
+  comingSoon?: boolean;
+};
+
+type FrameworkCategory = {
+  label: string;
+  items: Framework[];
+};
+
+const categories: FrameworkCategory[] = [
+  {
+    label: 'Server',
+    items: [
+      { id: 'laravel', label: 'Laravel', icon: LaravelIcon, href: '/docs/server/getting-started' },
+      { id: 'rails', label: 'Rails', icon: RailsIcon, href: '/docs/rails/getting-started' },
+      { id: 'adonis', label: 'AdonisJS', icon: AdonisIcon, href: '/docs/adonis-server/getting-started' },
+      { id: 'django', label: 'Django', icon: DjangoIcon, href: '/docs/django/getting-started' },
+    ],
+  },
+  {
+    label: 'Client',
+    items: [
+      { id: 'react', label: 'React', icon: ReactIcon, href: '/docs/react/getting-started' },
+    ],
+  },
 ];
+
+const allFrameworks = categories.flatMap((c) => c.items);
 
 export default function FrameworkDropdown(): JSX.Element {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const history = useHistory();
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -60,7 +72,9 @@ export default function FrameworkDropdown(): JSX.Element {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selected = frameworks.find((f) => f.active);
+  // Determine which framework is "current" based on the URL
+  const current = allFrameworks.find((fw) => fw.href && location.pathname.startsWith(fw.href.replace('/getting-started', '')))
+    || allFrameworks[0];
 
   return (
     <div className="framework-dropdown" ref={ref}>
@@ -70,33 +84,42 @@ export default function FrameworkDropdown(): JSX.Element {
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        {selected && <selected.icon />}
-        <span>{selected?.label}</span>
+        <current.icon />
+        <span>{current.label}</span>
         <ChevronIcon open={open} />
       </button>
 
       {open && (
         <div className="framework-dropdown__menu">
-          {frameworks.map((fw) => (
-            <button
-              key={fw.id}
-              className={`framework-dropdown__item ${fw.active ? 'framework-dropdown__item--active' : ''} ${fw.comingSoon ? 'framework-dropdown__item--disabled' : ''}`}
-              onClick={() => {
-                if (!fw.comingSoon) setOpen(false);
-              }}
-              disabled={fw.comingSoon}
-            >
-              <fw.icon />
-              <span className="framework-dropdown__item-label">{fw.label}</span>
-              {fw.comingSoon && (
-                <span className="framework-dropdown__badge">soon</span>
-              )}
-              {fw.active && (
-                <svg className="framework-dropdown__check" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M3 7l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </button>
+          {categories.map((category, catIdx) => (
+            <React.Fragment key={category.label}>
+              {catIdx > 0 && <div className="framework-dropdown__divider" />}
+              <div className="framework-dropdown__category">{category.label}</div>
+              {category.items.map((fw) => (
+                <button
+                  key={fw.id}
+                  className={`framework-dropdown__item ${fw.id === current.id ? 'framework-dropdown__item--active' : ''} ${fw.comingSoon ? 'framework-dropdown__item--disabled' : ''}`}
+                  onClick={() => {
+                    if (!fw.comingSoon && fw.href) {
+                      history.push(fw.href);
+                      setOpen(false);
+                    }
+                  }}
+                  disabled={fw.comingSoon}
+                >
+                  <fw.icon />
+                  <span className="framework-dropdown__item-label">{fw.label}</span>
+                  {fw.comingSoon && (
+                    <span className="framework-dropdown__badge">soon</span>
+                  )}
+                  {fw.id === current.id && (
+                    <svg className="framework-dropdown__check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M3 7l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </React.Fragment>
           ))}
         </div>
       )}

@@ -6,7 +6,7 @@ slug: /
 
 # What is Lumina?
 
-Lumina is a full-stack library that turns your Laravel Eloquent models into a complete REST API — with React hooks to consume it. No boilerplate controllers, no manual route definitions, no hand-written fetch calls.
+Lumina is a full-stack library that turns your models into a complete REST API — with React hooks to consume it. No boilerplate controllers, no manual route definitions, no hand-written fetch calls. Available for **Laravel**, **Ruby on Rails**, and **AdonisJS**.
 
 **Register a model. Get an API. Use a hook.**
 
@@ -14,15 +14,17 @@ Lumina is a full-stack library that turns your Laravel Eloquent models into a co
 
 ```
 ┌─────────────────────────┐         ┌──────────────────────────┐
-│   React / React Native  │  HTTP   │     Laravel Server       │
-│                         │◄───────►│                          │
-│  useModelIndex('posts') │         │  'posts' => Post::class  │
-│  useModelStore('posts') │         │                          │
-│  useModelUpdate('posts')│         │  Automatic CRUD routes   │
-│  useModelDelete('posts')│         │  Validation, Policies    │
-│  useAuth()              │         │  Multi-tenancy, Audit    │
+│   React / React Native  │  HTTP   │  Laravel, Rails, or     │
+│                         │◄───────►│  AdonisJS Server        │
+│  useModelIndex('posts') │         │                          │
+│  useModelStore('posts') │         │  Register a model        │
+│  useModelUpdate('posts')│         │                          │
+│  useModelDelete('posts')│         │  Automatic CRUD routes   │
+│  useAuth()              │         │  Validation, Policies    │
 └─────────────────────────┘         └──────────────────────────┘
-    @startsoft/lumina                    startsoft/lumina
+    @startsoft/lumina              startsoft/lumina (Laravel)
+                                  lumina-rails (Ruby on Rails)
+                                  @startsoft/lumina-adonis (AdonisJS)
 ```
 
 ## Features
@@ -48,6 +50,20 @@ composer require startsoft/lumina dev-main
 php artisan lumina:install
 ```
 
+### Server (Ruby on Rails)
+
+```bash
+bundle add lumina-rails
+rails lumina:install
+```
+
+### Server (AdonisJS)
+
+```bash
+npm install @startsoft/lumina-adonis
+node ace configure @startsoft/lumina-adonis
+```
+
 ### Client (React)
 
 ```bash
@@ -58,6 +74,8 @@ npm install @startsoft/lumina @tanstack/react-query axios
 
 ### 1. Register a model on the server
 
+**Laravel:**
+
 ```php
 // config/lumina.php
 return [
@@ -65,6 +83,28 @@ return [
         'posts' => \App\Models\Post::class,
     ],
 ];
+```
+
+**Ruby on Rails:**
+
+```ruby
+# config/initializers/lumina.rb
+Lumina.configure do |c|
+  c.model :posts, 'Post'
+end
+```
+
+**Node.js (AdonisJS):**
+
+```typescript
+// config/lumina.ts
+import { defineConfig } from '@startsoft/lumina-adonis'
+
+export default defineConfig({
+  models: {
+    posts: () => import('#models/post'),
+  },
+})
 ```
 
 This automatically creates these endpoints:
@@ -118,9 +158,29 @@ function Posts() {
 
 ### Laravel Server
 
-Set up your backend with models, validation, permissions, and multi-tenancy.
+Set up your backend with Eloquent models, validation, permissions, and multi-tenancy.
 
 **[Get Started →](./server/getting-started)**
+
+</div>
+
+<div style={{border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px', padding: '1.5rem'}}>
+
+### Rails Server
+
+Set up your backend with ActiveRecord models, concerns, and the same powerful features.
+
+**[Get Started →](./rails/getting-started)**
+
+</div>
+
+<div style={{border: '1px solid var(--ifm-color-emphasis-300)', borderRadius: '8px', padding: '1.5rem'}}>
+
+### AdonisJS Server
+
+Set up your backend with AdonisJS, Lucid ORM, and TypeScript-powered models.
+
+**[Get Started →](./adonis-server/getting-started)**
 
 </div>
 

@@ -156,6 +156,22 @@
   letter-spacing: 0.02em;
 }
 
+.framework-dropdown__category {
+  padding: 6px 12px 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.framework-dropdown__divider {
+  height: 1px;
+  background: #30363d;
+  margin: 4px 8px;
+}
+
 .framework-dropdown__check {
   color: #00ffff;
   flex-shrink: 0;
@@ -276,6 +292,43 @@
   margin-top: 32px;
   padding-top: 20px;
   border-top: 1px solid #30363d;
+}
+
+/* Search — dark theme overrides */
+[data-theme='dark'] .search-result-match {
+  color: #e6edf3;
+  background: transparent;
+}
+
+[data-theme='dark'] .search-result-match mark,
+[data-theme='dark'] .search-result-match .search-result-match-keyword {
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.15);
+}
+
+[data-theme='dark'] .DocSearch-Hit-source,
+[data-theme='dark'] .search-result-match-title {
+  color: #e6edf3;
+}
+
+[data-theme='dark'] .DocSearch-Hit-path,
+[data-theme='dark'] .search-result-match-path {
+  color: #8b949e;
+}
+
+[data-theme='dark'] .dropdown__menu {
+  background: #161b22;
+  border: 1px solid #30363d;
+}
+
+[data-theme='dark'] .dropdown__link {
+  color: #e6edf3;
+}
+
+[data-theme='dark'] .dropdown__link:hover,
+[data-theme='dark'] .dropdown__link--active {
+  background: rgba(0, 255, 255, 0.08);
+  color: #00ffff;
 }
 
 /* Hero homepage */
