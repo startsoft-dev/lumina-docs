@@ -21,16 +21,21 @@ Or configure it manually in `config/initializers/lumina.rb`:
 
 ```ruby
 Lumina.configure do |c|
-  c.multi_tenant[:enabled] = true
-  c.multi_tenant[:use_subdomain] = false                    # false = URL prefix, true = subdomain
-  c.multi_tenant[:organization_identifier_column] = 'slug'  # 'id', 'slug', or 'uuid'
-  c.multi_tenant[:middleware] = nil                          # Custom middleware class (optional)
+  c.model :posts, 'Post'
+
+  c.route_group :tenant, prefix: ':organization', middleware: [ResolveOrganizationFromRoute], models: :all
+
+  c.multi_tenant = { organization_identifier_column: 'slug' }  # 'id', 'slug', or 'uuid'
 end
 ```
 
+:::tip Hybrid Platforms
+For platforms that need both tenant and non-tenant routes (e.g., customer dashboard + driver app + admin panel), see [Route Groups](./route-groups.md).
+:::
+
 ## How It Works
 
-When multi-tenancy is enabled, all API routes include the organization:
+When a `:tenant` route group is configured, all routes in that group include the organization:
 
 ```
 /api/{organization}/posts
@@ -76,8 +81,11 @@ Uses `Lumina::Middleware::ResolveOrganizationFromSubdomain`. Enable it:
 
 ```ruby
 Lumina.configure do |c|
-  c.multi_tenant[:enabled] = true
-  c.multi_tenant[:use_subdomain] = true
+  c.model :posts, 'Post'
+
+  c.route_group :tenant, prefix: '', middleware: [ResolveOrganizationFromSubdomain], models: :all
+
+  c.multi_tenant = { organization_identifier_column: 'slug' }
 end
 ```
 
@@ -244,14 +252,16 @@ curl /api/acme-corp/posts
 
 ### Public Endpoints
 
-Models listed in the `public_model` config skip authentication:
+Models in a `:public` route group skip authentication:
 
 ```ruby
 # config/initializers/lumina.rb
 Lumina.configure do |c|
-  c.public_model :posts  # /api/{org}/posts doesn't require auth
+  c.route_group :public, prefix: 'public', models: [:posts]
 end
 ```
+
+See [Route Groups](./route-groups.md) for more details on public and hybrid configurations.
 
 ## Full Setup Example
 
@@ -265,8 +275,9 @@ Lumina.configure do |c|
   c.model :posts, 'Post'
   c.model :comments, 'Comment'
 
-  c.multi_tenant[:enabled] = true
-  c.multi_tenant[:organization_identifier_column] = 'slug'
+  c.route_group :tenant, prefix: ':organization', middleware: [ResolveOrganizationFromRoute], models: :all
+
+  c.multi_tenant = { organization_identifier_column: 'slug' }
 end
 ```
 

@@ -104,71 +104,94 @@ The `*` wildcard grants unrestricted access to every resource and every action. 
 
 ## How Permissions Are Stored
 
-Permissions are stored in the `roles` table as a JSON column. Each user is assigned a role per organization through the `user_roles` pivot table.
+Lumina supports two permission sources, used depending on whether the request is organization-scoped or not:
 
-**roles table:**
+### User-level permissions (`users.permissions`)
 
-```
-id | name    | slug    | permissions (JSON)
-1  | Admin   | admin   | ["*"]
-2  | Editor  | editor  | ["posts.index", "posts.show", "posts.store", "posts.update", "comments.*"]
-3  | Viewer  | viewer  | ["posts.index", "posts.show"]
-```
-
-**user_roles table:**
+For non-tenant route groups (e.g., `driver`, `admin`, `default`), permissions are stored directly on the `users` table as a JSON column:
 
 ```
-id | user_id | organization_id | role_id
-1  | 1       | 1               | 1        (user 1 is admin in org 1)
-2  | 2       | 1               | 2        (user 2 is editor in org 1)
-3  | 1       | 2               | 2        (user 1 is editor in org 2)
+id | name         | email              | permissions (JSON)
+1  | Alice Driver | alice@example.com  | ["trips.index", "trips.show", "trucks.*"]
+2  | Bob Admin    | bob@example.com    | ["*"]
+3  | Carol User   | carol@example.com  | ["posts.index", "posts.show"]
 ```
 
-This structure enables multi-tenant permission models where the same user can hold different roles in different organizations.
+This is the standard permission model and works for all apps, including non-multi-tenant apps.
 
-## Complete Role Setup Example
+### Organization-scoped permissions (`user_roles.permissions`)
 
-### 1. Create Roles
+For the `tenant` route group, permissions are stored per-organization via the `user_roles` pivot table:
 
-Define your roles in a seeder or migration:
+```
+id | user_id | organization_id | role_id | permissions (JSON)
+1  | 1       | 1               | 1       | ["*"]
+2  | 2       | 1               | 2       | ["posts.index", "posts.show", "posts.store"]
+3  | 1       | 2               | 2       | ["posts.index", "posts.show"]
+```
+
+This enables multi-tenant permission models where the same user can hold different roles and permissions in different organizations.
+
+### Resolution
+
+When `hasPermission()` is called:
+
+1. **Organization present** (tenant route group) → checks `user_roles.permissions` for that organization
+2. **No organization** (any other route group) → checks `users.permissions` directly
+
+## Complete Setup Examples
+
+### Non-Tenant App (User-Level Permissions)
+
+For apps without multi-tenancy, assign permissions directly on the user:
 
 ```php
-// In a seeder or migration
-$admin = Role::create([
-    'name' => 'Admin',
-    'slug' => 'admin',
-    'permissions' => ['*'],
-]);
+// Assign permissions to users
+$admin->update(['permissions' => ['*']]);
 
-$editor = Role::create([
-    'name' => 'Editor',
-    'slug' => 'editor',
-    'permissions' => [
-        'posts.index', 'posts.show', 'posts.store', 'posts.update',
-        'comments.*',
-    ],
-]);
+$editor->update(['permissions' => [
+    'posts.index', 'posts.show', 'posts.store', 'posts.update',
+    'comments.*',
+]]);
 
-$viewer = Role::create([
-    'name' => 'Viewer',
-    'slug' => 'viewer',
-    'permissions' => [
-        'posts.index', 'posts.show',
-        'comments.index', 'comments.show',
-    ],
-]);
+$viewer->update(['permissions' => [
+    'posts.index', 'posts.show',
+    'comments.index', 'comments.show',
+]]);
 ```
 
-### 2. Assign Users to Roles
+### Multi-Tenant App (Organization-Scoped Permissions)
 
-Link a user to a role within a specific organization:
+For multi-tenant apps, create roles and assign users to organizations with per-org permissions:
 
 ```php
-// Assign user as admin in organization
+// 1. Create roles
+$admin = Role::create(['name' => 'Admin', 'slug' => 'admin']);
+$editor = Role::create(['name' => 'Editor', 'slug' => 'editor']);
+
+// 2. Assign user to organization with permissions
 UserRole::create([
     'user_id' => $user->id,
     'organization_id' => $organization->id,
     'role_id' => $admin->id,
+    'permissions' => ['*'],
+]);
+```
+
+### Hybrid App (Both)
+
+For hybrid apps with tenant and non-tenant route groups, use both:
+
+```php
+// User-level permissions for non-tenant routes (e.g., driver app)
+$driver->update(['permissions' => ['trips.index', 'trips.show', 'trucks.*']]);
+
+// Organization-scoped permissions for tenant routes
+UserRole::create([
+    'user_id' => $user->id,
+    'organization_id' => $organization->id,
+    'role_id' => $admin->id,
+    'permissions' => ['*'],
 ]);
 ```
 

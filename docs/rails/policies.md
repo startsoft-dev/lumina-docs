@@ -98,7 +98,24 @@ The `*` wildcard grants unrestricted access to every resource and every action. 
 
 ## How Permissions Are Stored
 
-Permissions are stored in the `roles` table as a JSON column. Each user is assigned a role per organization through the `user_roles` join table.
+Lumina supports two permission sources, used depending on whether the request is organization-scoped or not:
+
+### User-level permissions (`users.permissions`)
+
+For non-tenant route groups (e.g., `:driver`, `:admin`, `:default`), permissions are stored directly on the `users` table as a JSON column:
+
+```
+id | name         | email              | permissions (JSON)
+1  | Alice Driver | alice@example.com  | ["trips.index", "trips.show", "trucks.*"]
+2  | Bob Admin    | bob@example.com    | ["*"]
+3  | Carol User   | carol@example.com  | ["posts.index", "posts.show"]
+```
+
+This is the standard permission model and works for all apps, including non-multi-tenant apps.
+
+### Organization-scoped permissions (`roles.permissions` via `user_roles`)
+
+For the `:tenant` route group, permissions are stored on the `roles` table and linked per-organization via the `user_roles` join table:
 
 **roles table:**
 
@@ -118,47 +135,48 @@ id | user_id | organization_id | role_id
 3  | 1       | 2               | 2        (user 1 is editor in org 2)
 ```
 
-This structure enables multi-tenant permission models where the same user can hold different roles in different organizations.
+This enables multi-tenant permission models where the same user can hold different roles in different organizations.
 
-## Complete Role Setup Example
+### Resolution
 
-### 1. Create Roles
+When `has_permission?` is called:
 
-Define your roles in a seed file or migration:
+1. **Organization present** (tenant route group) → checks `roles.permissions` for that organization via `user_roles`
+2. **No organization** (any other route group) → checks `users.permissions` directly
+
+## Complete Setup Examples
+
+### Non-Tenant App (User-Level Permissions)
+
+For apps without multi-tenancy, assign permissions directly on the user:
 
 ```ruby
-# db/seeds.rb
-admin = Role.create!(
-  name: 'Admin',
-  slug: 'admin',
-  permissions: ['*']
-)
+# Assign permissions to users
+admin.update!(permissions: ['*'])
 
-editor = Role.create!(
-  name: 'Editor',
-  slug: 'editor',
-  permissions: [
-    'posts.index', 'posts.show', 'posts.store', 'posts.update',
-    'comments.*',
-  ]
-)
+editor.update!(permissions: [
+  'posts.index', 'posts.show', 'posts.store', 'posts.update',
+  'comments.*',
+])
 
-viewer = Role.create!(
-  name: 'Viewer',
-  slug: 'viewer',
-  permissions: [
-    'posts.index', 'posts.show',
-    'comments.index', 'comments.show',
-  ]
-)
+viewer.update!(permissions: [
+  'posts.index', 'posts.show',
+  'comments.index', 'comments.show',
+])
 ```
 
-### 2. Assign Users to Roles
+### Multi-Tenant App (Organization-Scoped Permissions)
 
-Link a user to a role within a specific organization:
+For multi-tenant apps, create roles and assign users to organizations:
 
 ```ruby
-# Assign user as admin in organization
+# 1. Create roles
+admin = Role.create!(name: 'Admin', slug: 'admin', permissions: ['*'])
+editor = Role.create!(name: 'Editor', slug: 'editor', permissions: [
+  'posts.index', 'posts.show', 'posts.store', 'posts.update', 'comments.*',
+])
+
+# 2. Assign user to organization with role
 UserRole.create!(
   user_id: user.id,
   organization_id: organization.id,
@@ -166,7 +184,23 @@ UserRole.create!(
 )
 ```
 
-### 3. What Each Role Can Do
+### Hybrid App (Both)
+
+For hybrid apps with tenant and non-tenant route groups, use both:
+
+```ruby
+# User-level permissions for non-tenant routes (e.g., driver app)
+driver.update!(permissions: ['trips.index', 'trips.show', 'trucks.*'])
+
+# Organization-scoped permissions for tenant routes
+UserRole.create!(
+  user_id: user.id,
+  organization_id: organization.id,
+  role_id: admin.id
+)
+```
+
+### What Each Role Can Do
 
 Here is a breakdown of what each role is authorized to perform on the `posts` resource:
 

@@ -20,13 +20,21 @@ During `php artisan lumina:install`, select **Yes** when asked about multi-tenan
 Or configure it manually in `config/lumina.php`:
 
 ```php
+'route_groups' => [
+    'tenant' => [
+        'prefix' => '{organization}',
+        'middleware' => [\App\Http\Middleware\ResolveOrganizationFromRoute::class],
+        'models' => '*',
+    ],
+],
 'multi_tenant' => [
-    'enabled' => true,
-    'use_subdomain' => false,                    // false = URL prefix, true = subdomain
     'organization_identifier_column' => 'slug',  // 'id', 'slug', or 'uuid'
-    'middleware' => null,                         // Custom middleware class (optional)
 ],
 ```
+
+:::tip Hybrid platforms
+For platforms that need multiple access patterns (e.g., tenant + driver + admin + public), see [Route Groups](./route-groups.md).
+:::
 
 ## How It Works
 
