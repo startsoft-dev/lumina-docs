@@ -183,33 +183,119 @@ Here is a breakdown of what each role is authorized to perform on the `posts` re
 
 The Admin role has `*`, so every action is allowed. The Editor role has explicit `posts.index`, `posts.show`, `posts.store`, and `posts.update` permissions, so they can read and write but not delete. The Viewer role only has `posts.index` and `posts.show`, restricting them to read-only access.
 
-## Column-Level Visibility
+## Attribute Permissions
 
-Beyond action-level authorization, policies can control which columns are visible to specific users. This is useful when certain fields (like email addresses, phone numbers, or billing identifiers) should only be visible to administrators.
+Beyond action-level authorization, policies control **which fields** a user can read and write. This gives you fine-grained control over field visibility and writability on a per-role basis.
 
-Implement the `hidden_columns` method on your policy:
+### Field Visibility (Read)
+
+Two methods control which fields are included in API responses:
+
+- **`permitted_attributes_for_show(user)`** — a whitelist of fields the user can see. Return `['*']` to allow all fields.
+- **`hidden_attributes_for_show(user)`** — a blacklist of fields to hide. This is merged with the whitelist, so fields listed here are always removed from responses.
 
 ```ruby
-# app/policies/user_policy.rb
 class UserPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'users'
 
-  def hidden_columns(user)
-    # Non-admins can't see email or phone
-    if !user || !user.has_permission?('*')
-      ['email', 'phone', 'stripe_id']
+  def permitted_attributes_for_show(user)
+    if has_role?(user, 'admin')
+      ['*']  # Admins see everything
     else
+      ['id', 'name', 'avatar']  # Others see limited fields
+    end
+  end
+
+  def hidden_attributes_for_show(user)
+    if has_role?(user, 'admin')
       []
+    else
+      ['stripe_id', 'internal_notes']  # Always hidden for non-admins
     end
   end
 end
 ```
 
-On the model side, the `HidableColumns` concern checks the policy's `hidden_columns` method when serializing the model. The columns returned by `hidden_columns` are merged with the model's base hidden columns, so those fields are stripped from every API response for that user.
+When `permitted_attributes_for_show` returns a specific list (not `['*']`), all columns not in the list are automatically hidden from API responses. The `hidden_attributes_for_show` blacklist is then merged on top, ensuring those fields are removed even if they appear in the whitelist.
 
 :::info
-The `hidden_columns` method receives `nil` when there is no authenticated user (e.g., public endpoints). Always handle the `nil` case to avoid errors.
+Both methods receive `nil` when there is no authenticated user. Always handle the `nil` case.
 :::
+
+### Field Permissions (Write)
+
+Two methods control which fields a user can submit on create and update requests:
+
+- **`permitted_attributes_for_create(user)`** — fields the user can submit when creating a resource.
+- **`permitted_attributes_for_update(user)`** — fields the user can submit when updating a resource.
+
+Return `['*']` to allow all fields, or return a specific list to restrict access.
+
+```ruby
+class PostPolicy < Lumina::ResourcePolicy
+  self.resource_slug = 'posts'
+
+  def permitted_attributes_for_create(user)
+    if has_role?(user, 'admin')
+      ['*']  # Admins can set any field
+    else
+      ['title', 'content']  # Others can only set title and content
+    end
+  end
+
+  def permitted_attributes_for_update(user)
+    if has_role?(user, 'admin')
+      ['*']
+    else
+      ['title', 'content']
+    end
+  end
+end
+```
+
+When a user submits fields they are not permitted to set, the API returns a **403 Forbidden** response that explicitly names the forbidden fields:
+
+```json
+{
+    "message": "You are not allowed to set the following field(s): status, is_published"
+}
+```
+
+:::info
+Forbidden fields are explicitly rejected with a `403` response, not silently ignored. This makes it clear to the client exactly which fields caused the authorization failure.
+:::
+
+### Using `has_role?` Helper
+
+The `has_role?(user, role_slug)` method is available in all policies that extend `Lumina::ResourcePolicy`. It checks whether the given user holds the specified role in the current organization context.
+
+```ruby
+class PostPolicy < Lumina::ResourcePolicy
+  self.resource_slug = 'posts'
+
+  def permitted_attributes_for_create(user)
+    if has_role?(user, 'admin')
+      ['*']
+    elsif has_role?(user, 'editor')
+      ['title', 'content', 'excerpt', 'category_id']
+    else
+      ['title', 'content']
+    end
+  end
+
+  def permitted_attributes_for_update(user)
+    if has_role?(user, 'admin')
+      ['*']
+    elsif has_role?(user, 'editor')
+      ['title', 'content', 'excerpt', 'category_id']
+    else
+      ['title', 'content']
+    end
+  end
+end
+```
+
+Use `has_role?` in any attribute permission method to branch logic based on the user's role. The helper handles `nil` users gracefully, returning `false` when no user is authenticated.
 
 ## Include Authorization
 

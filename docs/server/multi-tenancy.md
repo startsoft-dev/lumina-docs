@@ -304,11 +304,8 @@ class Post extends Model
         'status'  => 'string|in:draft,published',
     ];
 
-    protected $validationRulesStore = [
-        'admin'  => ['title' => 'required', 'content' => 'required', 'status' => 'nullable'],
-        'editor' => ['title' => 'required', 'content' => 'required'],
-        '*'      => ['title' => 'required', 'content' => 'required'],
-    ];
+    // Field permissions are controlled by PostPolicy
+    // See: permittedAttributesForCreate() / permittedAttributesForUpdate()
 
     public function user()     { return $this->belongsTo(User::class); }
     public function comments() { return $this->hasMany(Comment::class); }

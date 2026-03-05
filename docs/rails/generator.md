@@ -101,13 +101,8 @@ class BlogPost < Lumina::LuminaModel
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :user_id, numericality: { only_integer: true }, allow_nil: true
 
-  # Store/update rules (field allowlist + presence modifiers)
-  lumina_store_rules(
-    '*': { title: :required, content: :required, status: :required, user_id: :required, published_at: :required }
-  )
-  lumina_update_rules(
-    '*': { title: :nullable, content: :nullable, status: :nullable, user_id: :nullable, published_at: :nullable }
-  )
+  # Field permissions are controlled by the policy.
+  # See: app/policies/blog_post_policy.rb
 
   lumina_filters  :status, :user_id
   lumina_sorts    :created_at, :title
@@ -174,6 +169,11 @@ class BlogPostPolicy < Lumina::ResourcePolicy
 
   # All CRUD methods inherited from ResourcePolicy
   # Override for custom authorization logic
+
+  # Attribute Permissions — override to control field access:
+  # def permitted_attributes_for_create(user)
+  #   has_role?(user, 'admin') ? ['*'] : ['title', 'content']
+  # end
 end
 ```
 

@@ -115,8 +115,8 @@ class BlogPost extends LuminaModel
         'published_at' => 'date',
     ];
 
-    protected $validationRulesStore = ['title', 'content'];
-    protected $validationRulesUpdate = ['title', 'content', 'status'];
+    // Field permissions are controlled by PostPolicy
+    // See: permittedAttributesForCreate() / permittedAttributesForUpdate()
 
     public static $allowedFilters  = ['status', 'user_id'];
     public static $allowedSorts    = ['created_at', 'title'];

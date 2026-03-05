@@ -167,10 +167,10 @@ Adds declarative validation to your model via `validateStore()` and `validateUpd
 
 | Property | Type | Description |
 |---|---|---|
-| `$validationRules` | `array` | Base rules keyed by field name (e.g., `['title' => 'string\|max:255']`). |
-| `$validationRulesStore` | `array` | Field names from `$validationRules` that are **required** on creation. |
-| `$validationRulesUpdate` | `array` | Field names from `$validationRules` that are **required** on update. |
+| `$validationRules` | `array` | Format rules keyed by field name (e.g., `['title' => 'string\|max:255']`). |
 | `$validationRulesMessages` | `array` | Custom error messages, following the Laravel validation message format. |
+
+Which fields each role can create or update is controlled by the policy's `permittedAttributesForCreate()` and `permittedAttributesForUpdate()` methods. See [Policies — Attribute Permissions](./policies#attribute-permissions).
 
 ```php
 use Lumina\LaravelApi\Models\LuminaModel;
@@ -182,12 +182,6 @@ class Post extends LuminaModel
         'content' => 'string',
         'status'  => 'string|in:draft,published,archived',
     ];
-
-    // These fields are required when creating a new post
-    protected $validationRulesStore = ['title', 'content'];
-
-    // These fields are accepted (but optional) when updating
-    protected $validationRulesUpdate = ['title', 'content', 'status'];
 
     protected $validationRulesMessages = [
         'title.max' => 'Post title cannot exceed 255 characters.',
@@ -382,7 +376,7 @@ Controls which columns are hidden from API responses. This trait provides multip
 
 1. **Base hidden columns** (always hidden): `password`, `remember_token`, `created_at`, `updated_at`, `deleted_at`, `email_verified_at`
 2. **Model-level hidden columns** via `$additionalHiddenColumns`: additional fields to always hide for this model
-3. **Policy-level hidden columns** via the `hiddenColumns()` method on the model's policy: per-user dynamic hiding
+3. **Policy-level attribute permissions** via `permittedAttributesForShow()` and `hiddenAttributesForShow()` on the model's policy: per-user dynamic visibility
 
 ```php
 class User extends LuminaModel
@@ -398,7 +392,7 @@ Hidden columns are cached per user for performance. If you change visibility rul
 :::
 
 :::info
-For policy-based column hiding (showing different fields to different users), see the [Policies](./policies) page.
+For policy-based field visibility (showing different fields to different users), see [Policies — Attribute Permissions](./policies#attribute-permissions).
 :::
 
 ---
@@ -516,8 +510,8 @@ class BlogPost extends LuminaModel
         'status'  => 'string|in:draft,published,archived',
     ];
 
-    protected $validationRulesStore  = ['title', 'content'];
-    protected $validationRulesUpdate = ['title', 'content', 'status', 'excerpt'];
+    // Field permissions (which roles can write which fields)
+    // are controlled by the PostPolicy — see Policies page.
 
     // ── Audit Trail ──────────────────────────────────────────────
     // No extra exclusions beyond the defaults (password, remember_token)

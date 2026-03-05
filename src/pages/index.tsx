@@ -576,9 +576,9 @@ function LaravelPolicyCode() {
       <span className="lp-line">    <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
       <span className="lp-line">    <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
       <span className="lp-line"> </span>
-      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenColumns</span>(<span className="lp-var">?Authenticatable</span> <span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenAttributesForShow</span>(<span className="lp-var">?Authenticatable</span> <span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
       <span className="lp-line">    {'{'}</span>
-      <span className="lp-line">        <span className="lp-kw">if</span> (!<span className="lp-var">$user</span>-&gt;<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
+      <span className="lp-line">        <span className="lp-kw">if</span> (!<span className="lp-var">$user</span>?-&gt;<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
       <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>];</span>
       <span className="lp-line">        {'}'}</span>
       <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
@@ -598,10 +598,8 @@ function RailsPolicyCode() {
       <span className="lp-line">  <span className="lp-cm">#   update   → checks "posts.update"</span></span>
       <span className="lp-line">  <span className="lp-cm">#   delete   → checks "posts.destroy"</span></span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">def</span> <span className="lp-fn">hidden_columns</span>(<span className="lp-var">user</span>)</span>
-      <span className="lp-line">    <span className="lp-kw">unless</span> <span className="lp-var">user</span>.<span className="lp-fn">has_permission?</span>(<span className="lp-str">'posts.*'</span>)</span>
-      <span className="lp-line">      <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>]</span>
-      <span className="lp-line">    <span className="lp-kw">end</span></span>
+      <span className="lp-line">  <span className="lp-kw">def</span> <span className="lp-fn">hidden_attributes_for_show</span>(<span className="lp-var">user</span>)</span>
+      <span className="lp-line">    <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>] <span className="lp-kw">unless</span> <span className="lp-var">user</span>&.<span className="lp-fn">has_permission?</span>(<span className="lp-str">'posts.*'</span>)</span>
       <span className="lp-line">    []</span>
       <span className="lp-line">  <span className="lp-kw">end</span></span>
       <span className="lp-line"><span className="lp-kw">end</span></span>
@@ -621,7 +619,7 @@ function AdonisPolicyCode() {
       <span className="lp-line">  <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
       <span className="lp-line">  <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-fn">hiddenColumns</span>(<span className="lp-var">user</span>: <span className="lp-cn">User</span> | <span className="lp-kw">null</span>): <span className="lp-cn">string</span>[] {'{'}</span>
+      <span className="lp-line">  <span className="lp-fn">hiddenAttributesForShow</span>(<span className="lp-var">user</span>: <span className="lp-cn">User</span> | <span className="lp-kw">null</span>): <span className="lp-cn">string</span>[] {'{'}</span>
       <span className="lp-line">    <span className="lp-kw">if</span> (!<span className="lp-var">user</span>?.<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
       <span className="lp-line">      <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>]</span>
       <span className="lp-line">    {'}'}</span>

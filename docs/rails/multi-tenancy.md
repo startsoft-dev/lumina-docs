@@ -288,17 +288,10 @@ class Post < ApplicationRecord
   lumina_includes :user, :comments
   lumina_search   :title, :content
 
-  lumina_validation_rules(
-    title:   'string|max:255',
-    content: 'string',
-    status:  'string|in:draft,published'
-  )
+  validates :title, length: { maximum: 255 }, allow_nil: true
+  validates :status, inclusion: { in: %w[draft published] }, allow_nil: true
 
-  lumina_store_rules(
-    admin:  { title: :required, content: :required, status: :nullable },
-    editor: { title: :required, content: :required },
-    '*':    { title: :required, content: :required }
-  )
+  # Field permissions are controlled by the policy (PostPolicy).
 
   belongs_to :user
   has_many :comments

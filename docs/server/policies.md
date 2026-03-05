@@ -189,41 +189,131 @@ Here is a breakdown of what each role is authorized to perform on the `posts` re
 
 The Admin role has `*`, so every action is allowed. The Editor role has explicit `posts.index`, `posts.show`, `posts.store`, and `posts.update` permissions, so they can read and write but not delete. The Viewer role only has `posts.index` and `posts.show`, restricting them to read-only access.
 
-## Column-Level Visibility
+## Attribute Permissions
 
-Beyond action-level authorization, policies can control which columns are visible to specific users. This is useful when certain fields (like email addresses, phone numbers, or billing identifiers) should only be visible to administrators.
+Beyond action-level authorization (can this user create/update/delete?), policies control **which fields** a user can read and write. This is handled through the `HasPermittedAttributes` contract, which `ResourcePolicy` implements by default.
 
-Implement the `HasHiddenColumns` contract on your policy:
+### Field Visibility (Read)
+
+Control which columns are visible in API responses using two complementary methods:
+
+| Method | Purpose |
+|---|---|
+| `permittedAttributesForShow()` | Whitelist — only these fields are visible. Use `['*']` to allow all. |
+| `hiddenAttributesForShow()` | Blacklist — these fields are always hidden, even if permitted. |
 
 ```php
 <?php
 
 namespace App\Policies;
 
-use Lumina\LaravelApi\Contracts\HasHiddenColumns;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Lumina\LaravelApi\Policies\ResourcePolicy;
 
-class UserPolicy extends ResourcePolicy implements HasHiddenColumns
+class UserPolicy extends ResourcePolicy
 {
     protected $resourceSlug = 'users';
 
-    public function hiddenColumns(?\Illuminate\Contracts\Auth\Authenticatable $user): array
+    public function permittedAttributesForShow(?Authenticatable $user): array
     {
-        // Non-admins can't see email or phone
-        if (!$user || !$user->hasPermission('*')) {
-            return ['email', 'phone', 'stripe_id'];
+        if ($user?->hasRole('admin')) {
+            return ['*']; // Admins see everything
         }
 
-        return [];
+        return ['id', 'name', 'avatar']; // Others see limited fields
+    }
+
+    public function hiddenAttributesForShow(?Authenticatable $user): array
+    {
+        if ($user?->hasRole('admin')) {
+            return [];
+        }
+
+        return ['stripe_id', 'internal_notes']; // Always hidden for non-admins
     }
 }
 ```
 
-On the model side, the `HidableColumns` trait checks the policy's `hiddenColumns()` method when serializing the model. The columns returned by `hiddenColumns()` are merged with the model's base `$hidden` array, so those fields are stripped from every API response for that user.
+When `permittedAttributesForShow()` returns a specific list (not `['*']`), all columns **not** in that list are automatically hidden. The `hiddenAttributesForShow()` results are merged on top, so fields can be hidden via either method.
+
+On the model side, the `HidableColumns` trait calls these methods when serializing. The hidden fields are stripped from every API response automatically.
 
 :::info
-The `hiddenColumns()` method receives `null` when there is no authenticated user (e.g., public endpoints). Always handle the `null` case to avoid errors.
+Both methods receive `null` when there is no authenticated user (e.g., public endpoints). Always handle the `null` case.
 :::
+
+### Field Permissions (Write)
+
+Control which fields a user can submit on `store` (create) and `update` actions:
+
+| Method | Purpose |
+|---|---|
+| `permittedAttributesForCreate()` | Fields the user can set when creating a resource |
+| `permittedAttributesForUpdate()` | Fields the user can set when updating a resource |
+
+```php
+class PostPolicy extends ResourcePolicy
+{
+    protected $resourceSlug = 'posts';
+
+    public function permittedAttributesForCreate(?Authenticatable $user): array
+    {
+        if ($user?->hasRole('admin')) {
+            return ['*']; // Admins can set any field
+        }
+
+        return ['title', 'content']; // Editors can only set title and content
+    }
+
+    public function permittedAttributesForUpdate(?Authenticatable $user): array
+    {
+        if ($user?->hasRole('admin')) {
+            return ['*'];
+        }
+
+        return ['title', 'content'];
+    }
+}
+```
+
+When a user submits fields they are not permitted to set, the API returns a **403 Forbidden** with a clear error message:
+
+```json
+{
+    "message": "You are not allowed to set the following field(s): status, is_published"
+}
+```
+
+:::info
+Forbidden fields are explicitly rejected with a 403 response, making it clear to API consumers which fields they cannot set.
+:::
+
+### Default Behavior
+
+By default, `ResourcePolicy` returns `['*']` for all permitted attribute methods and `[]` for hidden attributes. This means **all fields are allowed** unless you explicitly restrict them in your policy.
+
+### Using `hasRole()` Helper
+
+`ResourcePolicy` provides a `hasRole()` helper that checks the user's role within the current organization context:
+
+```php
+class PostPolicy extends ResourcePolicy
+{
+    public function permittedAttributesForCreate(?Authenticatable $user): array
+    {
+        // hasRole checks the user's role in the current request's organization
+        if ($this->hasRole($user, 'admin')) {
+            return ['*'];
+        }
+
+        if ($this->hasRole($user, 'editor')) {
+            return ['title', 'content', 'category_id'];
+        }
+
+        return ['title', 'content'];
+    }
+}
+```
 
 ## Include Authorization
 

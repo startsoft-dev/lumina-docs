@@ -18,7 +18,7 @@ flowchart TD
     G --> H[Filter by roles/permissions]
     H --> I[Query Builder]
     I --> J[Response Serialization]
-    J --> K[hiddenColumns via Policy]
+    J --> K[Attribute Permissions via Policy]
     K --> L{Which columns visible?}
     L --> M[Filter by roles/permissions]
     M --> N[JSON Response]
@@ -131,13 +131,13 @@ The query results are serialized into JSON. For `index` endpoints, Lumina adds p
 | `X-Per-Page` | Items per page |
 | `X-Total` | Total number of records |
 
-## 6. Hidden Columns via Policy
+## 6. Attribute Permissions via Policy
 
-Before sending the response, Lumina checks the policy's `hidden_columns()` method to determine if any columns should be stripped based on the user's role:
+Before sending the response, Lumina checks the policy's attribute permission methods to determine if any columns should be stripped based on the user's role:
 
 ```ruby
 class PostPolicy < Lumina::ResourcePolicy
-  def hidden_columns(user)
+  def hidden_attributes_for_show(user)
     if user&.has_permission?('posts.viewSensitive')
       []  # Admin sees everything
     else

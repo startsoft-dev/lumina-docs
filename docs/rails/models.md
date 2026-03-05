@@ -20,12 +20,7 @@ class Post < Lumina::LuminaModel
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft published] }, allow_nil: true
 
-  lumina_store_rules(
-    '*': { title: :required, content: :required }
-  )
-  lumina_update_rules(
-    '*': { title: :sometimes, content: :sometimes, status: :sometimes }
-  )
+  # Field permissions are controlled by the policy.
 end
 ```
 
@@ -170,32 +165,19 @@ end
 
 ### HasValidation
 
-Adds declarative validation to your model via `validate_store()` and `validate_update()` methods that Lumina calls automatically during `store` and `update` actions.
+Adds format validation to your model. Lumina calls `validate_for_action()` automatically during `store` and `update` actions.
 
-Validation uses two layers: standard ActiveModel `validates` declarations for type/format constraints, and `lumina_store_rules` / `lumina_update_rules` for field allowlisting and presence modifiers.
-
-**DSL Methods:**
-
-| Method | Type | Description |
-|---|---|---|
-| `lumina_store_rules` | `*symbols` or `hash` | Field names or role-keyed rules applied on `POST` (create). Acts as an allowlist. |
-| `lumina_update_rules` | `*symbols` or `hash` | Field names or role-keyed rules applied on `PUT`/`PATCH` (update). Acts as an allowlist. |
+Format constraints are defined using standard ActiveModel `validates` declarations. Field permissions (which fields each role can set) are defined on the policy.
 
 ```ruby
 class Post < Lumina::LuminaModel
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft published archived] }, allow_nil: true
-
-  # These fields are required when creating a new post
-  lumina_store_rules :title, :content
-
-  # These fields are accepted (but optional) when updating
-  lumina_update_rules :title, :content, :status
 end
 ```
 
 :::info
-For a complete breakdown of validation behavior, including how store and update rules interact, see the [Validation](./validation) page.
+For a complete breakdown of validation behavior, see the [Validation](./validation) page.
 :::
 
 ---
@@ -367,7 +349,7 @@ Controls which columns are hidden from API responses. This concern provides mult
 
 1. **Base hidden columns** (always hidden): `password`, `password_digest`, `remember_token`, `created_at`, `updated_at`, `deleted_at`, `discarded_at`, `email_verified_at`
 2. **Model-level hidden columns** via `lumina_additional_hidden`: additional fields to always hide for this model
-3. **Policy-level hidden columns** via the `hidden_columns()` method on the model's policy: per-user dynamic hiding
+3. **Policy-level visibility** via `hidden_attributes_for_show()` / `permitted_attributes_for_show()` methods on the policy: per-user dynamic hiding
 
 ```ruby
 class User < Lumina::LuminaModel
@@ -377,7 +359,7 @@ end
 ```
 
 :::tip
-Hidden columns are resolved per request based on the current user. The policy's `hidden_columns` method lets you return different lists for different users.
+Hidden columns are resolved per request based on the current user. The policy's `hidden_attributes_for_show` and `permitted_attributes_for_show` methods let you return different lists for different users.
 :::
 
 :::info
@@ -436,8 +418,7 @@ class BlogPost < Lumina::LuminaModel
   validates :excerpt, length: { maximum: 500 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft published archived] }, allow_nil: true
 
-  lumina_store_rules  :title, :content
-  lumina_update_rules :title, :content, :status, :excerpt
+  # Field permissions are controlled by the policy.
 
   # ── Audit Trail ──────────────────────────────────────────────
   # No extra exclusions beyond the defaults (password, remember_token)
@@ -471,7 +452,7 @@ This single model definition gives you:
 - **Eager loading** of user, category, comments, and tags (`?include=user,comments`)
 - **Sparse fieldsets** to reduce payload size (`?fields[blog_posts]=id,title,excerpt`)
 - **Pagination** at 20 records per page
-- **Validation** with different required fields for creation vs. update
+- **Format validation** with ActiveModel validators
 - **Audit logging** of every change with before/after values
 - **UUID generation** for external-facing identifiers
 - **Organization scoping** for multi-tenant data isolation

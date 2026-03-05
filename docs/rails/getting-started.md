@@ -85,9 +85,7 @@ class Post < Lumina::LuminaModel
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft published archived] }, allow_nil: true
 
-  # Store/update rules (field allowlist + presence modifiers)
-  lumina_store_rules :title, :content
-  lumina_update_rules :title, :content, :status
+  # Field permissions are controlled by the policy (PostPolicy).
 
   # Query configuration
   lumina_filters  :status, :user_id

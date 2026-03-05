@@ -107,16 +107,12 @@ class Post extends LuminaModel
 {
     protected $fillable = ['title', 'content', 'status', 'user_id'];
 
-    // Validation
+    // Validation (format rules — field permissions live in the policy)
     protected $validationRules = [
         'title'   => 'string|max:255',
         'content' => 'string',
         'status'  => 'string|in:draft,published,archived',
     ];
-
-    protected $validationRulesStore = ['title', 'content'];
-
-    protected $validationRulesUpdate = ['title', 'content', 'status'];
 
     // Query configuration
     public static $allowedFilters  = ['status', 'user_id'];
