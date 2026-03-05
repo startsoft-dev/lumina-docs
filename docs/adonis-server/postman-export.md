@@ -87,7 +87,7 @@ A top-level `Authentication` folder containing:
 
 ### Per-Model Folders
 
-Each registered model gets its own folder with sub-folders for each action. The command introspects the model's static properties (`$allowedFilters`, `$allowedSorts`, `$allowedIncludes`, `$allowedFields`, `$allowedSearch`, `$validationRules`, `$exceptActions`, `$softDeletes`) to generate accurate example requests.
+Each registered model gets its own folder with sub-folders for each action. The command introspects the model's static properties (`$allowedFilters`, `$allowedSorts`, `$allowedIncludes`, `$allowedFields`, `$allowedSearch`, `$validationSchema`, `$exceptActions`, `$softDeletes`) to generate accurate example requests.
 
 **Index sub-folder:**
 - List all
@@ -122,14 +122,14 @@ Each registered model gets its own folder with sub-folders for each action. The 
 
 ### Example Request Bodies
 
-The command generates example request bodies from the model's `$validationRules`, `$validationRulesStore`, and `$validationRulesUpdate` properties. Field values are inferred from the rule types:
+The command generates example request bodies from the model's `$validationSchema` property. Field values are inferred from the schema types:
 
-| Rule | Example Value |
+| Schema Type | Example Value |
 |------|--------------|
-| `boolean` | `true` |
-| `integer`, `exists:*`, `numeric` | `1` |
-| `max:N` | String of `min(10, N)` characters |
-| Other | `"Example fieldName"` |
+| `vine.boolean()` | `true` |
+| `vine.number()` | `1` |
+| `vine.string().maxLength(N)` | String of `min(10, N)` characters |
+| `vine.string()` | `"Example fieldName"` |
 
 ### Multi-Tenant Support
 

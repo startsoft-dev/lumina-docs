@@ -170,9 +170,13 @@ The `$policy` property can be:
 - A policy class reference: `PostPolicy`
 - A policy instance: `new PostPolicy()`
 
-## hiddenColumns Method
+## Attribute Permissions
 
-Policies can define which columns are hidden from API responses on a per-user basis via the `hiddenColumns()` method:
+Policies control which attributes are visible and writable on a per-user basis through four methods:
+
+### `hiddenAttributesForShow(user)`
+
+Returns an array of attribute names that should be **hidden** from API responses for this user. These are merged with the base hidden columns (`password`, `rememberToken`, etc.) and any `$additionalHiddenColumns` on the model.
 
 ```ts
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
@@ -180,24 +184,68 @@ import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_polic
 export default class UserPolicy extends ResourcePolicy {
   static resourceSlug = 'users'
 
-  hiddenColumns(user: any | null): string[] {
+  hiddenAttributesForShow(user: any | null): string[] {
     if (!user) {
-      // Hide sensitive fields from unauthenticated requests
       return ['email', 'phone', 'api_token']
     }
-
-    // Admins see everything
-    if (user.isAdmin) {
+    if (this.hasRole(user, 'admin')) {
       return []
     }
-
-    // Regular users cannot see other users' emails
     return ['api_token']
   }
 }
 ```
 
-These columns are additive -- they are merged with the base hidden columns (`password`, `rememberToken`, etc.) and any static `$additionalHiddenColumns` defined on the model.
+### `permittedAttributesForShow(user)`
+
+Returns an array of attribute names the user is allowed to **see** in API responses. Acts as a whitelist — only listed attributes are returned. Return `['*']` (default) to allow all attributes.
+
+```ts
+permittedAttributesForShow(user: any | null): string[] {
+  if (!user) return ['title', 'body']
+  if (this.hasRole(user, 'admin')) return ['*']
+  return ['title', 'body', 'status']
+}
+```
+
+### `permittedAttributesForCreate(user)`
+
+Returns an array of attribute names the user is allowed to **send** when creating a record. Fields not in this list will trigger a **403 Forbidden** response. Return `['*']` (default) to allow all attributes.
+
+```ts
+permittedAttributesForCreate(user: any | null): string[] {
+  if (!user) return []
+  if (this.hasRole(user, 'admin')) return ['*']
+  return ['title', 'body']
+}
+```
+
+### `permittedAttributesForUpdate(user)`
+
+Returns an array of attribute names the user is allowed to **send** when updating a record. Fields not in this list will trigger a **403 Forbidden** response. Return `['*']` (default) to allow all attributes.
+
+```ts
+permittedAttributesForUpdate(user: any | null): string[] {
+  if (!user) return []
+  if (this.hasRole(user, 'admin')) return ['*']
+  return ['title', 'body']
+}
+```
+
+### `hasRole(user, roleSlug)`
+
+A helper method available in all policies for checking the user's role:
+
+```ts
+permittedAttributesForCreate(user: any | null): string[] {
+  if (!user) return []
+  return this.hasRole(user, 'admin') ? ['*'] : ['title', 'content']
+}
+```
+
+:::tip
+When `permittedAttributesForShow` returns a non-wildcard list and `hiddenAttributesForShow` also hides some of those fields, the **blacklist wins** — fields in both lists are hidden.
+:::
 
 ## No Policy Behavior
 

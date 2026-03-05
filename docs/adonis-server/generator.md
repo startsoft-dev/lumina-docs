@@ -29,7 +29,7 @@ The generator can create three types of resources:
 
 Generates a complete Lumina-ready model file and its corresponding database migration. The model extends `LuminaModel` and includes:
 - `$allowedFilters`, `$allowedSorts`, `$defaultSort`, `$allowedIncludes`, `$allowedFields`, `$allowedSearch`
-- `$validationSchema` (VineJS), `$validationRulesStore`, `$validationRulesUpdate`
+- `$validationSchema` (VineJS type/format schemas)
 - Lucid column decorators with proper TypeScript types
 - Relationship declarations for foreign key columns
 - Soft delete support (optional)
@@ -264,8 +264,7 @@ export default class BlogPost extends compose(LuminaModel, BelongsToOrganization
     user_id: vine.number(),
   }
 
-  static $validationRulesStore = ['title', 'content', 'user_id']
-  static $validationRulesUpdate = ['title', 'content', 'user_id']
+  // Field permissions are controlled by the policy.
 
   @column({ isPrimary: true })
   declare id: number

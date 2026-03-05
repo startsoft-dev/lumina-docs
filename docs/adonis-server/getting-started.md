@@ -129,15 +129,14 @@ export default class Post extends LuminaModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
-  // -- Validation (VineJS schemas + store/update rules) --
+  // -- Validation (VineJS type schemas) --
   static $validationSchema = {
     title: vine.string().maxLength(255),
     content: vine.string(),
     status: vine.enum(['draft', 'published', 'archived']),
   }
 
-  static $validationRulesStore = ['title', 'content']
-  static $validationRulesUpdate = ['title', 'content', 'status']
+  // Field permissions are controlled by the policy.
 
   // -- Query Configuration --
   static $allowedFilters = ['status', 'user_id']
@@ -225,6 +224,6 @@ This will create the necessary tables for audit logs, invitations, and any model
 
 - [Request Lifecycle](./request-lifecycle) -- how requests flow through the pipeline
 - [Model Configuration](./models) -- mixins, properties, relationships
-- [Validation](./validation) -- per-action and role-based validation rules
+- [Validation](./validation) -- VineJS schemas and policy-driven field permissions
 - [Querying](./querying) -- filters, sorts, search, pagination, includes
 - [Policies](./policies) -- role-based authorization and permissions

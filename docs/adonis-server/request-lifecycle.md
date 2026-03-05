@@ -134,7 +134,7 @@ When multi-tenancy is enabled, the controller applies organization filtering to 
 
 ### 8. Validation
 
-For `store` and `update` actions, the controller calls the model's `validateStore()` or `validateUpdate()` method (provided by the `HasValidation` mixin). If validation fails, a 422 response is returned with the error details:
+For `store` and `update` actions, the controller resolves permitted fields from the policy (`permittedAttributesForCreate` or `permittedAttributesForUpdate`), checks for forbidden fields (returns 403), then calls the model's `validateForAction()` method (provided by the `HasValidation` mixin) for VineJS format validation. If validation fails, a 422 response is returned with the error details:
 
 ```json
 {

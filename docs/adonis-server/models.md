@@ -33,7 +33,7 @@ export default class Post extends LuminaModel {
 | Mixin | Purpose |
 |---|---|
 | `HasLumina` | Query builder DSL (`$allowedFilters`, `$allowedSorts`, etc.) |
-| `HasValidation` | Role-based validation with VineJS type schemas |
+| `HasValidation` | VineJS type/format validation with policy-driven field permissions |
 | `HidableColumns` | Dynamic column hiding from API responses |
 | `HasAutoScope` | Auto-discovery of `app/models/scopes/{Model}Scope` classes |
 
@@ -239,7 +239,7 @@ export default class Post extends LuminaModel {
 
 ### HasValidation
 
-Adds declarative validation to your model via `validateStore()` and `validateUpdate()` static methods that Lumina calls automatically during `store` and `update` actions. Uses VineJS for type/format validation and a declarative DSL for role-based field allowlisting.
+Adds VineJS type/format validation to your model via the `validateForAction()` static method. Field permissions (which fields each user can submit) are controlled by the **policy**, not the model.
 
 **Included in LuminaModel** — no need to add manually.
 
@@ -254,13 +254,12 @@ export default class Post extends LuminaModel {
     status: vine.enum(['draft', 'published', 'archived']),
   }
 
-  static $validationRulesStore = ['title', 'content']
-  static $validationRulesUpdate = ['title', 'content', 'status']
+  // Field permissions are controlled by the policy.
 }
 ```
 
 :::info
-For a complete breakdown of validation behavior, including presence modifiers and role-based rules, see the [Validation](./validation) page.
+For a complete breakdown of validation behavior, see the [Validation](./validation) page. For field permissions, see [Policies — Attribute Permissions](./policies#attribute-permissions).
 :::
 
 ---
@@ -401,7 +400,8 @@ export default class User extends LuminaModel {
 
 1. **Base hidden columns** (always hidden): `password`, `rememberToken`, `createdAt`, `updatedAt`, `deletedAt`
 2. **Model-level hidden columns** via `$additionalHiddenColumns`: additional fields to always hide for this model
-3. **Policy-level hidden columns** via the `hiddenColumns()` method on the model's policy: per-user dynamic hiding
+3. **Policy-level hidden columns** via the `hiddenAttributesForShow()` method on the model's policy: per-user dynamic hiding
+4. **Policy-level whitelist** via the `permittedAttributesForShow()` method: only listed attributes are returned
 
 ## Registration
 

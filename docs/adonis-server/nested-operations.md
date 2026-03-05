@@ -115,10 +115,10 @@ For update operations, the `id` field is **required**. A `422` error is returned
 
 ## Validation
 
-Each operation is individually validated using the corresponding model's validation rules:
+Each operation is individually validated. The controller resolves permitted fields from the policy (`permittedAttributesForCreate` or `permittedAttributesForUpdate`) and then runs VineJS format validation via `validateForAction()`:
 
-- Create operations use `validateStore()`
-- Update operations use `validateUpdate()`
+- Forbidden fields (not in the permitted list) return **403 Forbidden**
+- Format validation failures return **422 Unprocessable Entity**
 
 Validation errors are prefixed with the operation index for clarity:
 
