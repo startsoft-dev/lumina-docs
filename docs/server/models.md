@@ -11,7 +11,7 @@ Lumina models are standard Laravel Eloquent models enhanced with declarative sta
 
 The recommended way to create Lumina models is to extend `LuminaModel` — a convenience base class that pre-includes all the core traits you need:
 
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Models\LuminaModel;
 
 class Post extends LuminaModel
@@ -40,7 +40,7 @@ You no longer need to manually `use` these traits on every model.
 
 These traits are **not** included in `LuminaModel` because they require additional database columns or configuration. Add them manually when needed:
 
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Models\LuminaModel;
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
@@ -63,14 +63,13 @@ class Post extends LuminaModel
 
 You can publish and customize the base class for your application:
 
-```bash
+```bash title="terminal"
 php artisan vendor:publish --tag=lumina-model
 ```
 
 This creates `app/Models/LuminaModel.php` in your project, which extends the package's base class. Add your own traits or configuration that should apply to all Lumina models:
 
-```php
-// app/Models/LuminaModel.php
+```php title="app/Models/LuminaModel.php"
 use Lumina\LaravelApi\Models\LuminaModel as BaseLuminaModel;
 
 class LuminaModel extends BaseLuminaModel
@@ -87,7 +86,7 @@ You can still extend `Illuminate\Database\Eloquent\Model` directly and apply tra
 
 Below is a complete model example demonstrating **all** available static properties that Lumina recognizes:
 
-```php
+```php title="app/Models/Post.php"
 <?php
 
 namespace App\Models;
@@ -126,8 +125,6 @@ class Post extends LuminaModel
     // ── Route Exclusion ──────────────────────────────────────────
     public static array $exceptActions = ['destroy']; // skip DELETE endpoint
 
-    // ── Organization Path (for nested models) ────────────────────
-    public static string $owner = 'blog'; // Post -> blog -> organization
 }
 ```
 
@@ -147,7 +144,6 @@ class Post extends LuminaModel
 | `$middleware` | `array` | Middleware applied to **all** routes for this model. |
 | `$middlewareActions` | `array` | Middleware applied to **specific** actions only. Keys are action names (`index`, `show`, `store`, `update`, `destroy`). |
 | `$exceptActions` | `array` | List of CRUD actions to exclude from route generation. Valid values: `'index'`, `'show'`, `'store'`, `'update'`, `'destroy'`. |
-| `$owner` | `string` | Dot-notation path from this model to the model that holds `organization_id`. Used for nested organization scoping. |
 
 :::tip
 You only need to declare properties that differ from their defaults. For example, if you do not need filtering, simply omit `$allowedFilters` entirely.
@@ -172,7 +168,7 @@ Adds declarative validation to your model via `validateStore()` and `validateUpd
 
 Which fields each role can create or update is controlled by the policy's `permittedAttributesForCreate()` and `permittedAttributesForUpdate()` methods. See [Policies — Attribute Permissions](./policies#attribute-permissions).
 
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Models\LuminaModel;
 
 class Post extends LuminaModel
@@ -221,7 +217,7 @@ Permissions follow the pattern of the resource slug (the key in your `config/lum
 - `*` -- grants access to everything across all resources
 - `posts.*` -- grants access to all actions on posts
 
-```php
+```php title="app/Models/User.php"
 use Lumina\LaravelApi\Traits\HasPermissions;
 
 class User extends LuminaModel
@@ -259,7 +255,7 @@ Automatically records changes to your model in an audit log. Lumina tracks creat
 |---|---|---|---|
 | `$auditExclude` | `array` | `['password', 'remember_token']` | Fields excluded from audit log entries. Use this to prevent sensitive data from being recorded. |
 
-```php
+```php title="app/Models/User.php"
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 
 class User extends LuminaModel
@@ -293,7 +289,7 @@ For full details on querying and managing audit logs, see the [Audit Trail](./au
 
 Automatically generates a UUID for the model when it is created. The trait hooks into Eloquent's `creating` event and fills the `uuid` column if it is empty.
 
-```php
+```php title="app/Models/Invoice.php"
 use Lumina\LaravelApi\Traits\HasUuid;
 
 class Invoice extends LuminaModel
@@ -308,7 +304,7 @@ class Invoice extends LuminaModel
 :::warning
 Your database table must have a `uuid` column. Add it in your migration:
 
-```php
+```php title="database/migrations/create_invoices_table.php"
 $table->uuid('uuid')->unique()->nullable();
 ```
 :::
@@ -328,7 +324,7 @@ Provides multi-tenant organization scoping. This trait automatically filters all
 | Global scope | Automatic | All queries are automatically filtered by `organization_id`. |
 | Auto-set on create | Automatic | `organization_id` is filled from the current request context on creation. |
 
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
 
 class Post extends LuminaModel
@@ -340,19 +336,16 @@ class Post extends LuminaModel
 }
 ```
 
-**Nested ownership with `$owner`:**
+**Nested ownership (auto-detected):**
 
-Not every model has a direct `organization_id` column. For nested models, use the `$owner` static property to define the dot-notation path to the nearest model that holds the organization reference.
+Not every model has a direct `organization_id` column. Lumina auto-detects the path by introspecting `BelongsTo` relationships — just define your relationships and scoping works automatically.
 
-```php
+```php title="app/Models/Comment.php"
 class Comment extends LuminaModel
 {
     use BelongsToOrganization;
 
-    // Comment doesn't have organization_id directly.
-    // But it belongs to a Post, which belongs to a Blog, which has organization_id.
-    public static string $owner = 'post.blog';
-
+    // Comment → Post → Blog → Organization (auto-detected via BelongsTo chain)
     public function post()
     {
         return $this->belongsTo(Post::class);
@@ -360,7 +353,7 @@ class Comment extends LuminaModel
 }
 ```
 
-In this example, Lumina traverses `Comment -> post -> blog` to find the organization. The chain can be as deep as needed.
+Lumina traverses `Comment -> post -> blog` to find the organization automatically. The chain can be up to 3 levels deep.
 
 :::info
 For a full explanation of multi-tenancy and organization scoping, see the [Multi-Tenancy](./multi-tenancy) page.
@@ -378,7 +371,7 @@ Controls which columns are hidden from API responses. This trait provides multip
 2. **Model-level hidden columns** via `$additionalHiddenColumns`: additional fields to always hide for this model
 3. **Policy-level attribute permissions** via `permittedAttributesForShow()` and `hiddenAttributesForShow()` on the model's policy: per-user dynamic visibility
 
-```php
+```php title="app/Models/User.php"
 class User extends LuminaModel
 {
 
@@ -401,7 +394,7 @@ For policy-based field visibility (showing different fields to different users),
 
 Automatically applies a global scope to the model based on a naming convention. When this trait is used, Lumina looks for a scope class at `App\Models\Scopes\{ModelName}Scope` and applies it if found. No manual registration is needed.
 
-```php
+```php title="app/Models/Post.php"
 class Post extends LuminaModel
 {
 
@@ -411,7 +404,7 @@ class Post extends LuminaModel
 
 Create the corresponding scope class:
 
-```php
+```php title="app/Models/Scopes/PostScope.php"
 <?php
 
 namespace App\Models\Scopes;
@@ -454,7 +447,7 @@ Adds utility methods for formatting data in API responses. Currently provides cu
 | `CurrencyOption::EUR` | `€` | `€1.234,56` |
 | `CurrencyOption::CHF` | `CHF` | `CHF1,234.56` |
 
-```php
+```php title="app/Models/Product.php"
 use Lumina\LaravelApi\Traits\ViewModelHelpers;
 use Lumina\LaravelApi\Enums\CurrencyOption;
 
@@ -477,7 +470,7 @@ Note that BRL and EUR use dot as the thousands separator and comma as the decima
 
 Below is a full real-world model that combines multiple Lumina traits into a feature-rich API resource:
 
-```php
+```php title="app/Models/BlogPost.php"
 <?php
 
 namespace App\Models;
@@ -571,7 +564,7 @@ This single model definition gives you:
 
 Models are registered in `config/lumina.php`. The key becomes the URL slug and the permission prefix:
 
-```php
+```php title="config/lumina.php"
 'models' => [
     'blog-posts' => \App\Models\BlogPost::class,
     'comments'   => \App\Models\Comment::class,

@@ -11,7 +11,7 @@ Lumina models are standard AdonisJS Lucid models enhanced with declarative stati
 
 The recommended way to create Lumina models is to extend `LuminaModel` — a pre-composed base class that includes all the core mixins you need:
 
-```ts
+```ts title="app/models/post.ts"
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 import { column } from '@adonisjs/lucid/orm'
 
@@ -43,7 +43,7 @@ You no longer need to manually compose these mixins on every model.
 
 These mixins are **not** included in `LuminaModel` because they require additional database columns or relationships. Add them via `compose()` on top of `LuminaModel`:
 
-```ts
+```ts title="app/models/invoice.ts"
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 import { compose } from '@adonisjs/core/helpers'
 import { HasAuditTrail } from '@startsoft/lumina-adonis/mixins/has_audit_trail'
@@ -65,8 +65,7 @@ export default class Invoice extends compose(LuminaModel, HasAuditTrail, Belongs
 
 You can publish a customizable base class to your application:
 
-```ts
-// app/models/lumina_model.ts
+```ts title="app/models/lumina_model.ts"
 import BaseLuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 
 export default class LuminaModel extends BaseLuminaModel {
@@ -84,7 +83,7 @@ You can still use the `compose(BaseModel, HasLumina, HasValidation, ...)` patter
 
 For advanced use cases, AdonisJS's `compose()` helper lets you mix-and-match individual mixins:
 
-```ts
+```ts title="app/models/post.ts"
 import { BaseModel } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import { HasLumina } from '@startsoft/lumina-adonis/mixins/has_lumina'
@@ -101,7 +100,7 @@ This is equivalent to extending `LuminaModel` but gives you explicit control ove
 
 Below is a complete model example demonstrating **all** available static properties that Lumina recognizes:
 
-```ts
+```ts title="app/models/post.ts"
 import { DateTime } from 'luxon'
 import { column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
@@ -172,9 +171,6 @@ export default class Post extends compose(
   // -- Route Exclusion --
   static $exceptActions = ['destroy'] // skip DELETE endpoint
 
-  // -- Organization Path (for nested models) --
-  static $owner = ['blog'] // Post -> blog -> organization
-
   // -- Relationships --
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>
@@ -200,7 +196,6 @@ export default class Post extends compose(
 | `$middleware` | `string[]` | `[]` | Middleware names applied to **all** routes for this model. |
 | `$middlewareActions` | `Record<string, string[]>` | `{}` | Middleware applied to **specific** actions only. Keys are action names (`index`, `show`, `store`, `update`, `destroy`). |
 | `$exceptActions` | `string[]` | `[]` | List of CRUD actions to exclude from route generation. Valid values: `'index'`, `'show'`, `'store'`, `'update'`, `'destroy'`, `'trashed'`, `'restore'`, `'forceDelete'`. |
-| `$owner` | `string[]` | `[]` | Relationship chain from this model to the model that holds `organization_id`. Used for nested organization scoping. E.g., `['blog']` means `Post -> blog -> organization`. |
 
 :::tip
 You only need to declare properties that differ from their defaults. For example, if you do not need filtering, simply omit `$allowedFilters` entirely.
@@ -216,7 +211,7 @@ The core mixin that adds all the static DSL properties for the Lumina REST API l
 
 **Included in LuminaModel** — no need to add manually.
 
-```ts
+```ts title="app/models/post.ts"
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 
 export default class Post extends LuminaModel {
@@ -231,7 +226,6 @@ export default class Post extends LuminaModel {
   static $middleware = []
   static $middlewareActions = {}
   static $exceptActions = []
-  static $owner = []
 }
 ```
 
@@ -243,7 +237,7 @@ Adds VineJS type/format validation to your model via the `validateForAction()` s
 
 **Included in LuminaModel** — no need to add manually.
 
-```ts
+```ts title="app/models/post.ts"
 import vine from '@vinejs/vine'
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 
@@ -268,7 +262,7 @@ For a complete breakdown of validation behavior, see the [Validation](./validati
 
 Adds role-based permission checking to the **User** model. Lumina uses this mixin to authorize API actions automatically when policies are in place.
 
-```ts
+```ts title="app/models/user.ts"
 import { compose } from '@adonisjs/core/helpers'
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 import { hasMany } from '@adonisjs/lucid/orm'
@@ -295,7 +289,7 @@ See the [Policies](./policies) page for full details on the permission system.
 
 Automatically records changes to your model in an audit log. Uses Lucid model hooks (`after:create`, `after:update`, `after:delete`) to track creation, updates, deletion, force-deletion, and restoration events with old and new values.
 
-```ts
+```ts title="app/models/user.ts"
 import { compose } from '@adonisjs/core/helpers'
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 import { HasAuditTrail } from '@startsoft/lumina-adonis/mixins/has_audit_trail'
@@ -315,7 +309,7 @@ See the [Audit Trail](./audit-trail) page for full details.
 
 Automatically generates a UUID for the model when it is created. The mixin hooks into Lucid's `before:create` event and fills the `uuid` column if it is empty. Uses Node.js's built-in `crypto.randomUUID()`.
 
-```ts
+```ts title="app/models/invoice.ts"
 import { compose } from '@adonisjs/core/helpers'
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 import { column } from '@adonisjs/lucid/orm'
@@ -341,7 +335,7 @@ table.uuid('uuid').unique().nullable()
 
 Automatically applies a global scope to the model based on a naming convention. When this mixin is used, Lumina looks for a scope class at `app/models/scopes/{model_name}_scope.ts` and applies it if found.
 
-```ts
+```ts title="app/models/post.ts"
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 
 export default class Post extends LuminaModel {
@@ -361,7 +355,7 @@ The scope is only applied if the class file exists. You can safely add the `HasA
 
 Provides multi-tenant organization scoping. This mixin automatically filters all queries to the current organization and sets the `organizationId` when creating new records.
 
-```ts
+```ts title="app/models/post.ts"
 import { compose } from '@adonisjs/core/helpers'
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 import { column, belongsTo } from '@adonisjs/lucid/orm'
@@ -379,7 +373,7 @@ export default class Post extends compose(LuminaModel, BelongsToOrganization) {
 ```
 
 :::info
-See the [Multi-Tenancy](./multi-tenancy) page for full details on organization scoping and the `$owner` chain.
+See the [Multi-Tenancy](./multi-tenancy) page for full details on organization scoping. Organization ownership is auto-detected from `belongsTo` relationships.
 :::
 
 ---
@@ -388,7 +382,7 @@ See the [Multi-Tenancy](./multi-tenancy) page for full details on organization s
 
 Controls which columns are hidden from API responses. This mixin provides multiple layers of column visibility control: base defaults, model-level configuration, and policy-based per-user hiding.
 
-```ts
+```ts title="app/models/user.ts"
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 
 export default class User extends LuminaModel {
@@ -407,8 +401,7 @@ export default class User extends LuminaModel {
 
 Models are registered in `config/lumina.ts`. The key becomes the URL slug and the permission prefix:
 
-```ts
-// config/lumina.ts
+```ts title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({

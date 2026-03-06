@@ -11,7 +11,7 @@ Lumina models are standard Django models enhanced with class attributes and mixi
 
 The easiest way to get started is to extend `LuminaModel`, which bundles the most commonly needed mixins:
 
-```python
+```python title="blog/models.py"
 from django.db import models
 from lumina.models import LuminaModel
 
@@ -44,7 +44,7 @@ Add these manually when needed:
 | `HasUuidMixin`                 | Auto-generated UUID on creation        |
 | `HasPermissionsMixin`          | Permission checking (User model only)  |
 
-```python
+```python title="blog/models.py"
 from lumina.models import LuminaModel
 from lumina.mixins import BelongsToOrganizationMixin, HasUuidMixin
 
@@ -64,7 +64,7 @@ If you only need a subset of features, use the individual mixins directly instea
 
 ### Query Builder Properties
 
-```python
+```python title="blog/models.py"
 class Post(LuminaModel):
     # Filtering — ?filter[status]=published&filter[user_id]=5
     lumina_allowed_filters = ['status', 'published', 'category_id']
@@ -87,7 +87,7 @@ class Post(LuminaModel):
 
 ### Hidden Fields
 
-```python
+```python title="blog/models.py"
 class Post(LuminaModel):
     lumina_hidden_fields = ['internal_notes', 'admin_comment']
 ```
@@ -98,7 +98,7 @@ class Post(LuminaModel):
 
 Adds `deleted_at` field and custom manager for soft deletes.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import SoftDeleteMixin
 
 class Post(SoftDeleteMixin, models.Model):
@@ -114,7 +114,7 @@ Automatically adds these endpoints:
 
 Automatically logs all create, update, and delete operations.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import AuditTrailMixin
 
 class Post(AuditTrailMixin, models.Model):
@@ -127,7 +127,7 @@ class Post(AuditTrailMixin, models.Model):
 
 Adds role-based field allowlisting with presence modifiers for create and update operations. DRF infers type/format constraints from Django model fields automatically.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import HasValidationMixin
 
 class Post(HasValidationMixin, models.Model):
@@ -158,7 +158,7 @@ For a complete breakdown of validation behaviour, including presence modifiers a
 
 Auto-generates a UUID field on creation.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import HasUuidMixin
 
 class Post(HasUuidMixin, models.Model):
@@ -170,7 +170,7 @@ class Post(HasUuidMixin, models.Model):
 
 Marks a model as belonging to an organization for multi-tenant scoping.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import BelongsToOrganizationMixin
 
 class Post(BelongsToOrganizationMixin, models.Model):
@@ -182,7 +182,7 @@ class Post(BelongsToOrganizationMixin, models.Model):
 
 Defines fields that should be hidden from API responses.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import HidableFieldsMixin
 
 class Post(HidableFieldsMixin, models.Model):
@@ -196,7 +196,7 @@ class Post(HidableFieldsMixin, models.Model):
 
 Add to your User model to enable Lumina permission checking.
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import HasPermissionsMixin
 
 class User(HasPermissionsMixin, AbstractUser):

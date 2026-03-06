@@ -15,7 +15,7 @@ The Lumina React client provides TanStack Query hooks for every server endpoint.
 
 ## Installation
 
-```bash
+```bash title="terminal"
 npm install @startsoft/lumina @tanstack/react-query axios
 ```
 
@@ -25,7 +25,7 @@ npm install @startsoft/lumina @tanstack/react-query axios
 
 Point the client to your Laravel backend:
 
-```tsx
+```tsx title="src/config.ts"
 import { configureApi } from '@startsoft/lumina';
 
 configureApi({
@@ -35,7 +35,7 @@ configureApi({
 
 :::tip React Native
 For React Native, you can add a custom unauthorized handler:
-```tsx
+```tsx title="src/config.ts"
 configureApi({
   baseURL: 'https://api.yourapp.com/api',
   onUnauthorized: () => {
@@ -48,7 +48,7 @@ configureApi({
 
 ### 2. Wrap your app with providers
 
-```tsx
+```tsx title="src/App.tsx"
 import { AuthProvider } from '@startsoft/lumina';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -67,7 +67,7 @@ function App() {
 
 ### 3. Start using hooks
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 import { useModelIndex, useModelStore } from '@startsoft/lumina';
 
 function PostsList() {
@@ -160,14 +160,14 @@ function PostsList() {
 
 Pagination metadata comes from response **headers** (not body). All hooks return it automatically:
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 const { data: response } = useModelIndex('posts', { page: 1, perPage: 20 });
 
 const posts = response?.data;           // Array of records
 const pagination = response?.pagination; // { currentPage, lastPage, perPage, total }
 ```
 
-```tsx
+```tsx title="src/types.ts"
 // PaginationMeta type
 interface PaginationMeta {
   currentPage: number;
@@ -181,7 +181,7 @@ interface PaginationMeta {
 
 The library exports all types:
 
-```tsx
+```tsx title="src/types.ts"
 import type {
   PaginationMeta,
   ModelQueryOptions,

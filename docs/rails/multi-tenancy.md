@@ -19,7 +19,7 @@ During `rails lumina:install`, select **Yes** when asked about multi-tenant supp
 
 Or configure it manually in `config/initializers/lumina.rb`:
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :posts, 'Post'
 
@@ -56,7 +56,7 @@ The middleware:
 
 The organization identifier is part of the URL path:
 
-```bash
+```bash title="terminal"
 GET /api/acme-corp/posts       # Using slug
 GET /api/1/posts               # Using id
 GET /api/abc-123-def/posts     # Using uuid
@@ -64,7 +64,7 @@ GET /api/abc-123-def/posts     # Using uuid
 
 Uses `Lumina::Middleware::ResolveOrganizationFromRoute`. The identifier column is configurable:
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 c.multi_tenant[:organization_identifier_column] = 'slug'  # matches organizations.slug column
 ```
 
@@ -72,14 +72,14 @@ c.multi_tenant[:organization_identifier_column] = 'slug'  # matches organization
 
 The organization is extracted from the subdomain:
 
-```bash
+```bash title="terminal"
 GET https://acme-corp.yourapp.com/api/posts
 GET https://other-org.yourapp.com/api/posts
 ```
 
 Uses `Lumina::Middleware::ResolveOrganizationFromSubdomain`. Enable it:
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :posts, 'Post'
 
@@ -97,7 +97,7 @@ The subdomain middleware automatically skips these common subdomains: `www`, `ap
 
 Add `BelongsToOrganization` to scope a model's data per organization:
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::HasValidation
@@ -109,7 +109,7 @@ end
 
 Migration:
 
-```ruby
+```ruby title="db/migrate/create_posts.rb"
 class CreatePosts < ActiveRecord::Migration[8.0]
   def change
     create_table :posts do |t|
@@ -128,39 +128,34 @@ Now `GET /api/acme-corp/posts` only returns posts where `organization_id` matche
 
 ### Nested Organization Ownership
 
-Not all models have a direct `organization_id` column. For nested models, use the `lumina_owner` DSL to define the path to the organization:
+Not all models have a direct `organization_id` column. For nested models, Lumina auto-detects the path to the organization by walking `belongs_to` relationships:
 
-```ruby
+```ruby title="app/models/comment.rb"
 class Comment < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::BelongsToOrganization
 
-  # Comment → Post → Blog → Organization
-  lumina_owner 'post.blog'
-
+  # Comment → Post → Blog → Organization is auto-detected
   belongs_to :post
 end
 ```
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::BelongsToOrganization
 
-  # Post → Blog → Organization
-  lumina_owner 'blog'
-
+  # Post → Blog → Organization is auto-detected
   belongs_to :blog
   has_many :comments
 end
 ```
 
-```ruby
+```ruby title="app/models/blog.rb"
 class Blog < ApplicationRecord
   include Lumina::BelongsToOrganization
 
-  # Blog has organization_id directly — no lumina_owner needed
-
+  # Blog has organization_id directly
   belongs_to :organization
   has_many :posts
 end
@@ -172,8 +167,7 @@ Users have roles scoped to each organization. A user can be **admin** in one org
 
 ### Setting Up Roles
 
-```ruby
-# db/seeds.rb
+```ruby title="db/seeds.rb"
 admin = Role.create!(
   name: 'Admin',
   slug: 'admin',
@@ -198,7 +192,7 @@ viewer = Role.create!(
 
 ### Assigning Users to Organizations
 
-```ruby
+```ruby title="db/seeds.rb"
 # User is admin in Acme Corp
 UserRole.create!(
   user_id: user.id,
@@ -216,7 +210,7 @@ UserRole.create!(
 
 ### Checking Permissions
 
-```ruby
+```ruby title="app/models/user.rb"
 # User is admin in Acme Corp
 user.has_permission?('posts.store', acme_corp)   # true
 user.has_permission?('posts.destroy', acme_corp)  # true (admin has *)
@@ -232,7 +226,7 @@ user.has_permission?('posts.index', other_org)   # true
 
 If a user tries to access an organization they don't belong to:
 
-```bash
+```bash title="terminal"
 curl -H "Authorization: Bearer TOKEN" /api/other-org/posts
 # → 404 { "message": "Organization not found" }
 ```
@@ -245,7 +239,7 @@ Returning 404 instead of 403 prevents leaking information about organization exi
 
 Requests without authentication to non-public endpoints:
 
-```bash
+```bash title="terminal"
 curl /api/acme-corp/posts
 # → 401 { "message": "Unauthenticated." }
 ```
@@ -254,8 +248,7 @@ curl /api/acme-corp/posts
 
 Models in a `:public` route group skip authentication:
 
-```ruby
-# config/initializers/lumina.rb
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.route_group :public, prefix: 'public', models: [:posts]
 end
@@ -269,8 +262,7 @@ Here's a complete multi-tenant setup from scratch:
 
 ### 1. Enable in Config
 
-```ruby
-# config/initializers/lumina.rb
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :posts, 'Post'
   c.model :comments, 'Comment'
@@ -283,8 +275,7 @@ end
 
 ### 2. Create Models
 
-```ruby
-# app/models/post.rb
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::HasValidation
@@ -311,8 +302,7 @@ end
 
 ### 3. Seed Roles
 
-```ruby
-# db/seeds.rb
+```ruby title="db/seeds.rb"
 Role.create!(name: 'Admin', slug: 'admin', permissions: ['*'])
 Role.create!(name: 'Editor', slug: 'editor', permissions: [
   'posts.index', 'posts.show', 'posts.store', 'posts.update',
@@ -326,7 +316,7 @@ Role.create!(name: 'Viewer', slug: 'viewer', permissions: [
 
 ### 4. Create Organization & Assign Users
 
-```ruby
+```ruby title="db/seeds.rb"
 org = Organization.create!(name: 'Acme Corp', slug: 'acme-corp')
 
 # Admin user
@@ -346,7 +336,7 @@ UserRole.create!(
 
 ### 5. Use the API
 
-```bash
+```bash title="terminal"
 # Admin: full access
 curl -H "Authorization: Bearer ADMIN_TOKEN" \
   -X POST /api/acme-corp/posts \

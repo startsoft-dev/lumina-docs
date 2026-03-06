@@ -11,7 +11,7 @@ Every Lumina endpoint supports filtering, sorting, search, pagination, field sel
 
 Define what's queryable on your model:
 
-```php
+```php title="app/Models/Post.php"
 class Post extends Model
 {
     // Fields that can be filtered
@@ -42,7 +42,7 @@ Fields **not** listed in these arrays are silently ignored. This is a security f
 
 Filter records by field values:
 
-```bash
+```bash title="terminal"
 # Single filter
 GET /api/posts?filter[status]=published
 
@@ -57,7 +57,7 @@ Only fields listed in `$allowedFilters` can be filtered.
 
 ### Examples
 
-```bash
+```bash title="terminal"
 # Posts by a specific user
 GET /api/posts?filter[user_id]=42
 
@@ -72,7 +72,7 @@ GET /api/posts?filter[status]=draft,published
 
 Sort records by one or more fields:
 
-```bash
+```bash title="terminal"
 # Ascending
 GET /api/posts?sort=title
 
@@ -89,24 +89,24 @@ Only fields listed in `$allowedSorts` can be sorted. If no sort is specified, `$
 
 Full-text search across configured fields:
 
-```bash
+```bash title="terminal"
 GET /api/posts?search=laravel
 ```
 
 Searches across all fields listed in `$allowedSearch`. You can search across relationships too:
 
-```php
+```php title="app/Models/Post.php"
 // Model config
 public static $allowedSearch = ['title', 'content', 'user.name'];
 ```
 
-```bash
+```bash title="terminal"
 # This searches in post.title, post.content, AND user.name
 GET /api/posts?search=john
 ```
 
 :::tip Combine search with filters
-```bash
+```bash title="terminal"
 # Search for "laravel" only in published posts
 GET /api/posts?search=laravel&filter[status]=published
 ```
@@ -116,7 +116,7 @@ GET /api/posts?search=laravel&filter[status]=published
 
 Control page size and navigate through results:
 
-```bash
+```bash title="terminal"
 # Page 1 with 20 items per page
 GET /api/posts?page=1&per_page=20
 
@@ -137,7 +137,7 @@ X-Total: 195
 
 The response body contains only the data array:
 
-```json
+```json title="Response"
 [
     { "id": 21, "title": "Post 21", ... },
     { "id": 22, "title": "Post 22", ... },
@@ -149,7 +149,7 @@ The response body contains only the data array:
 
 To return all results without pagination:
 
-```php
+```php title="app/Models/Tag.php"
 class Tag extends Model
 {
     public static bool $paginationEnabled = false;
@@ -158,7 +158,7 @@ class Tag extends Model
 
 ### Changing Default Page Size
 
-```php
+```php title="app/Models/Post.php"
 class Post extends Model
 {
     protected $perPage = 25; // Default items per page
@@ -169,7 +169,7 @@ class Post extends Model
 
 Select only specific fields to reduce payload size:
 
-```bash
+```bash title="terminal"
 # Select specific fields
 GET /api/posts?fields[posts]=id,title,status
 
@@ -187,7 +187,7 @@ The table name is used as the key in the `fields` parameter. For a `posts` table
 
 Load related models in a single request:
 
-```bash
+```bash title="terminal"
 # Load single relationship
 GET /api/posts?include=user
 
@@ -204,7 +204,7 @@ Only relationships listed in `$allowedIncludes` can be loaded.
 
 You can get relationship counts or existence checks:
 
-```bash
+```bash title="terminal"
 # Get the count of comments for each post
 GET /api/posts?include=commentsCount
 
@@ -213,7 +213,7 @@ GET /api/posts?include=commentsExists
 ```
 
 Response:
-```json
+```json title="Response"
 {
     "id": 1,
     "title": "My Post",
@@ -226,7 +226,7 @@ Response:
 
 When loading includes, Lumina checks if the user has `viewAny` permission on the included resource. If not, a 403 is returned:
 
-```bash
+```bash title="terminal"
 # If user doesn't have 'comments.index' permission:
 GET /api/posts?include=comments
 # → 403 { "message": "You do not have permission to include comments." }
@@ -236,7 +236,7 @@ This prevents users from bypassing permissions through eager loading.
 
 ## Combined Example
 
-```bash
+```bash title="terminal"
 GET /api/posts?filter[status]=published&sort=-created_at&include=user,comments&fields[posts]=id,title,excerpt&search=laravel&page=1&per_page=20
 ```
 
@@ -259,7 +259,7 @@ X-Total: 47
 ```
 
 **Body:**
-```json
+```json title="Response"
 [
     {
         "id": 42,

@@ -11,7 +11,7 @@ Lumina uses a policy-based authorization system that automatically checks permis
 
 The `ResourcePolicy` class provides default implementations for all CRUD authorization methods. Each method checks whether the authenticated user holds the required permission string:
 
-```ts
+```ts title="app/policies/post_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class PostPolicy extends ResourcePolicy {
@@ -43,8 +43,7 @@ Permissions follow the pattern `{resource_slug}.{action}`:
 
 The `resource_slug` matches the key you use in `config/lumina.ts` when registering models:
 
-```ts
-// config/lumina.ts
+```ts title="config/lumina.ts"
 models: {
   posts: () => import('#models/post'),       // slug = 'posts'
   'blog-posts': () => import('#models/blog_post'),  // slug = 'blog-posts'
@@ -73,7 +72,7 @@ const canCreate = await user.hasPermission('posts.store', organization)
 
 The `HasPermissions` mixin is applied to your **User** model and provides the `hasPermission()` and `getRoleSlugForValidation()` methods:
 
-```ts
+```ts title="app/models/user.ts"
 import { compose } from '@adonisjs/core/helpers'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
@@ -90,21 +89,54 @@ export default class User extends compose(BaseModel, HasPermissions) {
   @column()
   declare email: string
 
+  @column()
+  declare permissions: string[] | null
+
   @hasMany(() => UserRole)
   declare userRoles: HasMany<typeof UserRole>
 }
 ```
 
-### How Permission Checking Works
+### How Permissions Are Stored
+
+Lumina supports two permission sources, used depending on whether the request is organization-scoped or not:
+
+#### User-level permissions (`users.permissions`)
+
+For non-tenant route groups (e.g., `driver`, `admin`, `default`), permissions are stored directly on the `users` table as a JSON column:
+
+```
+id | name         | email              | permissions (JSON)
+1  | Alice Driver | alice@example.com  | ["trips.index", "trips.show", "trucks.*"]
+2  | Bob Admin    | bob@example.com    | ["*"]
+3  | Carol User   | carol@example.com  | ["posts.index", "posts.show"]
+```
+
+This is the standard permission model and works for all apps, including non-multi-tenant apps.
+
+#### Organization-scoped permissions (`userRoles.permissions`)
+
+For the `tenant` route group, permissions are stored on the `userRoles` join table, scoped per organization:
+
+```
+id | userId | organizationId | permissions (JSON)
+1  | 1      | 1              | ["*"]
+2  | 2      | 1              | ["posts.index", "posts.show", "posts.store"]
+3  | 1      | 2              | ["posts.index", "posts.show"]
+```
+
+This enables multi-tenant permission models where the same user can hold different permissions in different organizations.
+
+#### Resolution
 
 When `hasPermission(permission, organization?)` is called:
 
-1. The `userRoles` relationship is loaded (with the nested `role`) if not already preloaded
-2. Each `UserRole` is filtered by the given organization (if provided)
-3. Each role's `permissions` array is checked for exact matches and wildcard matches
-4. Returns `true` if any permission matches
+1. **Organization present** (tenant route group) → checks `userRoles.permissions` for that organization
+2. **No organization** (any other route group) → checks `users.permissions` directly
 
-The `permissions` property on a `UserRole` can be either a JSON string or a plain array of permission strings:
+This is deterministic — the decision is based on the presence of an organization in the request, which is set by middleware in tenant route groups. There is no fallback chain.
+
+The `permissions` property can be either a JSON string or a plain array of permission strings:
 
 ```json
 ["posts.index", "posts.show", "posts.store", "comments.*"]
@@ -114,14 +146,14 @@ The `permissions` property on a `UserRole` can be either a JSON string or a plai
 
 | Method | Description |
 |---|---|
-| `hasPermission(permission, organization?)` | Returns `true` if the user has the given permission within the specified organization. |
+| `hasPermission(permission, organization?)` | Returns `true` if the user has the given permission. With organization: checks `userRoles.permissions`. Without: checks `users.permissions`. |
 | `getRoleSlugForValidation(organization?)` | Returns the user's role slug within an organization, used for role-based validation rules. |
 
 ## Custom Policies
 
 Extend `ResourcePolicy` to add custom authorization logic. Override any method to implement your own checks:
 
-```ts
+```ts title="app/policies/post_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class PostPolicy extends ResourcePolicy {
@@ -157,7 +189,7 @@ You can call `super.methodName()` to compose your custom logic with the default 
 
 Register your policy on the model via the static `$policy` property:
 
-```ts
+```ts title="app/models/post.ts"
 export default class Post extends compose(BaseModel, HasLumina) {
   static $policy = () => import('#policies/post_policy')
 
@@ -178,7 +210,7 @@ Policies control which attributes are visible and writable on a per-user basis t
 
 Returns an array of attribute names that should be **hidden** from API responses for this user. These are merged with the base hidden columns (`password`, `rememberToken`, etc.) and any `$additionalHiddenColumns` on the model.
 
-```ts
+```ts title="app/policies/user_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class UserPolicy extends ResourcePolicy {
@@ -255,7 +287,7 @@ If a model does not define a `$policy` property, **all actions are allowed**. Th
 
 The `resourceSlug` static property on the policy tells Lumina which permission prefix to use. If you do not set it, Lumina attempts to resolve the slug automatically by matching the model class against the `models` map in `config/lumina.ts`.
 
-```ts
+```ts title="app/policies/post_policy.ts"
 // Explicit slug (recommended)
 export default class PostPolicy extends ResourcePolicy {
   static resourceSlug = 'posts'

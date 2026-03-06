@@ -51,7 +51,7 @@ Creates a new invitation and sends an email notification.
 
 **Request Body:**
 
-```json
+```json title="Request"
 {
   "email": "newuser@example.com",
   "role_id": 2
@@ -111,7 +111,7 @@ Accepts an invitation using a token. This is a public endpoint (no organization 
 
 **Request Body:**
 
-```json
+```json title="Request"
 {
   "token": "a1b2c3d4e5f6...64-char-hex-token"
 }
@@ -126,7 +126,7 @@ Accepts an invitation using a token. This is a public endpoint (no organization 
 - If the user **is authenticated**, the invitation is accepted immediately, and the user is added to the organization with the assigned role
 
 **Response (not authenticated):**
-```json
+```json title="Response"
 {
   "invitation": { ... },
   "requires_registration": true,
@@ -135,7 +135,7 @@ Accepts an invitation using a token. This is a public endpoint (no organization 
 ```
 
 **Response (authenticated):**
-```json
+```json title="Response"
 {
   "message": "Invitation accepted successfully",
   "invitation": { ... },
@@ -232,8 +232,7 @@ The `InvitationPolicy` class controls access to invitation endpoints:
 
 By default, any member of an organization can create invitations. To restrict this to specific roles, configure `invitations.allowedRoles`:
 
-```ts
-// config/lumina.ts
+```ts title="config/lumina.ts"
 invitations: {
   expiresDays: 7,
   allowedRoles: ['admin', 'manager'], // Only admins and managers can invite
@@ -244,8 +243,7 @@ When set to `null` (default), all organization members can create invitations.
 
 ## Configuration
 
-```ts
-// config/lumina.ts
+```ts title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({

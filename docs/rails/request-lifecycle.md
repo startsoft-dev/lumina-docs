@@ -34,7 +34,7 @@ Lumina applies middleware in this order:
 2. **Model middleware** — Defined via `lumina_middleware` on your model (applies to all actions)
 3. **Action middleware** — Defined via `lumina_middleware_actions` (applies to specific actions only)
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
 
@@ -67,7 +67,7 @@ Each CRUD action maps to a policy method:
 
 The policy checks the user's **roles and permissions** for the current organization. If the user lacks the required permission, a `403 Forbidden` response is returned immediately.
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   # Permission format: posts.index, posts.store, etc.
   # Wildcards supported: posts.* or just *
@@ -83,21 +83,21 @@ Once authorized, Lumina determines **which records** the user can see. This is t
 Scoping ensures users only access data belonging to their current organization:
 
 - Models with `organization_id` are filtered directly
-- Nested models use the `lumina_owner` path to traverse relationships back to the organization
+- Nested models use auto-detected `belongs_to` chains to traverse relationships back to the organization
 - Custom scopes (via `HasAutoScope`) can add additional filtering
 
-```ruby
+```ruby title="app/models/"
 # Direct: WHERE organization_id = ?
 class Blog < ApplicationRecord
   include Lumina::BelongsToOrganization
 end
 
-# Nested: WHERE EXISTS (post.blog.organization_id = ?)
+# Nested: WHERE EXISTS (post.blog.organization_id = ?) — auto-detected from belongs_to
 class Comment < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::BelongsToOrganization
 
-  lumina_owner 'post.blog'
+  belongs_to :post
 end
 ```
 
@@ -135,7 +135,7 @@ The query results are serialized into JSON. For `index` endpoints, Lumina adds p
 
 Before sending the response, Lumina checks the policy's attribute permission methods to determine if any columns should be stripped based on the user's role:
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   def hidden_attributes_for_show(user)
     if user&.has_permission?('posts.viewSensitive')
@@ -153,7 +153,7 @@ This provides **column-level security** — different users see different fields
 
 The final JSON response is returned to the client. For a single resource:
 
-```json
+```json title="Response"
 {
   "id": 1,
   "title": "My Post",

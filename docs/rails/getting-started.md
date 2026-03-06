@@ -15,13 +15,13 @@ Install Lumina and go from zero to a full REST API in under 5 minutes.
 
 ## Installation
 
-```bash
+```bash title="terminal"
 bundle add lumina-rails
 ```
 
 Then run the interactive installer:
 
-```bash
+```bash title="terminal"
 rails lumina:install
 ```
 
@@ -35,8 +35,7 @@ The installer will walk you through:
 
 After installation, your config file is at `config/initializers/lumina.rb`:
 
-```ruby
-# config/initializers/lumina.rb
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   # Model registration — slug => model class name
   c.model :posts, 'Post'
@@ -69,7 +68,7 @@ end
 
 Add these to your `.env` file as needed:
 
-```env
+```env title=".env"
 # Invitation expiration (days)
 INVITATION_EXPIRES_DAYS=7
 ```
@@ -78,8 +77,7 @@ INVITATION_EXPIRES_DAYS=7
 
 Create a model (or use the [generator](./generator)):
 
-```ruby
-# app/models/post.rb
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   # Validation (ActiveModel — use allow_nil: true for all validators)
   validates :title, length: { maximum: 255 }, allow_nil: true
@@ -104,7 +102,7 @@ end
 `Lumina::LuminaModel` extends `ApplicationRecord` and includes `HasLumina`, `HasValidation`, `HidableColumns`, and `HasAutoScope` out of the box. Open the base class to see all available class attributes with YARD documentation and examples.
 
 For additional features, include concerns manually:
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   include Lumina::HasAuditTrail
   include Lumina::BelongsToOrganization
@@ -116,7 +114,7 @@ end
 
 Register it in `config/initializers/lumina.rb`:
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :posts, 'Post'
 end
@@ -158,7 +156,7 @@ Lumina also provides auth routes out of the box:
 
 ## Run Migrations
 
-```bash
+```bash title="terminal"
 rails db:migrate
 ```
 
@@ -168,7 +166,7 @@ This will create the necessary tables for audit logs, invitations, and any model
 
 Use the interactive generator to create models, migrations, factories, policies, and scopes:
 
-```bash
+```bash title="terminal"
 rails lumina:generate
 ```
 

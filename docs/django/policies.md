@@ -52,7 +52,7 @@ Permissions follow the pattern `{slug}.{action}`:
 
 ### Wildcards
 
-```python
+```python title="blog/policies.py"
 ['*']           # All permissions on all resources
 ['posts.*']     # All permissions on posts
 ```
@@ -61,7 +61,7 @@ Permissions follow the pattern `{slug}.{action}`:
 
 Permissions are stored as a JSON list on the Role model:
 
-```python
+```python title="blog/models.py"
 class Role(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
@@ -75,7 +75,7 @@ class UserRole(models.Model):
 
 ### Example Roles
 
-```python
+```python title="terminal"
 # Admin - full access
 Role.objects.create(name='Admin', slug='admin', permissions=['*'])
 
@@ -94,7 +94,7 @@ Role.objects.create(name='Viewer', slug='viewer', permissions=[
 
 Policies can hide fields from API responses:
 
-```python
+```python title="blog/policies.py"
 class PostPolicy(ResourcePolicy):
     slug = 'posts'
 
@@ -108,7 +108,7 @@ class PostPolicy(ResourcePolicy):
 
 Control access to relationship includes:
 
-```python
+```python title="blog/policies.py"
 class PostPolicy(ResourcePolicy):
     slug = 'posts'
 
@@ -122,7 +122,7 @@ class PostPolicy(ResourcePolicy):
 
 Override any method for custom authorization:
 
-```python
+```python title="blog/policies.py"
 class PostPolicy(ResourcePolicy):
     slug = 'posts'
 

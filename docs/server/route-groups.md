@@ -11,7 +11,7 @@ Route groups allow you to register the same models under multiple URL prefixes, 
 
 Define route groups in `config/lumina.php`:
 
-```php
+```php title="config/lumina.php"
 'route_groups' => [
     'group-name' => [
         'prefix' => 'url-prefix',           // URL prefix for routes
@@ -41,7 +41,7 @@ All other group names (e.g., `'driver'`, `'admin'`, `'default'`) are standard au
 
 ### Simple Non-Tenant App
 
-```php
+```php title="config/lumina.php"
 'route_groups' => [
     'default' => [
         'prefix' => '',
@@ -55,7 +55,7 @@ Routes: `GET /api/posts`, `POST /api/posts`, etc.
 
 ### Simple Multi-Tenant App
 
-```php
+```php title="config/lumina.php"
 'route_groups' => [
     'tenant' => [
         'prefix' => '{organization}',
@@ -208,7 +208,7 @@ Lumina uses two permission sources based on the route group context:
 
 Add a `permissions` JSON column to your users table:
 
-```php
+```php title="database/migrations/add_permissions_to_users_table.php"
 Schema::table('users', function (Blueprint $table) {
     $table->json('permissions')->nullable();
 });
@@ -216,7 +216,7 @@ Schema::table('users', function (Blueprint $table) {
 
 Add the cast to your User model:
 
-```php
+```php title="app/Models/User.php"
 class User extends Authenticatable
 {
     use HasPermissions;
@@ -229,7 +229,7 @@ class User extends Authenticatable
 
 ### Assigning Permissions
 
-```php
+```php title="database/seeders/UserSeeder.php"
 // Driver: can view and manage their trips and trucks
 $driver->update([
     'permissions' => ['trips.index', 'trips.show', 'trucks.*'],
@@ -293,7 +293,7 @@ If you're upgrading from a previous Lumina version, update your `config/lumina.p
 
 **Before:**
 
-```php
+```php title="config/lumina.php"
 'public' => ['materials'],
 'multi_tenant' => [
     'enabled' => true,
@@ -305,7 +305,7 @@ If you're upgrading from a previous Lumina version, update your `config/lumina.p
 
 **After:**
 
-```php
+```php title="config/lumina.php"
 'route_groups' => [
     'tenant' => [
         'prefix' => '{organization}',

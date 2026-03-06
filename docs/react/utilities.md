@@ -11,7 +11,7 @@ Lumina exports utility functions, adapters, and hooks beyond the main CRUD opera
 
 Configure the Axios client used by all hooks.
 
-```tsx
+```tsx title="src/config.ts"
 import { configureApi } from '@startsoft/lumina';
 
 configureApi({
@@ -31,7 +31,7 @@ configureApi({
 
 :::tip React Native
 Use `onUnauthorized` to navigate to your login screen instead of the default `window.location` redirect:
-```tsx
+```tsx title="src/config.ts"
 configureApi({
   baseURL: 'https://api.yourapp.com/api',
   onUnauthorized: () => navigation.navigate('Login'),
@@ -43,7 +43,7 @@ configureApi({
 
 The pre-configured Axios instance used by all hooks. Use it for custom API calls that aren't covered by the built-in hooks.
 
-```tsx
+```tsx title="src/api.ts"
 import { api } from '@startsoft/lumina';
 
 // Custom API call
@@ -70,7 +70,7 @@ The `api` instance automatically:
 
 Platform-agnostic storage adapter. Uses `localStorage` on web and can be swapped for `AsyncStorage` on React Native.
 
-```tsx
+```tsx title="src/storage.ts"
 import { storage } from '@startsoft/lumina';
 
 // Store a value
@@ -100,7 +100,7 @@ storage.removeItem('theme');
 
 Platform-agnostic event emitter for cross-component communication. Uses `window.dispatchEvent` on web.
 
-```tsx
+```tsx title="src/events.ts"
 import { events } from '@startsoft/lumina';
 
 // Emit an event
@@ -128,7 +128,7 @@ On web, organization changes are broadcast via `StorageEvent`, enabling cross-ta
 
 Parse pagination metadata from Axios response headers. Used internally by all list hooks, but available for custom API calls.
 
-```tsx
+```tsx title="src/utils/pagination.ts"
 import { api, extractPaginationFromHeaders } from '@startsoft/lumina';
 
 const response = await api.get('/posts?page=2&per_page=15');
@@ -153,7 +153,7 @@ const pagination = extractPaginationFromHeaders(response);
 
 Returns `null` if the headers are not present.
 
-```typescript
+```typescript title="src/types.ts"
 interface PaginationMeta {
   currentPage: number;
   lastPage: number;
@@ -166,7 +166,7 @@ interface PaginationMeta {
 
 Utility function for merging CSS classes. Combines [clsx](https://github.com/lukeed/clsx) and [tailwind-merge](https://github.com/dcastil/tailwind-merge) for conflict-free class merging.
 
-```tsx
+```tsx title="src/utils/cn.ts"
 import { cn } from '@startsoft/lumina';
 
 // Basic usage
@@ -184,7 +184,7 @@ cn('text-red-500', 'text-blue-500'); // 'text-blue-500'
 
 Toast notification state management hook.
 
-```tsx
+```tsx title="src/components/MyComponent.tsx"
 import { useToast } from '@startsoft/lumina';
 
 function MyComponent() {
@@ -232,7 +232,7 @@ function MyComponent() {
 
 Fetch the audit trail (change history) for a specific record.
 
-```tsx
+```tsx title="src/components/PostHistory.tsx"
 import { useModelAudit } from '@startsoft/lumina';
 
 function PostHistory({ postId }) {
@@ -300,7 +300,7 @@ function PostHistory({ postId }) {
 
 ### Audit Log Entry Type
 
-```typescript
+```typescript title="src/types.ts"
 interface AuditLog {
   id: number;
   action: 'created' | 'updated' | 'deleted' | 'force_deleted' | 'restored';

@@ -13,7 +13,7 @@ During `rails lumina:install`, select **Yes** when asked about audit trail. This
 
 Then add the `HasAuditTrail` concern to any model you want to track:
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::HasValidation
@@ -25,7 +25,7 @@ end
 
 Run the migration:
 
-```bash
+```bash title="terminal"
 rails db:migrate
 ```
 
@@ -49,7 +49,7 @@ On updates, only the fields that actually changed are logged — not the entire 
 
 By default, `password` and `remember_token` are excluded from audit logs. Add more fields with the `lumina_audit_exclude` DSL:
 
-```ruby
+```ruby title="app/models/user.rb"
 class User < ApplicationRecord
   include Lumina::HasAuditTrail
 
@@ -80,7 +80,7 @@ Each audit log entry contains:
 
 Fetch the audit trail for any model instance:
 
-```bash
+```bash title="terminal"
 GET /api/posts/42/audit
 GET /api/posts/42/audit?page=1&per_page=20
 ```
@@ -89,7 +89,7 @@ Supports pagination via query parameters.
 
 ### Response Example
 
-```json
+```json title="Response"
 [
     {
         "id": 1,
@@ -146,7 +146,7 @@ Supports pagination via query parameters.
 
 The `HasAuditTrail` concern adds an `audit_logs` polymorphic association:
 
-```ruby
+```ruby title="terminal"
 # Get all audit logs for a post
 logs = post.audit_logs.order(created_at: :desc)
 
@@ -181,7 +181,7 @@ This context is set by Lumina's controller before any model operations occur, so
 
 Here's how audit trail works in practice:
 
-```ruby
+```ruby title="terminal"
 # 1. User creates a post
 post = Post.create!(
   title: 'Hello World',
@@ -218,7 +218,7 @@ post.destroy
 
 When multi-tenancy is enabled, the `organization_id` is automatically captured in each audit log entry. This means you can query audit logs per organization:
 
-```ruby
+```ruby title="terminal"
 Lumina::AuditLog.where(organization_id: organization.id)
   .order(created_at: :desc)
   .page(1)

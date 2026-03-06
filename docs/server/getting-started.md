@@ -15,13 +15,13 @@ Install Lumina and go from zero to a full REST API in under 5 minutes.
 
 ## Installation
 
-```bash
+```bash title="terminal"
 composer require startsoft/lumina dev-main
 ```
 
 Then run the interactive installer:
 
-```bash
+```bash title="terminal"
 php artisan lumina:install
 ```
 
@@ -36,8 +36,7 @@ The installer will walk you through:
 
 After installation, your config file is at `config/lumina.php`:
 
-```php
-// config/lumina.php
+```php title="config/lumina.php"
 return [
     // Model registration — slug => model class
     'models' => [
@@ -87,7 +86,7 @@ return [
 
 Add these to your `.env` file as needed:
 
-```env
+```env title=".env"
 # Invitation expiration (days)
 INVITATION_EXPIRES_DAYS=7
 ```
@@ -96,7 +95,7 @@ INVITATION_EXPIRES_DAYS=7
 
 Create a model (or use the [generator](./generator)):
 
-```php
+```php title="app/Models/Post.php"
 <?php
 
 namespace App\Models;
@@ -138,7 +137,7 @@ class Post extends LuminaModel
 `LuminaModel` extends `Model` and includes `SoftDeletes`, `HasValidation`, `HidableColumns`, and `HasAutoScope` out of the box. Open the base class to see all available properties with documentation and examples.
 
 For additional features, add traits manually:
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
 
@@ -152,7 +151,7 @@ class Post extends LuminaModel
 
 Register it in `config/lumina.php`:
 
-```php
+```php title="config/lumina.php"
 'models' => [
     'posts' => \App\Models\Post::class,
 ],
@@ -194,7 +193,7 @@ Lumina also provides auth routes out of the box:
 
 ## Run Migrations
 
-```bash
+```bash title="terminal"
 php artisan migrate
 ```
 
@@ -204,7 +203,7 @@ This will create the necessary tables for audit logs, invitations, and any model
 
 Use the interactive generator to create models, migrations, factories, policies, and scopes:
 
-```bash
+```bash title="terminal"
 php artisan lumina:generate
 ```
 

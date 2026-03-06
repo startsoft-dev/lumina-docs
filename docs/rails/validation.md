@@ -19,7 +19,7 @@ When a request hits a `store` or `update` endpoint, Lumina:
 4. On failure, returns a `422` response with field-level errors
 5. On success, proceeds with the operation using only the validated fields
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::HasValidation
@@ -41,7 +41,7 @@ Validation runs automatically. You do not need to call any validation method you
 
 Use standard Rails `validates` declarations for type and format constraints. These are the same validators you already know from Rails:
 
-```ruby
+```ruby title="app/models/post.rb"
 validates :title, length: { maximum: 255 }, allow_nil: true
 validates :content, length: { maximum: 10_000 }, allow_nil: true
 validates :status, inclusion: { in: %w[draft published archived] }, allow_nil: true
@@ -64,7 +64,7 @@ Keep model-level validators focused on **type and format constraints** (e.g., `l
 
 Which fields are accepted on `store` and `update` is determined by the policy's `permitted_attributes_for_create()` and `permitted_attributes_for_update()` methods. This is where role-based field access lives.
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 
@@ -88,7 +88,7 @@ end
 
 When a user submits fields they are not permitted to set, the API returns a **403 Forbidden**:
 
-```json
+```json title="Response"
 {
     "message": "You are not allowed to set the following field(s): status, is_published"
 }
@@ -104,7 +104,7 @@ For full documentation on attribute permissions, including `permitted_attributes
 
 When validation fails, the API returns a `422 Unprocessable Entity` response with field-level errors:
 
-```json
+```json title="Response"
 {
     "errors": {
         "title": ["The title field is required."],
@@ -121,8 +121,7 @@ Here is a full `Post` model and policy with role-based field permissions for thr
 
 ### Model
 
-```ruby
-# app/models/post.rb
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::HasValidation
@@ -143,8 +142,7 @@ end
 
 ### Policy
 
-```ruby
-# app/policies/post_policy.rb
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 

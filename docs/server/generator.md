@@ -20,7 +20,7 @@ Scaffold models, policies, scopes, and more with interactive CLI commands.
 
 Interactive installer that sets up the entire Lumina framework:
 
-```bash
+```bash title="terminal"
 php artisan lumina:install
 ```
 
@@ -47,7 +47,7 @@ The installer walks you through:
 
 Interactively scaffold resources:
 
-```bash
+```bash title="terminal"
 php artisan lumina:generate
 # or
 php artisan lumina:g
@@ -94,7 +94,7 @@ php artisan lumina:g
 This generates:
 
 **Model** (`app/Models/BlogPost.php`):
-```php
+```php title="app/Models/BlogPost.php"
 <?php
 
 namespace App\Models;
@@ -132,7 +132,7 @@ class BlogPost extends LuminaModel
 ```
 
 **Migration** (`database/migrations/xxxx_create_blog_posts_table.php`):
-```php
+```php title="database/migrations/create_blog_posts_table.php"
 Schema::create('blog_posts', function (Blueprint $table) {
     $table->id();
     $table->string('title');
@@ -146,7 +146,7 @@ Schema::create('blog_posts', function (Blueprint $table) {
 ```
 
 **Factory** (`database/factories/BlogPostFactory.php`):
-```php
+```php title="database/factories/BlogPostFactory.php"
 class BlogPostFactory extends Factory
 {
     public function definition(): array
@@ -163,7 +163,7 @@ class BlogPostFactory extends Factory
 ```
 
 **Auto-registration** in `config/lumina.php`:
-```php
+```php title="config/lumina.php"
 'models' => [
     'blog-posts' => \App\Models\BlogPost::class,
 ],
@@ -171,7 +171,7 @@ class BlogPostFactory extends Factory
 
 ### Generating a Policy
 
-```bash
+```bash title="terminal"
 php artisan lumina:generate
 # Select: Policy
 # Resource name: BlogPost
@@ -179,7 +179,7 @@ php artisan lumina:generate
 
 Generates `app/Policies/BlogPostPolicy.php`:
 
-```php
+```php title="app/Policies/BlogPostPolicy.php"
 <?php
 
 namespace App\Policies;
@@ -197,7 +197,7 @@ class BlogPostPolicy extends ResourcePolicy
 
 ### Generating a Scope
 
-```bash
+```bash title="terminal"
 php artisan lumina:generate
 # Select: Scope
 # Resource name: BlogPost
@@ -205,7 +205,7 @@ php artisan lumina:generate
 
 Generates `app/Models/Scopes/BlogPostScope.php`:
 
-```php
+```php title="app/Models/Scopes/BlogPostScope.php"
 <?php
 
 namespace App\Models\Scopes;
@@ -244,7 +244,7 @@ If the model uses the `HasAutoScope` trait, this scope is automatically applied.
 
 Generate a complete Postman Collection v2.1 for all registered models:
 
-```bash
+```bash title="terminal"
 php artisan lumina:export-postman
 ```
 
@@ -260,8 +260,7 @@ This creates a JSON file you can import directly into Postman. The collection in
 
 ### Postman Config
 
-```php
-// config/lumina.php
+```php title="config/lumina.php"
 'postman' => [
     'role_class'      => 'App\Models\Role',
     'user_role_class'  => 'App\Models\UserRole',
@@ -273,7 +272,7 @@ This creates a JSON file you can import directly into Postman. The collection in
 
 Generate an invitation link for testing:
 
-```bash
+```bash title="terminal"
 php artisan invitation:link
 ```
 

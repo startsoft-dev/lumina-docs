@@ -1,0 +1,248 @@
+---
+description: "Multi-tenancy conventions for Lumina organization-scoped models"
+globs: "app/Models/**/*.php,config/lumina.php"
+alwaysApply: false
+---
+
+# Lumina Multi-Tenancy Patterns
+
+## Overview
+
+Lumina provides built-in multi-tenancy through organization scoping. Every API request is scoped to an organization, and models define how they relate to the organization.
+
+## Direct Ownership: BelongsToOrganization Trait
+
+For models with a direct `organization_id` foreign key column, use the `BelongsToOrganization` trait:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Traits\HidableColumns;
+use Lumina\LaravelApi\Traits\BelongsToOrganization;
+
+class Project extends \Illuminate\Database\Eloquent\Model
+{
+    use HasFactory;
+    use SoftDeletes;
+    use HasValidation;
+    use HidableColumns;
+    use BelongsToOrganization;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'organization_id',
+    ];
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+}
+```
+
+The `BelongsToOrganization` trait automatically:
+- Scopes all queries to the current organization
+- Sets `organization_id` on creation
+- Validates that the record belongs to the resolved organization
+
+## Indirect Ownership: Auto-Detected from BelongsTo
+
+For models that belong to an organization through another model (no direct `organization_id`), Lumina auto-detects the ownership path by introspecting BelongsTo relationships:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Traits\HidableColumns;
+
+class Task extends \Illuminate\Database\Eloquent\Model
+{
+    use HasFactory;
+    use SoftDeletes;
+    use HasValidation;
+    use HidableColumns;
+
+    // Task -> Project -> Organization is auto-detected via BelongsTo
+    protected $fillable = [
+        'title',
+        'description',
+        'project_id',
+    ];
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+}
+```
+
+```php
+class Comment extends \Illuminate\Database\Eloquent\Model
+{
+    use HasFactory;
+    use SoftDeletes;
+    use HasValidation;
+    use HidableColumns;
+
+    // Comment -> Article -> Organization is auto-detected via BelongsTo
+    protected $fillable = ['body', 'article_id', 'user_id'];
+
+    public function article()
+    {
+        return $this->belongsTo(Article::class);
+    }
+}
+```
+
+Lumina walks the `belongsTo` chain automatically to find the organization.
+
+## Route Strategies
+
+### Prefix Strategy (default)
+
+The organization identifier is a route prefix:
+
+```
+GET /api/{org}/projects
+GET /api/acme-corp/projects
+```
+
+Configuration:
+
+```php
+// config/lumina.php
+'organization' => [
+    'model' => \App\Models\Organization::class,
+    'identifier' => 'slug',
+    'route_strategy' => 'prefix',
+],
+```
+
+Middleware used: `ResolveOrganizationFromRoute`
+
+### Subdomain Strategy
+
+The organization identifier is a subdomain:
+
+```
+GET https://acme-corp.api.example.com/projects
+```
+
+Configuration:
+
+```php
+// config/lumina.php
+'organization' => [
+    'model' => \App\Models\Organization::class,
+    'identifier' => 'slug',
+    'route_strategy' => 'subdomain',
+    'domain' => 'api.example.com',
+],
+```
+
+Middleware used: `ResolveOrganizationFromSubdomain`
+
+## Organization Identifier Options
+
+The `identifier` config determines which column is used in the URL to identify the organization:
+
+| Identifier | URL Example                     | Column Used |
+|------------|---------------------------------|-------------|
+| `id`       | `/api/1/projects`               | `id`        |
+| `slug`     | `/api/acme-corp/projects`       | `slug`      |
+| `uuid`     | `/api/550e8400-.../projects`    | `uuid`      |
+
+```php
+'organization' => [
+    'identifier' => 'slug', // 'id', 'slug', or 'uuid'
+],
+```
+
+## Full Configuration Example
+
+```php
+<?php
+
+// config/lumina.php
+return [
+    'models' => [
+        \App\Models\User::class,
+        \App\Models\Project::class,
+        \App\Models\Task::class,
+        \App\Models\Article::class,
+        \App\Models\Comment::class,
+    ],
+
+    'organization' => [
+        'model' => \App\Models\Organization::class,
+        'identifier' => 'slug',
+        'route_strategy' => 'prefix',
+    ],
+
+    'auth' => [
+        'middleware' => ['auth:sanctum'],
+        'guard' => 'sanctum',
+    ],
+
+    'prefix' => 'api',
+
+    'soft_deletes' => [
+        'enabled' => true,
+        'routes' => true, // Generates trash/restore/force-delete routes
+    ],
+];
+```
+
+## Middleware
+
+Lumina provides two middleware classes for resolving the organization from the request:
+
+### ResolveOrganizationFromRoute
+
+Used with the `prefix` strategy. Extracts the organization identifier from the route parameter:
+
+```php
+// Automatically applied by Lumina when route_strategy is 'prefix'
+// Resolves {org} from /api/{org}/resource
+```
+
+### ResolveOrganizationFromSubdomain
+
+Used with the `subdomain` strategy. Extracts the organization identifier from the request host:
+
+```php
+// Automatically applied by Lumina when route_strategy is 'subdomain'
+// Resolves org from {org}.api.example.com
+```
+
+Both middleware classes resolve the organization and make it available via:
+
+```php
+// Access the current organization anywhere in the application
+$organization = app('lumina.organization');
+
+// Or via the helper
+$organization = lumina_organization();
+```
+
+## DON'Ts
+
+- **DO NOT** manually filter by organization in queries. The `BelongsToOrganization` trait and auto-detected BelongsTo chains handle organization scoping automatically.
+
+```php
+// BAD: Manual organization filtering
+$projects = Project::where('organization_id', $orgId)->get();
+
+// GOOD: Lumina handles it automatically
+$projects = Project::all(); // Already scoped to current org
+```

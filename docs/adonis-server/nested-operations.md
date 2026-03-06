@@ -23,7 +23,7 @@ POST /api/:organization/nested
 
 The request body must contain an `operations` array. Each operation specifies the model, the action (`create` or `update`), and the data:
 
-```json
+```json title="Request"
 {
   "operations": [
     {
@@ -67,7 +67,7 @@ The request body must contain an `operations` array. Each operation specifies th
 
 On success, the endpoint returns a `results` array with the outcome of each operation:
 
-```json
+```json title="Response"
 {
   "results": [
     {
@@ -122,7 +122,7 @@ Each operation is individually validated. The controller resolves permitted fiel
 
 Validation errors are prefixed with the operation index for clarity:
 
-```json
+```json title="Response"
 {
   "message": "Validation failed.",
   "errors": {
@@ -153,7 +153,7 @@ When multi-tenancy is enabled:
 
 Configure nested operations in `config/lumina.ts`:
 
-```ts
+```ts title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({
@@ -177,7 +177,7 @@ export default defineConfig({
 
 To limit which models can be used in nested operations:
 
-```ts
+```ts title="config/lumina.ts"
 nested: {
   allowedModels: ['posts', 'comments', 'tags'],
 },
@@ -185,7 +185,7 @@ nested: {
 
 Operations targeting unlisted models return a `422` error:
 
-```json
+```json title="Response"
 {
   "message": "Operation not allowed.",
   "errors": {
@@ -213,7 +213,7 @@ The endpoint validates at multiple levels and returns appropriate errors:
 
 ## Example: Saving a Form with Related Records
 
-```bash
+```bash title="terminal"
 POST /api/nested
 
 {

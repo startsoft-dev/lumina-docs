@@ -44,7 +44,7 @@ Each method in `ResourcePolicy` calls `hasPermission()` on the authenticated use
 
 A minimal policy requires no method implementations at all. The base class handles everything:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 <?php
 
 namespace App\Policies;
@@ -145,7 +145,7 @@ When `hasPermission()` is called:
 
 For apps without multi-tenancy, assign permissions directly on the user:
 
-```php
+```php title="database/seeders/UserSeeder.php"
 // Assign permissions to users
 $admin->update(['permissions' => ['*']]);
 
@@ -164,7 +164,7 @@ $viewer->update(['permissions' => [
 
 For multi-tenant apps, create roles and assign users to organizations with per-org permissions:
 
-```php
+```php title="database/seeders/RoleSeeder.php"
 // 1. Create roles
 $admin = Role::create(['name' => 'Admin', 'slug' => 'admin']);
 $editor = Role::create(['name' => 'Editor', 'slug' => 'editor']);
@@ -182,7 +182,7 @@ UserRole::create([
 
 For hybrid apps with tenant and non-tenant route groups, use both:
 
-```php
+```php title="database/seeders/UserSeeder.php"
 // User-level permissions for non-tenant routes (e.g., driver app)
 $driver->update(['permissions' => ['trips.index', 'trips.show', 'trucks.*']]);
 
@@ -225,7 +225,7 @@ Control which columns are visible in API responses using two complementary metho
 | `permittedAttributesForShow()` | Whitelist — only these fields are visible. Use `['*']` to allow all. |
 | `hiddenAttributesForShow()` | Blacklist — these fields are always hidden, even if permitted. |
 
-```php
+```php title="app/Policies/UserPolicy.php"
 <?php
 
 namespace App\Policies;
@@ -274,7 +274,7 @@ Control which fields a user can submit on `store` (create) and `update` actions:
 | `permittedAttributesForCreate()` | Fields the user can set when creating a resource |
 | `permittedAttributesForUpdate()` | Fields the user can set when updating a resource |
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     protected $resourceSlug = 'posts';
@@ -301,7 +301,7 @@ class PostPolicy extends ResourcePolicy
 
 When a user submits fields they are not permitted to set, the API returns a **403 Forbidden** with a clear error message:
 
-```json
+```json title="Response"
 {
     "message": "You are not allowed to set the following field(s): status, is_published"
 }
@@ -319,7 +319,7 @@ By default, `ResourcePolicy` returns `['*']` for all permitted attribute methods
 
 `ResourcePolicy` provides a `hasRole()` helper that checks the user's role within the current organization context:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     public function permittedAttributesForCreate(?Authenticatable $user): array
@@ -350,7 +350,7 @@ GET /api/posts?include=comments
 
 Lumina checks whether the user has `comments.index` permission. If the user does not have that permission, the request is rejected with a `403 Forbidden`:
 
-```json
+```json title="Response"
 {
     "message": "You do not have permission to include comments."
 }
@@ -366,7 +366,7 @@ This applies to all includes, including nested ones. A request like `?include=co
 
 In multi-tenant applications, permissions are evaluated per organization. A user can hold different roles in different organizations, and permission checks respect this context.
 
-```php
+```php title="app/Models/User.php"
 // User is admin in Org A
 $user->hasPermission('posts.store', $orgA);  // true
 
@@ -384,7 +384,7 @@ This means you do not need to manually pass the organization when using policies
 
 While the base `ResourcePolicy` handles most cases, you can override any policy method to add custom authorization logic. A common pattern is restricting users to only modify their own records:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 <?php
 
 namespace App\Policies;
@@ -412,7 +412,7 @@ In this example, the `update()` method first checks if the user is a superadmin 
 
 You can apply this pattern to any policy method:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 // Only allow viewing unpublished posts if user is the author
 public function view(?Authenticatable $user, $post): bool
 {
@@ -447,7 +447,7 @@ Always call `parent::methodName()` in your overrides to preserve the base permis
 
 When authorization fails for any reason -- missing permission, failed custom logic, or unauthenticated access -- Lumina returns a standard error response:
 
-```json
+```json title="Response"
 {
     "message": "This action is unauthorized."
 }
@@ -457,7 +457,7 @@ When authorization fails for any reason -- missing permission, failed custom log
 
 If the user is not authenticated at all and the route requires authentication, Laravel's auth middleware returns:
 
-```json
+```json title="Response"
 {
     "message": "Unauthenticated."
 }

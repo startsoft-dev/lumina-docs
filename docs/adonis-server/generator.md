@@ -9,13 +9,13 @@ Lumina includes an interactive Ace command that scaffolds resources with all the
 
 ## Usage
 
-```bash
+```bash title="terminal"
 node ace lumina:generate
 ```
 
 Or use the shorthand alias:
 
-```bash
+```bash title="terminal"
 node ace lumina:g
 ```
 
@@ -44,7 +44,7 @@ Generates a complete Lumina-ready model file and its corresponding database migr
 
 Generates a policy class that extends `ResourcePolicy`:
 
-```ts
+```ts title="app/policies/post_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class PostPolicy extends ResourcePolicy {
@@ -61,7 +61,7 @@ export default class PostPolicy extends ResourcePolicy {
 
 Generates a global query scope class for use with the `HasAutoScope` mixin:
 
-```ts
+```ts title="app/models/scopes/post_scope.ts"
 import type { ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 export default class PostScope {
@@ -103,15 +103,7 @@ If multi-tenancy is enabled in your config, you are asked:
 Does this model belong to an organization? (Y/n)
 ```
 
-If no, and existing models are found, you can specify a parent model for indirect organization scoping:
-
-```
-Does this model have a parent that belongs to an organization? (Y/n)
-Which model is the parent owner?
-> Blog
-```
-
-This sets the `$owner` property on the generated model (e.g., `static $owner = ['blog', 'organization']`).
+Organization ownership is auto-detected from `belongsTo` relationships at runtime.
 
 ### Step 4: Define Columns
 
@@ -169,7 +161,7 @@ Additional options
 
 ### Basic Model
 
-```bash
+```bash title="terminal"
 $ node ace lumina:generate
 
 ? What type of resource would you like to generate? Model (with migration)
@@ -200,7 +192,7 @@ CREATE app/policies/post_policy.ts
 
 ### Policy Only
 
-```bash
+```bash title="terminal"
 $ node ace lumina:generate
 
 ? What type of resource would you like to generate? Policy (extends ResourcePolicy)
@@ -211,7 +203,7 @@ CREATE app/policies/post_policy.ts
 
 ### Scope Only
 
-```bash
+```bash title="terminal"
 $ node ace lumina:generate
 
 ? What type of resource would you like to generate? Scope (global query scope)
@@ -224,7 +216,7 @@ CREATE app/models/scopes/post_scope.ts
 
 When generating a model, the command automatically registers it in `config/lumina.ts` by inserting a new entry into the `models` map:
 
-```ts
+```ts title="config/lumina.ts"
 models: {
   // existing models...
   posts: () => import('#models/post'),  // <-- added by generator
@@ -237,7 +229,7 @@ If the model slug already exists in the config, the registration step is skipped
 
 For a `BlogPost` model with `title` (string), `content` (text), and `user` (references User) columns, soft deletes, and organization ownership, the generator produces:
 
-```ts
+```ts title="app/models/blog_post.ts"
 import { DateTime } from 'luxon'
 import { column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'

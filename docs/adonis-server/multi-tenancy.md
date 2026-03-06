@@ -5,21 +5,27 @@ title: Multi-Tenancy
 
 # Multi-Tenancy
 
-Lumina provides built-in multi-tenancy support that isolates data by organization. When enabled, all queries are automatically scoped to the current organization, and new records are tagged with the correct `organization_id`. Two routing strategies are available: URL prefix and subdomain.
+Lumina provides built-in multi-tenancy support that isolates data by organization. When an organization is present in the request context (set by middleware), all queries are automatically scoped to that organization, and new records are tagged with the correct `organization_id`.
+
+Multi-tenancy is configured via [Route Groups](./route-groups). Use a `tenant` route group with organization-resolving middleware to enable org-scoped routing.
 
 ## Configuration
 
-Enable multi-tenancy in `config/lumina.ts`:
+Enable multi-tenancy by adding a `tenant` route group in `config/lumina.ts`:
 
-```ts
+```ts title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({
+  routeGroups: {
+    tenant: {
+      prefix: ':organization',
+      middleware: ['lumina:resolveOrg'],
+      models: '*',
+    },
+  },
   multiTenant: {
-    enabled: true,
-    useSubdomain: false,                  // false = URL prefix, true = subdomain
-    organizationIdentifierColumn: 'id',   // 'id', 'slug', or 'uuid'
-    middleware: null,                      // Custom middleware class (optional)
+    organizationIdentifierColumn: 'slug',
   },
 })
 ```
@@ -28,16 +34,25 @@ export default defineConfig({
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `enabled` | `boolean` | `false` | Enable or disable multi-tenant mode globally. |
-| `useSubdomain` | `boolean` | `false` | When `true`, resolve the organization from the subdomain. When `false`, resolve from a URL prefix parameter. |
 | `organizationIdentifierColumn` | `string` | `'id'` | The column used to look up the organization. Common values: `'id'`, `'slug'`, `'uuid'`. |
-| `middleware` | `string \| null` | `null` | Override the default middleware with a custom class. |
 
 ## Routing Strategies
 
 ### URL Prefix Mode
 
-When `useSubdomain` is `false` (default), all resource routes include an `:organization` parameter:
+Use a `tenant` route group with a parameterized prefix:
+
+```ts title="config/lumina.ts"
+routeGroups: {
+  tenant: {
+    prefix: ':organization',
+    middleware: ['lumina:resolveOrg'],
+    models: '*',
+  },
+},
+```
+
+Routes:
 
 ```
 GET    /api/:organization/posts
@@ -51,7 +66,19 @@ The `ResolveOrganizationFromRoute` middleware extracts the `:organization` param
 
 ### Subdomain Mode
 
-When `useSubdomain` is `true`, the organization is resolved from the subdomain portion of the `Host` header:
+Use a `tenant` route group with the subdomain middleware:
+
+```ts title="config/lumina.ts"
+routeGroups: {
+  tenant: {
+    prefix: '',
+    middleware: ['lumina:resolveOrgSubdomain'],
+    models: '*',
+  },
+},
+```
+
+Routes:
 
 ```
 GET    https://acme.example.com/api/posts
@@ -97,7 +124,7 @@ If the user does not belong to the organization in subdomain mode, a `403` is re
 
 The `BelongsToOrganization` mixin provides automatic organization scoping at the model level:
 
-```ts
+```ts title="app/models/post.ts"
 import { compose } from '@adonisjs/core/helpers'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
@@ -150,16 +177,13 @@ Post.scopeForOrganization(query, organization)
 The global organization scope is skipped when running in a console context (e.g., Ace commands, tests, queue workers) since there is no HTTP request context available.
 :::
 
-## Nested Organization Scoping with `$owner`
+## Nested Organization Scoping (Auto-Detected)
 
-Not every model has a direct `organization_id` column. For nested models, use the `$owner` static property (from `HasLumina`) to define the relationship chain to the nearest model that holds the organization reference:
+Not every model has a direct `organization_id` column. For nested models, Lumina automatically walks `belongsTo` relationships to find the nearest model that holds the organization reference. No explicit configuration is needed:
 
-```ts
+```ts title="app/models/comment.ts"
 export default class Comment extends compose(BaseModel, HasLumina, BelongsToOrganization) {
-  // Comment doesn't have organization_id directly.
-  // But it belongs to a Post, which has organization_id.
-  static $owner = ['post']
-
+  // Organization path is auto-detected: Comment -> post -> organization
   @column()
   declare postId: number
 
@@ -168,7 +192,7 @@ export default class Comment extends compose(BaseModel, HasLumina, BelongsToOrga
 }
 ```
 
-In this example, Lumina traverses `Comment -> post` to find the organization using a nested `whereHas` call:
+Lumina traverses `Comment -> post` to find the organization using a nested `whereHas` call:
 
 ```sql
 SELECT * FROM comments
@@ -177,18 +201,7 @@ WHERE EXISTS (
 )
 ```
 
-### Deep Nesting
-
-The `$owner` chain can be multiple levels deep:
-
-```ts
-export default class Reply extends compose(BaseModel, HasLumina) {
-  // Reply -> comment -> post -> blog -> organization
-  static $owner = ['comment', 'post', 'blog']
-}
-```
-
-Lumina produces nested `whereHas` calls for each level of the chain.
+Deep nesting is also auto-detected (e.g., `Reply -> comment -> post -> organization`).
 
 ## Organization Scope Precedence
 
@@ -197,15 +210,14 @@ The `ResourcesController` applies organization scoping using the following order
 1. **Resource IS the Organization model** -- restrict to the current org's primary key
 2. **Model has `scopeForOrganization` static method** -- delegate to the custom scope
 3. **Model has `organization_id` column** -- simple `WHERE organization_id = ?`
-4. **Model has `$owner` chain** -- traverse relationships with nested `whereHas`
+4. **Auto-detected `belongsTo` chain** -- Lumina walks `belongsTo` relationships to find a model with `organization_id`
 5. **Model has `organization` or `organizations` relationship** -- use `whereHas`
 6. **No relationship found** -- model is global (no scope applied)
 
 ## Auto-Setting Organization on Create
 
 When creating a record via `POST /api/:organization/posts`, the controller automatically adds `organization_id` to the data if:
-- Multi-tenancy is enabled
-- An organization is present in the context
+- An organization is present in the request context (set by middleware)
 - The model has an `organizationId` or `organization_id` column
 
 This happens in the controller layer, independent of the `BelongsToOrganization` mixin. Using both provides defense-in-depth.

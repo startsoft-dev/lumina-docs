@@ -12,7 +12,7 @@ Complete CRUD operations with TanStack Query -- zero boilerplate. Every hook aut
 
 All five hooks are imported from `@startsoft/lumina`:
 
-```tsx
+```tsx title="src/hooks/crud.ts"
 import {
   useModelIndex,
   useModelShow,
@@ -28,7 +28,7 @@ import {
 
 Fetch a paginated list of records with filtering, sorting, search, and more.
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 const { data: response, isLoading, error, refetch } = useModelIndex('posts', {
   filters: { status: 'published', user_id: 1 },
   includes: ['user', 'comments'],
@@ -63,7 +63,7 @@ Returns a standard TanStack Query result object:
 
 ### ModelQueryOptions
 
-```tsx
+```tsx title="src/types.ts"
 interface ModelQueryOptions {
   filters?: Record<string, any>;
   includes?: string[];
@@ -87,7 +87,7 @@ interface ModelQueryOptions {
 
 ### QueryResponse Type
 
-```tsx
+```tsx title="src/types.ts"
 interface QueryResponse<T> {
   data: T[];
   pagination: PaginationMeta | null;
@@ -112,7 +112,7 @@ A full component with search, filtering, pagination controls, loading state, and
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 import { useState } from 'react';
 import { useModelIndex } from '@startsoft/lumina';
 
@@ -223,7 +223,7 @@ function PostsList() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { useModelIndex } from '@startsoft/lumina';
@@ -357,7 +357,7 @@ When the user changes search or filter values, reset `page` back to `1`. Otherwi
 
 Fetch a single record by ID with optional relationship eager-loading.
 
-```tsx
+```tsx title="src/components/PostDetail.tsx"
 const { data: post, isLoading, error } = useModelShow('posts', 42, {
   includes: ['user', 'comments'],
 });
@@ -391,7 +391,7 @@ A component that displays a post with its author and comments:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/PostDetail.tsx"
 import { useModelShow } from '@startsoft/lumina';
 
 function PostDetail({ postId }) {
@@ -446,7 +446,7 @@ function PostDetail({ postId }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/PostDetail.tsx"
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useModelShow } from '@startsoft/lumina';
 
@@ -532,7 +532,7 @@ The query is automatically **disabled** when `id` is falsy (`null`, `undefined`,
 
 Create a new record via a POST request. Returns a TanStack Query mutation object.
 
-```tsx
+```tsx title="src/components/CreatePostForm.tsx"
 const createPost = useModelStore('posts');
 
 createPost.mutate(
@@ -554,7 +554,7 @@ createPost.mutate(
 
 Pass the new record data directly to `mutate()`:
 
-```tsx
+```tsx title="src/components/CreatePostForm.tsx"
 createPost.mutate({ title: 'My Post', body: 'Content here', status: 'draft' });
 ```
 
@@ -582,7 +582,7 @@ A full create form with inputs, loading state, error display, and list refresh:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/CreatePostForm.tsx"
 import { useState } from 'react';
 import { useModelStore, useModelIndex } from '@startsoft/lumina';
 
@@ -661,7 +661,7 @@ function CreatePostForm() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/CreatePostForm.tsx"
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useModelStore, useModelIndex } from '@startsoft/lumina';
@@ -748,7 +748,7 @@ function CreatePostForm() {
 
 Update an existing record via a PUT request. Returns a TanStack Query mutation object.
 
-```tsx
+```tsx title="src/components/EditPostForm.tsx"
 const updatePost = useModelUpdate('posts');
 
 updatePost.mutate(
@@ -769,7 +769,7 @@ updatePost.mutate(
 
 Pass an object with `id` and `data`:
 
-```tsx
+```tsx title="src/components/EditPostForm.tsx"
 updatePost.mutate({
   id: 42,                                    // The record ID
   data: { title: 'New Title', status: 'published' }, // Fields to update
@@ -796,7 +796,7 @@ A pre-populated edit form that loads existing data with `useModelShow` and saves
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/EditPostForm.tsx"
 import { useState, useEffect } from 'react';
 import { useModelShow, useModelUpdate } from '@startsoft/lumina';
 
@@ -893,7 +893,7 @@ function EditPostForm({ postId, onSaved }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/EditPostForm.tsx"
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useModelShow, useModelUpdate } from '@startsoft/lumina';
@@ -1016,7 +1016,7 @@ function EditPostForm({ postId, onSaved }) {
 
 Soft delete a record via a DELETE request. Returns a TanStack Query mutation object.
 
-```tsx
+```tsx title="src/components/DeleteButton.tsx"
 const deletePost = useModelDelete('posts');
 
 deletePost.mutate(42, {
@@ -1034,7 +1034,7 @@ deletePost.mutate(42, {
 
 Pass the record ID directly to `mutate()`:
 
-```tsx
+```tsx title="src/components/DeleteButton.tsx"
 deletePost.mutate(42);
 ```
 
@@ -1055,7 +1055,7 @@ On success, `useModelDelete` automatically invalidates all `useModelIndex` and `
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/DeleteButton.tsx"
 function DeleteButton({ postId, onDeleted }) {
   const deletePost = useModelDelete('posts');
 
@@ -1080,7 +1080,7 @@ function DeleteButton({ postId, onDeleted }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/DeleteButton.tsx"
 import { Alert } from 'react-native';
 import { Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 
@@ -1136,7 +1136,7 @@ All mutation hooks (`useModelStore`, `useModelUpdate`, `useModelDelete`) support
 
 Laravel returns validation errors in a predictable format. Each field maps to an array of error messages:
 
-```tsx
+```tsx title="src/utils/errorHandling.ts"
 const createPost = useModelStore('posts');
 
 createPost.mutate(data, {
@@ -1155,7 +1155,7 @@ createPost.mutate(data, {
 
 ### Handling Authorization Errors (403)
 
-```tsx
+```tsx title="src/utils/errorHandling.ts"
 createPost.mutate(data, {
   onError: (error) => {
     if (error.response?.status === 403) {
@@ -1167,7 +1167,7 @@ createPost.mutate(data, {
 
 ### Handling Not Found Errors (404)
 
-```tsx
+```tsx title="src/utils/errorHandling.ts"
 updatePost.mutate({ id: postId, data }, {
   onError: (error) => {
     if (error.response?.status === 404) {
@@ -1181,7 +1181,7 @@ updatePost.mutate({ id: postId, data }, {
 
 A reusable pattern for handling all common error types:
 
-```tsx
+```tsx title="src/utils/errorHandling.ts"
 function handleMutationError(error, setErrors) {
   const status = error.response?.status;
 
@@ -1234,7 +1234,7 @@ A full `PostsManager` component that combines all five hooks -- listing, creatin
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/pages/PostsManager.tsx"
 import { useState } from 'react';
 import {
   useModelIndex,
@@ -1454,7 +1454,7 @@ function CreateForm({ onCreated }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/pages/PostsManager.tsx"
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
 import {

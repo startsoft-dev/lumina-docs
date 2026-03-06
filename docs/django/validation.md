@@ -14,7 +14,7 @@ Lumina provides a two-layer validation system through the `HasValidationMixin`:
 
 Apply the mixin to your model, or extend `LuminaModel` (which includes it automatically):
 
-```python
+```python title="blog/models.py"
 from django.db import models
 from lumina.models import LuminaModel
 
@@ -38,7 +38,7 @@ The mixin adds these class methods:
 
 DRF's `ModelSerializer` already reads type and format constraints from your Django model fields:
 
-```python
+```python title="blog/models.py"
 class Post(LuminaModel):
     title = models.CharField(max_length=255)           # → CharField(max_length=255, required=True)
     content = models.TextField(blank=True, default='') # → CharField(required=False)
@@ -51,7 +51,7 @@ You do **not** need to redeclare these constraints. Only use `lumina_validation_
 
 Use `lumina_validation_schema` to override DRF-inferred field behaviour for specific fields:
 
-```python
+```python title="blog/models.py"
 class Post(LuminaModel):
     title = models.CharField(max_length=255)
     status = models.CharField(max_length=50, default='draft')
@@ -82,7 +82,7 @@ Values are DRF serializer-field keyword arguments. Common overrides:
 
 The simplest approach. List the field names to permit (all treated as `required`):
 
-```python
+```python title="blog/models.py"
 class Post(LuminaModel):
     title = models.CharField(max_length=255)
     content = models.TextField(blank=True, default='')
@@ -99,7 +99,7 @@ class Post(LuminaModel):
 
 For role-based validation, use a dict where keys are role slugs and values map fields to presence modifiers:
 
-```python
+```python title="blog/models.py"
 lumina_store_validation = {
     'admin': {
         'title': 'required',
@@ -147,7 +147,7 @@ If no store/update rules are defined (empty `{}` or `[]`), all model fields pass
 
 When validation fails, the API returns an HTTP `400 Bad Request` response:
 
-```json
+```json title="Response"
 {
     "title": ["This field is required."],
     "status": ["\"invalid\" is not a valid choice."]
@@ -158,7 +158,7 @@ Each field key maps to an array of error messages. These are standard DRF error 
 
 ## Complete Example
 
-```python
+```python title="blog/models.py"
 from django.db import models
 from lumina.models import LuminaModel
 

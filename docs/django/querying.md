@@ -9,7 +9,7 @@ Lumina provides powerful query capabilities through URL parameters.
 
 ## Model Configuration
 
-```python
+```python title="blog/models.py"
 class Post(models.Model):
     lumina_allowed_filters = ['status', 'published', 'category_id']
     lumina_allowed_sorts = ['title', 'created_at']
@@ -21,7 +21,7 @@ class Post(models.Model):
 
 Filter records using `filter[field]=value` syntax:
 
-```
+```text title="Request"
 GET /api/posts?filter[status]=published
 GET /api/posts?filter[published]=true
 GET /api/posts?filter[category_id]=5
@@ -31,7 +31,7 @@ GET /api/posts?filter[category_id]=5
 
 Combine filters with AND logic:
 
-```
+```text title="Request"
 GET /api/posts?filter[status]=published&filter[published]=true
 ```
 
@@ -39,7 +39,7 @@ GET /api/posts?filter[status]=published&filter[published]=true
 
 Use comma-separated values for IN queries:
 
-```
+```text title="Request"
 GET /api/posts?filter[status]=draft,published
 ```
 
@@ -51,7 +51,7 @@ Only fields listed in `lumina_allowed_filters` can be filtered. Unlisted fields 
 
 Sort results using the `sort` parameter. Prefix with `-` for descending:
 
-```
+```text title="Request"
 GET /api/posts?sort=title           # Ascending
 GET /api/posts?sort=-created_at     # Descending
 GET /api/posts?sort=-published,title # Multiple sorts
@@ -61,7 +61,7 @@ GET /api/posts?sort=-published,title # Multiple sorts
 
 Search across multiple fields with `?search=`:
 
-```
+```text title="Request"
 GET /api/posts?search=django
 ```
 
@@ -71,7 +71,7 @@ This performs a case-insensitive search (`__icontains`) across all fields in `lu
 
 Request paginated results with `?per_page=`:
 
-```
+```text title="Request"
 GET /api/posts?per_page=10
 GET /api/posts?per_page=10&page=2
 ```
@@ -95,7 +95,7 @@ Without `?per_page`, all records are returned without pagination.
 
 Load related models using `?include=`:
 
-```
+```text title="Request"
 GET /api/posts?include=comments
 GET /api/posts?include=comments,author
 ```
@@ -106,7 +106,7 @@ Lumina automatically uses `select_related` for ForeignKey/OneToOne and `prefetch
 
 Includes can be restricted via policies:
 
-```python
+```python title="blog/policies.py"
 class PostPolicy(ResourcePolicy):
     slug = 'posts'
 
@@ -122,18 +122,18 @@ If denied, the API returns `403 Forbidden`.
 
 Select specific fields with `?fields=`:
 
-```
+```text title="Request"
 GET /api/posts?fields=id,title,status
 ```
 
 ## Combined Example
 
-```
+```text title="Request"
 GET /api/posts?filter[status]=published&sort=-created_at&search=django&include=comments&per_page=10&page=1
 ```
 
 Response:
-```
+```text title="Response"
 HTTP/1.1 200 OK
 X-Current-Page: 1
 X-Last-Page: 3

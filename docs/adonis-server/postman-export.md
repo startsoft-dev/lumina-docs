@@ -9,7 +9,7 @@ Lumina includes an Ace command that generates a complete Postman Collection v2.1
 
 ## Usage
 
-```bash
+```bash title="terminal"
 node ace lumina:export-postman
 ```
 
@@ -25,7 +25,7 @@ This starts the AdonisJS application, introspects all registered models from `co
 
 ### Examples
 
-```bash
+```bash title="terminal"
 # Default output
 node ace lumina:export-postman
 
@@ -40,8 +40,7 @@ node ace lumina:export-postman -p "My Project API"
 
 The Postman export reads default values from `config/lumina.ts`:
 
-```ts
-// config/lumina.ts
+```ts title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({

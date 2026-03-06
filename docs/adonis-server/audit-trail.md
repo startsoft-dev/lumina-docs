@@ -11,7 +11,7 @@ Lumina includes an automatic audit trail system that records every change to you
 
 Apply the mixin to any model you want to audit:
 
-```ts
+```ts title="app/models/post.ts"
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
@@ -84,7 +84,7 @@ The `auditableType` and `auditableId` columns form a polymorphic reference to th
 
 By default, the `password` and `remember_token` fields are excluded from audit log snapshots. Override the `$auditExclude` static property to customize which fields are excluded:
 
-```ts
+```ts title="app/models/user.ts"
 export default class User extends compose(BaseModel, HasAuditTrail) {
   static $auditExclude = ['password', 'remember_token', 'api_token', 'stripe_secret']
 }
@@ -182,7 +182,7 @@ const postChanges = await AuditLog.query()
 
 The `audit_logs` table is created by a Lumina migration. Make sure you run migrations after installing:
 
-```bash
+```bash title="terminal"
 node ace migration:run
 ```
 

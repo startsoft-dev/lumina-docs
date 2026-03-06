@@ -19,7 +19,7 @@ Same Lumina hooks, adapted for native. Built on Expo with SecureStore, AsyncStor
 
 ## Quick Start
 
-```bash
+```bash title="terminal"
 # Clone the template
 git clone https://github.com/startsoft-dev/lumina-react-native-template
 cd lumina-react-native-template
@@ -33,7 +33,7 @@ npm start
 
 Run on devices:
 
-```bash
+```bash title="terminal"
 npm run ios       # iPhone simulator
 npm run android   # Android emulator
 npm run web       # Web browser (testing)
@@ -41,7 +41,7 @@ npm run web       # Web browser (testing)
 
 ## Project Structure
 
-```
+``` title="Project Structure"
 app/                        # Expo Router file-based routing
 ├── (auth)/                 # Public routes
 │   └── login.tsx
@@ -70,8 +70,7 @@ src/
 
 The API client auto-detects the platform:
 
-```typescript
-// src/lib/lumina-rn/api-client.ts
+```typescript title="src/lib/lumina-rn/api-client.ts"
 const API_CONFIG = {
   baseURL: __DEV__
     ? Platform.select({
@@ -87,7 +86,7 @@ const API_CONFIG = {
 
 Hooks work identically to the web client:
 
-```tsx
+```tsx title="src/screens/UsersList.tsx"
 import { useModelIndex, useAuth } from '../lib/lumina-rn';
 
 function UsersList() {

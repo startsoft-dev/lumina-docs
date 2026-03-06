@@ -12,7 +12,7 @@ Manage user invitations for multi-tenant organizations. Invite users by email, a
 
 ## Invitation Object
 
-```typescript
+```typescript title="src/types.ts"
 interface Invitation {
   id: number;
   email: string;
@@ -30,7 +30,7 @@ interface Invitation {
 
 Fetch invitations for the current organization. Optionally filter by status.
 
-```tsx
+```tsx title="src/hooks/useInvitations.ts"
 import { useInvitations } from '@startsoft/lumina';
 
 // All invitations
@@ -51,7 +51,7 @@ const { data: expired } = useInvitations('expired');
 
 Send a new invitation to an email address with a specific role.
 
-```tsx
+```tsx title="src/hooks/useInviteUser.ts"
 import { useInviteUser } from '@startsoft/lumina';
 
 const invite = useInviteUser();
@@ -82,7 +82,7 @@ The server prevents sending duplicate invitations. If a pending invitation alrea
 
 Resend an invitation email. This also refreshes the expiration date.
 
-```tsx
+```tsx title="src/hooks/useResendInvitation.ts"
 import { useResendInvitation } from '@startsoft/lumina';
 
 const resend = useResendInvitation();
@@ -100,7 +100,7 @@ resend.mutate(invitationId, {
 
 Cancel a pending invitation. Only pending invitations can be cancelled.
 
-```tsx
+```tsx title="src/hooks/useCancelInvitation.ts"
 import { useCancelInvitation } from '@startsoft/lumina';
 
 const cancel = useCancelInvitation();
@@ -118,7 +118,7 @@ cancel.mutate(invitationId, {
 
 Accept an invitation using the token from the invitation link. This is a **public route** — no authentication or organization context is required.
 
-```tsx
+```tsx title="src/hooks/useAcceptInvitation.ts"
 import { useAcceptInvitation } from '@startsoft/lumina';
 
 const accept = useAcceptInvitation();
@@ -144,7 +144,7 @@ A full invitation management component with all hooks:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/InvitationManager.tsx"
 import { useState } from 'react';
 import {
   useInvitations,
@@ -302,7 +302,7 @@ function InvitationManager({ roles }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/InvitationManager.tsx"
 import React, { useState } from 'react';
 import {
   View,
@@ -492,7 +492,7 @@ For handling invitation acceptance (linked from email):
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/pages/AcceptInvitationPage.tsx"
 import { useEffect, useState } from 'react';
 import { useAcceptInvitation } from '@startsoft/lumina';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -541,7 +541,7 @@ function AcceptInvitationPage() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/pages/AcceptInvitationScreen.tsx"
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useAcceptInvitation } from '@startsoft/lumina';

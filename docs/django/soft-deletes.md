@@ -21,7 +21,7 @@ class Post(SoftDeleteMixin, models.Model):
 
 The mixin adds a `deleted_at` field automatically. Create a migration:
 
-```bash
+```bash title="terminal"
 python manage.py makemigrations
 python manage.py migrate
 ```
@@ -41,7 +41,7 @@ When a model uses `SoftDeleteMixin`, Lumina automatically registers these additi
 
 ### Default Queries Exclude Deleted Records
 
-```python
+```python title="terminal"
 Post.objects.all()           # Only active records
 Post.all_objects.all()       # All records including deleted
 Post.objects.only_trashed()  # Only soft-deleted records
@@ -49,7 +49,7 @@ Post.objects.only_trashed()  # Only soft-deleted records
 
 ### Soft Delete
 
-```
+```text title="Request"
 DELETE /api/posts/1
 
 HTTP/1.1 204 No Content
@@ -59,7 +59,7 @@ The record's `deleted_at` is set to the current timestamp. It no longer appears 
 
 ### List Trashed
 
-```
+```text title="Response"
 GET /api/posts/trashed
 
 HTTP/1.1 200 OK
@@ -74,7 +74,7 @@ HTTP/1.1 200 OK
 
 ### Restore
 
-```
+```text title="Response"
 POST /api/posts/1/restore
 
 HTTP/1.1 200 OK
@@ -87,7 +87,7 @@ HTTP/1.1 200 OK
 
 ### Force Delete
 
-```
+```text title="Request"
 DELETE /api/posts/1/force-delete
 
 HTTP/1.1 204 No Content
@@ -99,7 +99,7 @@ The record is permanently removed from the database.
 
 Soft delete actions have their own policy methods:
 
-```python
+```python title="blog/policies.py"
 class PostPolicy(ResourcePolicy):
     slug = 'posts'
 

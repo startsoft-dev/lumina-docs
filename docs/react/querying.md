@@ -14,7 +14,7 @@ This is for the `@startsoft/lumina` React client library. All query options work
 
 Every query hook accepts a `ModelQueryOptions` object that controls filtering, sorting, pagination, search, eager loading, and field selection:
 
-```tsx
+```tsx title="src/types.ts"
 interface ModelQueryOptions {
   filters?: Record<string, any>;
   includes?: string[];
@@ -34,7 +34,7 @@ All query parameters are optional. You can combine any subset of them in a singl
 
 Pass a `filters` object to narrow results. Each key-value pair maps to a query parameter the server uses to scope the response.
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 const { data } = useModelIndex('posts', {
   filters: { status: 'published' },
 });
@@ -56,7 +56,7 @@ Filters are reactive. When the filter values change, TanStack Query automaticall
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/FilterablePosts.tsx"
 import { useState } from 'react';
 import { useModelIndex } from '@startsoft/lumina';
 
@@ -113,7 +113,7 @@ function FilterablePosts() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/FilterablePosts.tsx"
 import React, { useState } from 'react';
 import { View, Text, FlatList } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -188,7 +188,7 @@ function FilterablePosts() {
 
 Use the `sort` option to order results. Prefix a field name with `-` for descending order.
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 // Ascending by title
 const { data } = useModelIndex('posts', { sort: 'title' });
 
@@ -208,7 +208,7 @@ Multiple sort fields are comma-separated in a single string. The server applies 
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/SortablePostsTable.tsx"
 import { useState } from 'react';
 import { useModelIndex } from '@startsoft/lumina';
 
@@ -272,7 +272,7 @@ function SortablePostsTable() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/SortablePostsTable.tsx"
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useModelIndex } from '@startsoft/lumina';
@@ -343,7 +343,7 @@ function SortablePostsTable() {
 
 Use the `search` option for full-text search across server-defined searchable fields.
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 const { data } = useModelIndex('posts', { search: 'laravel' });
 ```
 
@@ -356,7 +356,7 @@ The fields that are searched depend on your Laravel backend configuration. Typic
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/SearchablePosts.tsx"
 import { useState, useEffect } from 'react';
 import { useModelIndex } from '@startsoft/lumina';
 
@@ -405,7 +405,7 @@ function SearchablePosts() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/SearchablePosts.tsx"
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList } from 'react-native';
 import { useModelIndex } from '@startsoft/lumina';
@@ -464,7 +464,7 @@ function SearchablePosts() {
 
 Control page-based pagination with `page` and `perPage`. The response includes a `pagination` object with metadata.
 
-```tsx
+```tsx title="src/components/PaginatedPosts.tsx"
 const [page, setPage] = useState(1);
 const { data: response } = useModelIndex('posts', { page, perPage: 20 });
 
@@ -481,7 +481,7 @@ Pagination metadata is extracted from response **headers**, not the response bod
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/PaginatedPosts.tsx"
 import { useState } from 'react';
 import { useModelIndex } from '@startsoft/lumina';
 
@@ -538,7 +538,7 @@ function PaginatedPosts() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/PaginatedPosts.tsx"
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useModelIndex } from '@startsoft/lumina';
@@ -604,7 +604,7 @@ function PaginatedPosts() {
 
 Use `includes` to load related models in a single request, avoiding N+1 query problems.
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 const { data } = useModelIndex('posts', {
   includes: ['user', 'comments', 'tags'],
 });
@@ -622,7 +622,7 @@ Only include relationships you actually need. Each included relationship adds to
 
 This works the same way with `useModelShow`:
 
-```tsx
+```tsx title="src/components/PostDetail.tsx"
 const { data: post } = useModelShow('posts', postId, {
   includes: ['user', 'comments.user', 'tags'],
 });
@@ -635,7 +635,7 @@ const { data: post } = useModelShow('posts', postId, {
 
 Use `fields` to request only specific fields, reducing payload size.
 
-```tsx
+```tsx title="src/components/PostsList.tsx"
 const { data } = useModelIndex('posts', {
   fields: ['id', 'title', 'status'],
 });
@@ -652,7 +652,7 @@ Here is a complete component that brings together filtering, sorting, search, pa
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/AdvancedPostsList.tsx"
 import { useState, useEffect } from 'react';
 import { useModelIndex } from '@startsoft/lumina';
 
@@ -802,7 +802,7 @@ function AdvancedPostsList() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/AdvancedPostsList.tsx"
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import { Picker } from '@react-native-picker/picker';

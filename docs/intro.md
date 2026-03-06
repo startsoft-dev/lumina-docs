@@ -45,28 +45,28 @@ Lumina is a full-stack library that turns your models into a complete REST API â
 
 ### Server (Laravel)
 
-```bash
+```bash title="terminal"
 composer require startsoft/lumina dev-main
 php artisan lumina:install
 ```
 
 ### Server (Ruby on Rails)
 
-```bash
+```bash title="terminal"
 bundle add lumina-rails
 rails lumina:install
 ```
 
 ### Server (AdonisJS)
 
-```bash
+```bash title="terminal"
 npm install @startsoft/lumina-adonis
 node ace configure @startsoft/lumina-adonis
 ```
 
 ### Client (React)
 
-```bash
+```bash title="terminal"
 npm install @startsoft/lumina @tanstack/react-query axios
 ```
 
@@ -76,8 +76,7 @@ npm install @startsoft/lumina @tanstack/react-query axios
 
 **Laravel:**
 
-```php
-// config/lumina.php
+```php title="config/lumina.php"
 return [
     'models' => [
         'posts' => \App\Models\Post::class,
@@ -87,8 +86,7 @@ return [
 
 **Ruby on Rails:**
 
-```ruby
-# config/initializers/lumina.rb
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :posts, 'Post'
 end
@@ -96,8 +94,7 @@ end
 
 **Node.js (AdonisJS):**
 
-```typescript
-// config/lumina.ts
+```typescript title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({
@@ -119,7 +116,7 @@ This automatically creates these endpoints:
 
 ### 2. Use it from React
 
-```tsx
+```tsx title="src/components/Posts.tsx"
 import { useModelIndex, useModelStore } from '@startsoft/lumina';
 
 function Posts() {

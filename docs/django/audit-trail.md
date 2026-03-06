@@ -11,7 +11,7 @@ Lumina can automatically log all create, update, and delete operations on your m
 
 Add `AuditTrailMixin` to your model:
 
-```python
+```python title="blog/models.py"
 from lumina.mixins import AuditTrailMixin
 
 class Post(AuditTrailMixin, models.Model):
@@ -30,7 +30,7 @@ MIDDLEWARE = [
 
 Run migrations (Lumina's `AuditLog` model is included):
 
-```bash
+```bash title="terminal"
 python manage.py migrate
 ```
 
@@ -48,7 +48,7 @@ python manage.py migrate
 
 Exclude sensitive fields from audit logs:
 
-```python
+```python title="blog/models.py"
 class User(AuditTrailMixin, models.Model):
     lumina_audit_exclude = ['password', 'api_key', 'secret_token']
 ```
@@ -72,7 +72,7 @@ Default excluded fields: `['password']`
 
 ## Querying Audit Logs
 
-```python
+```python title="terminal"
 from lumina.models import AuditLog
 from django.contrib.contenttypes.models import ContentType
 
@@ -92,7 +92,7 @@ org_logs = AuditLog.objects.filter(organization_id=org.pk)
 
 ## Example Audit Trail
 
-```
+```text title="Response"
 1. POST /api/posts {"title": "Hello"}
    → AuditLog: action=created, new_values={"title": "Hello", "status": "draft"}
 

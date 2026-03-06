@@ -12,7 +12,7 @@ Execute multi-model atomic transactions from the client. Create parent and child
 
 ## useNestedOperations()
 
-```tsx
+```tsx title="src/hooks/useNestedOperations.ts"
 import { useNestedOperations } from '@startsoft/lumina';
 
 const nestedOps = useNestedOperations();
@@ -32,7 +32,7 @@ nestedOps.mutate({
 
 ## Operation Types
 
-```typescript
+```typescript title="src/types.ts"
 interface NestedOperation {
   action: 'create' | 'update' | 'delete';
   model: string;
@@ -57,7 +57,7 @@ Use `$N.field` syntax to reference results from earlier operations:
 
 This allows creating parent-child relationships in a single request:
 
-```tsx
+```tsx title="src/components/CreateBlogForm.tsx"
 nestedOps.mutate({
   operations: [
     // Operation 0: create blog
@@ -102,7 +102,7 @@ All operations run inside a database transaction. If **any** operation fails:
 - No partial data is left in the database
 - The `onError` callback receives the error details
 
-```tsx
+```tsx title="src/components/CreateBlogForm.tsx"
 nestedOps.mutate({
   operations: [
     { action: 'create', model: 'blogs', data: { title: 'Blog' } },
@@ -128,7 +128,7 @@ Create a blog with multiple posts in one submit:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/CreateBlogForm.tsx"
 import { useState } from 'react';
 import { useNestedOperations } from '@startsoft/lumina';
 
@@ -224,7 +224,7 @@ function CreateBlogForm() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/CreateBlogForm.tsx"
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNestedOperations } from '@startsoft/lumina';
@@ -337,7 +337,7 @@ Update multiple records at once:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/BulkArchive.tsx"
 function BulkArchive({ selectedIds }) {
   const nestedOps = useNestedOperations();
 
@@ -367,7 +367,7 @@ function BulkArchive({ selectedIds }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/BulkArchive.tsx"
 import React from 'react';
 import { TouchableOpacity, Text, Alert } from 'react-native';
 import { useNestedOperations } from '@startsoft/lumina';
@@ -407,7 +407,7 @@ function BulkArchive({ selectedIds }) {
 
 Combine creates, updates, and deletes in one transaction:
 
-```tsx
+```tsx title="src/components/MixedOperations.tsx"
 nestedOps.mutate({
   operations: [
     // Create a new category

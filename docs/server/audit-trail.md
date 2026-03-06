@@ -13,7 +13,7 @@ During `php artisan lumina:install`, select **Yes** when asked about audit trail
 
 Then add the `HasAuditTrail` trait to any model you want to track:
 
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Traits\HasAuditTrail;
 
 class Post extends Model
@@ -24,7 +24,7 @@ class Post extends Model
 
 Run the migration:
 
-```bash
+```bash title="terminal"
 php artisan migrate
 ```
 
@@ -48,7 +48,7 @@ On updates, only the fields that actually changed are logged — not the entire 
 
 By default, `password` and `remember_token` are excluded from audit logs. Add more fields with the `$auditExclude` property:
 
-```php
+```php title="app/Models/User.php"
 class User extends Model
 {
     use HasAuditTrail;
@@ -86,7 +86,7 @@ Each audit log entry contains:
 
 Fetch the audit trail for any model instance:
 
-```bash
+```bash title="terminal"
 GET /api/posts/42/audit
 GET /api/posts/42/audit?page=1&per_page=20
 ```
@@ -95,7 +95,7 @@ Supports pagination via query parameters.
 
 ### Response Example
 
-```json
+```json title="Response"
 [
     {
         "id": 1,
@@ -152,7 +152,7 @@ Supports pagination via query parameters.
 
 The `HasAuditTrail` trait adds an `auditLogs()` polymorphic relationship:
 
-```php
+```php title="app/Models/Post.php"
 // Get all audit logs for a post
 $logs = $post->auditLogs()->latest()->get();
 
@@ -177,7 +177,7 @@ echo "Deleted by user #{$deletion->user_id} at {$deletion->created_at}";
 
 Here's how audit trail works in practice:
 
-```php
+```php title="app/Models/Post.php"
 // 1. User creates a post
 $post = Post::create([
     'title' => 'Hello World',
@@ -214,7 +214,7 @@ $post->forceDelete();
 
 When multi-tenancy is enabled, the `organization_id` is automatically captured in each audit log entry. This means you can query audit logs per organization:
 
-```php
+```php title="app/Models/AuditLog.php"
 AuditLog::where('organization_id', $organization->id)
     ->latest()
     ->paginate(20);

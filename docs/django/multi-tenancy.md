@@ -24,7 +24,7 @@ LUMINA = {
 
 With `USE_SUBDOMAIN: False`, organizations are identified via URL:
 
-```
+```text title="Request"
 GET /api/acme/posts          # Posts for "acme" organization
 GET /api/acme/posts/1        # Single post in "acme"
 POST /api/acme/posts         # Create post in "acme"
@@ -55,7 +55,7 @@ Lumina automatically generates URLs with `<str:organization>/` prefix.
 
 With `USE_SUBDOMAIN: True`, organizations are identified via subdomain:
 
-```
+```text title="Request"
 GET https://acme.example.com/api/posts
 ```
 

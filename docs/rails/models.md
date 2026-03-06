@@ -11,7 +11,7 @@ Lumina models are standard ActiveRecord models enhanced with declarative DSL met
 
 The recommended way to create Lumina models is to extend `Lumina::LuminaModel` — a convenience base class that pre-includes all the core concerns you need:
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   lumina_filters :status, :user_id
   lumina_sorts :created_at, :title
@@ -39,7 +39,7 @@ You no longer need to manually `include` these concerns on every model.
 
 These concerns are **not** included in `Lumina::LuminaModel` because they require additional database columns, gems, or relationships. Add them manually when needed:
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   include Lumina::HasAuditTrail
   include Lumina::BelongsToOrganization
@@ -60,14 +60,13 @@ end
 
 You can publish and customize the base class for your application:
 
-```bash
+```bash title="terminal"
 rails lumina:install --publish-model
 ```
 
 This creates `app/models/lumina_model.rb` in your project, which extends the gem's base class. Add your own concerns or configuration that should apply to all Lumina models:
 
-```ruby
-# app/models/lumina_model.rb
+```ruby title="app/models/lumina_model.rb"
 class LuminaModel < Lumina::LuminaModel
   include Lumina::HasAuditTrail  # Now all models get audit trail
 end
@@ -81,8 +80,7 @@ You can still extend `ApplicationRecord` directly and include concerns manually 
 
 Below is a complete model example demonstrating **all** available DSL methods that Lumina recognizes:
 
-```ruby
-# app/models/post.rb
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   include Lumina::HasAuditTrail
   include Lumina::BelongsToOrganization
@@ -110,9 +108,6 @@ class Post < Lumina::LuminaModel
   # ── Route Exclusion ──────────────────────────────────────────
   lumina_except_actions :destroy  # skip DELETE endpoint
 
-  # ── Organization Path (for nested models) ────────────────────
-  lumina_owner 'blog'  # Post -> blog -> organization
-
   # ── Relationships ────────────────────────────────────────────
   belongs_to :user
   belongs_to :blog
@@ -136,7 +131,6 @@ end
 | `lumina_middleware` | `*strings` | Middleware applied to **all** routes for this model. |
 | `lumina_middleware_actions` | `hash` | Middleware applied to **specific** actions only. Keys are action names (`:index`, `:show`, `:store`, `:update`, `:destroy`). |
 | `lumina_except_actions` | `*symbols` | List of CRUD actions to exclude from route generation. Valid values: `:index`, `:show`, `:store`, `:update`, `:destroy`. |
-| `lumina_owner` | `string` | Dot-notation path from this model to the model that holds `organization_id`. Used for nested organization scoping. |
 
 :::tip
 You only need to declare DSL methods that differ from their defaults. For example, if you do not need filtering, simply omit `lumina_filters` entirely.
@@ -152,7 +146,7 @@ The core concern that provides all query-related DSL methods. It sets up class a
 
 **Included in LuminaModel** — no need to add manually.
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   # HasLumina is already included
 end
@@ -169,7 +163,7 @@ Adds format validation to your model. Lumina calls `validate_for_action()` autom
 
 Format constraints are defined using standard ActiveModel `validates` declarations. Field permissions (which fields each role can set) are defined on the policy.
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   validates :title, length: { maximum: 255 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft published archived] }, allow_nil: true
@@ -207,7 +201,7 @@ Permissions follow the pattern of the resource slug (the key in your `Lumina.con
 - `*` — grants access to everything across all resources
 - `posts.*` — grants access to all actions on posts
 
-```ruby
+```ruby title="app/models/user.rb"
 class User < Lumina::LuminaModel
   include Lumina::HasPermissions
 
@@ -244,7 +238,7 @@ Automatically records changes to your model in an audit log. Lumina tracks creat
 |---|---|---|---|
 | `lumina_audit_exclude` | `*symbols/strings` | `['password', 'remember_token']` | Fields excluded from audit log entries. Use this to prevent sensitive data from being recorded. |
 
-```ruby
+```ruby title="app/models/user.rb"
 class User < Lumina::LuminaModel
   include Lumina::HasAuditTrail
 
@@ -275,7 +269,7 @@ For full details on querying and managing audit logs, see the [Audit Trail](./au
 
 Automatically generates a UUID for the model when it is created. The concern hooks into ActiveRecord's `before_create` callback and fills the `uuid` column if it is empty.
 
-```ruby
+```ruby title="app/models/invoice.rb"
 class Invoice < Lumina::LuminaModel
   include Lumina::HasUuid
 
@@ -287,7 +281,7 @@ end
 :::warning
 Your database table must have a `uuid` column. Add it in your migration:
 
-```ruby
+```ruby title="db/migrate/create_invoices.rb"
 t.uuid :uuid, null: true
 add_index :invoices, :uuid, unique: true
 ```
@@ -308,7 +302,7 @@ Provides multi-tenant organization scoping. This concern automatically filters a
 | Default scope | Automatic | All queries are automatically filtered by `organization_id`. |
 | Auto-set on create | Automatic | `organization_id` is filled from the current request context on creation. |
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   include Lumina::BelongsToOrganization
 
@@ -317,18 +311,15 @@ class Post < Lumina::LuminaModel
 end
 ```
 
-**Nested ownership with `lumina_owner`:**
+**Nested ownership:**
 
-Not every model has a direct `organization_id` column. For nested models, use the `lumina_owner` DSL method to define the dot-notation path to the nearest model that holds the organization reference.
+Not every model has a direct `organization_id` column. For nested models, Lumina auto-detects the path to the organization by walking `belongs_to` relationships.
 
-```ruby
+```ruby title="app/models/comment.rb"
 class Comment < Lumina::LuminaModel
   include Lumina::BelongsToOrganization
 
-  # Comment doesn't have organization_id directly.
-  # But it belongs to a Post, which belongs to a Blog, which has organization_id.
-  lumina_owner 'post.blog'
-
+  # Comment → post → blog → organization is auto-detected
   belongs_to :post
 end
 ```
@@ -351,7 +342,7 @@ Controls which columns are hidden from API responses. This concern provides mult
 2. **Model-level hidden columns** via `lumina_additional_hidden`: additional fields to always hide for this model
 3. **Policy-level visibility** via `hidden_attributes_for_show()` / `permitted_attributes_for_show()` methods on the policy: per-user dynamic hiding
 
-```ruby
+```ruby title="app/models/user.rb"
 class User < Lumina::LuminaModel
   # Always hide these columns from API responses (in addition to base defaults)
   lumina_additional_hidden :api_token, :stripe_id
@@ -372,7 +363,7 @@ For policy-based column hiding (showing different fields to different users), se
 
 Automatically applies a global scope to the model based on a naming convention. When this concern is used, Lumina looks for a scope class at `ModelScopes::{ModelName}Scope` and applies it if found. No manual registration is needed.
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
   # HasAutoScope is already included — automatically loads ModelScopes::PostScope (if it exists)
 end
@@ -380,8 +371,7 @@ end
 
 Create the corresponding scope class:
 
-```ruby
-# app/models/model_scopes/post_scope.rb
+```ruby title="app/models/model_scopes/post_scope.rb"
 module ModelScopes
   class PostScope
     def self.apply(scope)
@@ -403,8 +393,7 @@ The scope is only applied if the class exists. You can safely add the `HasAutoSc
 
 Below is a full real-world model that combines multiple Lumina concerns into a feature-rich API resource:
 
-```ruby
-# app/models/blog_post.rb
+```ruby title="app/models/blog_post.rb"
 class BlogPost < Lumina::LuminaModel
   include Lumina::HasAuditTrail
   include Lumina::HasUuid
@@ -462,7 +451,7 @@ This single model definition gives you:
 
 Models are registered in `config/initializers/lumina.rb`. The key becomes the URL slug and the permission prefix:
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :'blog-posts', 'BlogPost'
   c.model :comments, 'Comment'

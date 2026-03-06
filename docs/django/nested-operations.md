@@ -9,12 +9,12 @@ Lumina supports batch operations that execute multiple create, update, and delet
 
 ## Endpoint
 
-```
+```text title="Request"
 POST /api/nested
 ```
 
 With multi-tenancy (route prefix):
-```
+```text title="Request"
 POST /api/{organization}/nested
 ```
 
@@ -32,7 +32,7 @@ LUMINA = {
 
 ## Request Format
 
-```json
+```json title="Request"
 {
     "operations": [
         {
@@ -65,7 +65,7 @@ LUMINA = {
 
 ## Response Format
 
-```json
+```json title="Response"
 {
     "results": [
         {
@@ -95,7 +95,7 @@ All operations run inside a database transaction. If any operation fails:
 2. An error response is returned with details
 3. No records are modified
 
-```json
+```json title="Response"
 HTTP/1.1 422 Unprocessable Entity
 {
     "detail": "Transaction failed: Post matching query does not exist."
@@ -114,7 +114,7 @@ Each operation validates its data against the model's validation rules before ex
 
 ### E-Commerce: Create Order with Items
 
-```json
+```json title="Request"
 {
     "operations": [
         {
@@ -138,7 +138,7 @@ Each operation validates its data against the model's validation rules before ex
 
 ### CMS: Update Page and Sections
 
-```json
+```json title="Request"
 {
     "operations": [
         {

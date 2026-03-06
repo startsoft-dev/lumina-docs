@@ -34,7 +34,7 @@ Lumina applies middleware in this order:
 2. **Model middleware** — Defined via `$middleware` on your model (applies to all actions)
 3. **Action middleware** — Defined via `$middlewareActions` (applies to specific actions only)
 
-```php
+```php title="app/Models/Post.php"
 class Post extends Model
 {
     // Applied to ALL routes for this model
@@ -66,7 +66,7 @@ Each CRUD action maps to a policy method:
 
 The policy checks the user's **roles and permissions** for the current organization. If the user lacks the required permission, a `403 Forbidden` response is returned immediately.
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     // Permission format: posts.viewAny, posts.create, etc.
@@ -83,21 +83,25 @@ Once authorized, Lumina determines **which records** the user can see. This is t
 Scoping ensures users only access data belonging to their current organization:
 
 - Models with `organization_id` are filtered directly
-- Nested models use the `$owner` path to traverse relationships back to the organization
+- Nested models are auto-detected — Lumina introspects `BelongsTo` relationships to find the path to the organization
 - Custom scopes (via `HasAutoScope`) can add additional filtering
 
-```php
+```php title="app/Models/Blog.php"
 // Direct: WHERE organization_id = ?
 class Blog extends Model
 {
     use BelongsToOrganization;
 }
 
-// Nested: WHERE EXISTS (post.blog.organization_id = ?)
+// Nested: auto-detected via Comment -> post() -> blog() -> organization_id
 class Comment extends Model
 {
     use BelongsToOrganization;
-    public static string $owner = 'post.blog';
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class);
+    }
 }
 ```
 
@@ -135,7 +139,7 @@ The query results are serialized into JSON. For `index` endpoints, Lumina adds p
 
 Before sending the response, Lumina checks the policy's `permittedAttributesForShow()` and `hiddenAttributesForShow()` methods to determine which columns are visible based on the user's role:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     public function hiddenAttributesForShow(?Authenticatable $user): array
@@ -155,7 +159,7 @@ This provides **column-level security** — different users see different fields
 
 The final JSON response is returned to the client. For a single resource:
 
-```json
+```json title="Response"
 {
   "id": 1,
   "title": "My Post",

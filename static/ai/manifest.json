@@ -1,0 +1,52 @@
+{
+  "cursor": [
+    { "src": "cursor/rules/audit-trail.mdc", "dest": ".cursor/rules/audit-trail.mdc" },
+    { "src": "cursor/rules/middleware-patterns.mdc", "dest": ".cursor/rules/middleware-patterns.mdc" },
+    { "src": "cursor/rules/model-patterns.mdc", "dest": ".cursor/rules/model-patterns.mdc" },
+    { "src": "cursor/rules/multi-tenancy.mdc", "dest": ".cursor/rules/multi-tenancy.mdc" },
+    { "src": "cursor/rules/package-conventions.mdc", "dest": ".cursor/rules/package-conventions.mdc" },
+    { "src": "cursor/rules/policy-patterns.mdc", "dest": ".cursor/rules/policy-patterns.mdc" },
+    { "src": "cursor/rules/react-auth.mdc", "dest": ".cursor/rules/react-auth.mdc" },
+    { "src": "cursor/rules/react-hooks.mdc", "dest": ".cursor/rules/react-hooks.mdc" },
+    { "src": "cursor/rules/react-native.mdc", "dest": ".cursor/rules/react-native.mdc" },
+    { "src": "cursor/rules/route-patterns.mdc", "dest": ".cursor/rules/route-patterns.mdc" },
+    { "src": "cursor/rules/scope-patterns.mdc", "dest": ".cursor/rules/scope-patterns.mdc" },
+    { "src": "cursor/rules/test-patterns.mdc", "dest": ".cursor/rules/test-patterns.mdc" },
+    { "src": "cursor/rules/validation-patterns.mdc", "dest": ".cursor/rules/validation-patterns.mdc" },
+    { "src": "cursor/skills/add-invitation-flow/SKILL.md", "dest": ".cursor/skills/add-invitation-flow/SKILL.md" },
+    { "src": "cursor/skills/add-middleware/SKILL.md", "dest": ".cursor/skills/add-middleware/SKILL.md" },
+    { "src": "cursor/skills/add-model/SKILL.md", "dest": ".cursor/skills/add-model/SKILL.md" },
+    { "src": "cursor/skills/add-policy/SKILL.md", "dest": ".cursor/skills/add-policy/SKILL.md" },
+    { "src": "cursor/skills/add-react-crud/SKILL.md", "dest": ".cursor/skills/add-react-crud/SKILL.md" },
+    { "src": "cursor/skills/add-scope/SKILL.md", "dest": ".cursor/skills/add-scope/SKILL.md" },
+    { "src": "cursor/skills/override-action/SKILL.md", "dest": ".cursor/skills/override-action/SKILL.md" },
+    { "src": "cursor/skills/pest-testing/SKILL.md", "dest": ".cursor/skills/pest-testing/SKILL.md" },
+    { "src": "cursor/skills/setup-multi-tenancy/SKILL.md", "dest": ".cursor/skills/setup-multi-tenancy/SKILL.md" },
+    { "src": "cursor/agents/full-stack-scaffolder.md", "dest": ".cursor/agents/full-stack-scaffolder.md" },
+    { "src": "cursor/agents/middleware-specialist.md", "dest": ".cursor/agents/middleware-specialist.md" },
+    { "src": "cursor/agents/model-verifier.md", "dest": ".cursor/agents/model-verifier.md" },
+    { "src": "cursor/agents/policy-specialist.md", "dest": ".cursor/agents/policy-specialist.md" },
+    { "src": "cursor/agents/product-manager.md", "dest": ".cursor/agents/product-manager.md" },
+    { "src": "cursor/agents/react-specialist.md", "dest": ".cursor/agents/react-specialist.md" },
+    { "src": "cursor/agents/scope-specialist.md", "dest": ".cursor/agents/scope-specialist.md" },
+    { "src": "cursor/agents/security-auditor.md", "dest": ".cursor/agents/security-auditor.md" },
+    { "src": "cursor/agents/test-specialist.md", "dest": ".cursor/agents/test-specialist.md" }
+  ],
+  "claude": [
+    { "src": "claude/CLAUDE.md", "dest": "CLAUDE.md" },
+    { "src": "claude/commands/add-middleware.md", "dest": ".claude/commands/add-middleware.md" },
+    { "src": "claude/commands/add-model.md", "dest": ".claude/commands/add-model.md" },
+    { "src": "claude/commands/add-policy.md", "dest": ".claude/commands/add-policy.md" },
+    { "src": "claude/commands/add-react-crud.md", "dest": ".claude/commands/add-react-crud.md" },
+    { "src": "claude/commands/add-scope.md", "dest": ".claude/commands/add-scope.md" },
+    { "src": "claude/commands/full-scaffold.md", "dest": ".claude/commands/full-scaffold.md" },
+    { "src": "claude/commands/setup-auth.md", "dest": ".claude/commands/setup-auth.md" },
+    { "src": "claude/commands/verify-model.md", "dest": ".claude/commands/verify-model.md" },
+    { "src": "claude/rules/architecture.md", "dest": ".claude/rules/architecture.md" },
+    { "src": "claude/rules/client-patterns.md", "dest": ".claude/rules/client-patterns.md" },
+    { "src": "claude/rules/server-patterns.md", "dest": ".claude/rules/server-patterns.md" }
+  ],
+  "codex": [
+    { "src": "codex/AGENTS.md", "dest": "AGENTS.md" }
+  ]
+}

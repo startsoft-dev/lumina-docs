@@ -9,7 +9,7 @@ Execute multiple model operations in a single atomic transaction. Create related
 
 ## Endpoint
 
-```bash
+```bash title="terminal"
 # Without multi-tenancy
 POST /api/nested
 
@@ -19,7 +19,7 @@ POST /api/{organization}/nested
 
 :::info Route Path
 The route path is configurable in `config/lumina.php`:
-```php
+```php title="config/lumina.php"
 'nested' => [
     'path' => 'nested',  // Change to 'batch' or 'bulk' if you prefer
 ],
@@ -28,8 +28,7 @@ The route path is configurable in `config/lumina.php`:
 
 ## Configuration
 
-```php
-// config/lumina.php
+```php title="config/lumina.php"
 'nested' => [
     'path' => 'nested',            // Route path
     'max_operations' => 50,        // Max operations per request
@@ -39,7 +38,7 @@ The route path is configurable in `config/lumina.php`:
 
 ## Request Format
 
-```json
+```json title="Request"
 {
     "operations": [
         {
@@ -80,7 +79,7 @@ Use `$N.field` syntax to reference the result of a previous operation:
 
 This is essential for creating related records in a single request:
 
-```json
+```json title="Request"
 {
     "operations": [
         {
@@ -123,7 +122,7 @@ In this example:
 
 ## Response Format
 
-```json
+```json title="Response"
 {
     "results": [
         {
@@ -180,7 +179,7 @@ In this example:
 
 All operations run inside a database transaction. If **any** operation fails — validation error, authorization failure, or database error — the **entire batch is rolled back**. No partial results.
 
-```json
+```json title="Request"
 // If operation 2 fails validation, operation 0 and 1 are also rolled back
 {
     "operations": [
@@ -192,7 +191,7 @@ All operations run inside a database transaction. If **any** operation fails —
 ```
 
 Response (422):
-```json
+```json title="Response"
 {
     "message": "Validation failed.",
     "errors": {
@@ -222,7 +221,7 @@ Each operation's data is validated against the model's validation rules (includi
 
 ### E-Commerce: Create Order with Items
 
-```json
+```json title="Request"
 {
     "operations": [
         {
@@ -260,7 +259,7 @@ Each operation's data is validated against the model's validation rules (includi
 
 ### CMS: Create Page with Sections
 
-```json
+```json title="Request"
 {
     "operations": [
         {
@@ -294,7 +293,7 @@ Each operation's data is validated against the model's validation rules (includi
 
 ### Update Multiple Records
 
-```json
+```json title="Request"
 {
     "operations": [
         {

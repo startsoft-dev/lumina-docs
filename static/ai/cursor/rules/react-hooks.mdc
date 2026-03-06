@@ -1,0 +1,375 @@
+---
+description: "React hook patterns for Lumina client (@startsoft/lumina)"
+globs: "src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Lumina React Hook Patterns
+
+All hooks are imported from `@startsoft/lumina`.
+
+```typescript
+import {
+  useModelIndex,
+  useModelShow,
+  useModelStore,
+  useModelUpdate,
+  useModelDelete,
+  useModelTrashed,
+  useModelRestore,
+  useModelForceDelete,
+  useNestedOperations,
+} from '@startsoft/lumina';
+```
+
+## CRUD Hooks
+
+### useModelIndex -- List Records
+
+```typescript
+interface QueryOptions {
+  filters?: Record<string, string | number | boolean>;
+  includes?: string[];
+  sort?: string;
+  fields?: Record<string, string[]>;
+  search?: string;
+  page?: number;
+  perPage?: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+  };
+}
+
+const { data, isLoading, error, refetch } = useModelIndex<Article>('articles', {
+  filters: { status: 'published' },
+  includes: ['author', 'comments'],
+  sort: '-created_at',
+  fields: { articles: ['id', 'title', 'status', 'created_at'] },
+  search: 'laravel',
+  page: 1,
+  perPage: 20,
+});
+
+// data shape: { data: Article[], pagination: { current_page, per_page, total, last_page } }
+```
+
+Usage example:
+
+```tsx
+function ArticleList() {
+  const { data, isLoading, error, refetch } = useModelIndex<Article>('articles', {
+    includes: ['author'],
+    sort: '-created_at',
+    perPage: 10,
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {data.data.map((article) => (
+        <div key={article.id}>
+          <h2>{article.title}</h2>
+          <p>By {article.author?.name}</p>
+        </div>
+      ))}
+      <p>Total: {data.pagination.total}</p>
+      <button onClick={() => refetch()}>Refresh</button>
+    </div>
+  );
+}
+```
+
+### useModelShow -- Get Single Record
+
+```typescript
+const { data, isLoading, error, refetch } = useModelShow<Article>('articles', articleId, {
+  includes: ['author', 'comments'],
+  fields: { articles: ['id', 'title', 'body', 'status'] },
+});
+
+// data shape: Article (the record directly, not wrapped)
+```
+
+Usage example:
+
+```tsx
+function ArticleDetail({ id }: { id: number }) {
+  const { data: article, isLoading, error } = useModelShow<Article>('articles', id, {
+    includes: ['author', 'comments'],
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      <h1>{article.title}</h1>
+      <p>{article.body}</p>
+      <span>By {article.author?.name}</span>
+    </div>
+  );
+}
+```
+
+### useModelStore -- Create Record
+
+```typescript
+const { mutate, isPending, error } = useModelStore<Article>('articles');
+
+// Call mutate with the data payload
+mutate({ title: 'New Article', body: 'Content here', status: 'draft' });
+```
+
+Usage example:
+
+```tsx
+function CreateArticle() {
+  const { mutate, isPending, error } = useModelStore<Article>('articles');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    mutate(
+      { title, body, status: 'draft' },
+      {
+        onSuccess: (article) => {
+          console.log('Created:', article.id);
+        },
+        onError: (err) => {
+          console.error('Failed:', err.message);
+        },
+      }
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
+      <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Body" />
+      <button type="submit" disabled={isPending}>
+        {isPending ? 'Creating...' : 'Create'}
+      </button>
+      {error && <p>Error: {error.message}</p>}
+    </form>
+  );
+}
+```
+
+### useModelUpdate -- Update Record
+
+```typescript
+const { mutate, isPending, error } = useModelUpdate<Article>('articles');
+
+// Pass an object with id and data
+mutate({ id: 1, data: { title: 'Updated Title', status: 'published' } });
+```
+
+Usage example:
+
+```tsx
+function EditArticle({ article }: { article: Article }) {
+  const { mutate, isPending } = useModelUpdate<Article>('articles');
+  const [title, setTitle] = useState(article.title);
+
+  const handleSave = () => {
+    mutate(
+      { id: article.id, data: { title } },
+      {
+        onSuccess: () => {
+          console.log('Updated successfully');
+        },
+      }
+    );
+  };
+
+  return (
+    <div>
+      <input value={title} onChange={(e) => setTitle(e.target.value)} />
+      <button onClick={handleSave} disabled={isPending}>
+        {isPending ? 'Saving...' : 'Save'}
+      </button>
+    </div>
+  );
+}
+```
+
+### useModelDelete -- Delete Record
+
+```typescript
+const { mutate, isPending, error } = useModelDelete('articles');
+
+// Pass the record id
+mutate(articleId);
+```
+
+Usage example:
+
+```tsx
+function DeleteButton({ articleId }: { articleId: number }) {
+  const { mutate, isPending } = useModelDelete('articles');
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure?')) {
+      mutate(articleId, {
+        onSuccess: () => {
+          console.log('Deleted');
+        },
+      });
+    }
+  };
+
+  return (
+    <button onClick={handleDelete} disabled={isPending}>
+      {isPending ? 'Deleting...' : 'Delete'}
+    </button>
+  );
+}
+```
+
+## Soft Delete Hooks
+
+### useModelTrashed -- List Soft-Deleted Records
+
+```typescript
+const { data, isLoading, error, refetch } = useModelTrashed<Article>('articles', {
+  sort: '-deleted_at',
+  perPage: 10,
+});
+
+// Same response shape as useModelIndex
+```
+
+### useModelRestore -- Restore Soft-Deleted Record
+
+```typescript
+const { mutate, isPending } = useModelRestore('articles');
+
+mutate(articleId); // Restores the soft-deleted record
+```
+
+### useModelForceDelete -- Permanently Delete Record
+
+```typescript
+const { mutate, isPending } = useModelForceDelete('articles');
+
+mutate(articleId); // Permanently removes the record
+```
+
+## Nested Operations
+
+For models with parent-child relationships:
+
+```typescript
+const nested = useNestedOperations();
+
+// List tasks under a project
+const { data } = nested.useIndex<Task>('projects', projectId, 'tasks', {
+  sort: '-created_at',
+});
+
+// Create a task under a project
+const { mutate } = nested.useStore<Task>('projects', projectId, 'tasks');
+mutate({ title: 'New Task', status: 'todo' });
+
+// Update a nested task
+const { mutate: updateTask } = nested.useUpdate<Task>('projects', projectId, 'tasks');
+updateTask({ id: taskId, data: { status: 'done' } });
+
+// Delete a nested task
+const { mutate: deleteTask } = nested.useDelete('projects', projectId, 'tasks');
+deleteTask(taskId);
+```
+
+## QueryOptions Reference
+
+All query hooks (`useModelIndex`, `useModelShow`, `useModelTrashed`) accept an optional `QueryOptions` object:
+
+```typescript
+interface QueryOptions {
+  filters?: Record<string, string | number | boolean>;  // ?filter[key]=value
+  includes?: string[];                                    // ?include=rel1,rel2
+  sort?: string;                                          // ?sort=-field (desc) or ?sort=field (asc)
+  fields?: Record<string, string[]>;                      // ?fields[model]=field1,field2
+  search?: string;                                        // ?search=term
+  page?: number;                                          // ?page=N
+  perPage?: number;                                       // ?per_page=N
+}
+```
+
+## Auto Cache Invalidation
+
+Lumina automatically invalidates related caches when mutations succeed:
+
+- `useModelStore` invalidates the `useModelIndex` cache for the same model
+- `useModelUpdate` invalidates both the `useModelIndex` and `useModelShow` caches
+- `useModelDelete` invalidates the `useModelIndex` cache
+- `useModelRestore` invalidates both `useModelIndex` and `useModelTrashed` caches
+- `useModelForceDelete` invalidates the `useModelTrashed` cache
+
+You do not need to manually call `refetch()` after mutations unless you need immediate re-fetching before the cache invalidation takes effect.
+
+## Error Handling
+
+Lumina errors follow a consistent structure:
+
+```typescript
+interface LuminaError {
+  message: string;
+  status: number;
+  errors?: Record<string, string[]>; // Validation errors (422)
+}
+```
+
+### Handling Validation Errors (422)
+
+```tsx
+function CreateArticle() {
+  const { mutate, error } = useModelStore<Article>('articles');
+
+  return (
+    <form onSubmit={() => mutate({ title: '', body: '' })}>
+      {error?.status === 422 && error.errors && (
+        <div>
+          {Object.entries(error.errors).map(([field, messages]) => (
+            <p key={field}>
+              {field}: {messages.join(', ')}
+            </p>
+          ))}
+        </div>
+      )}
+    </form>
+  );
+}
+```
+
+### Handling Authorization Errors (403)
+
+```tsx
+if (error?.status === 403) {
+  return <div>You do not have permission to perform this action.</div>;
+}
+```
+
+### Handling Not Found Errors (404)
+
+```tsx
+if (error?.status === 404) {
+  return <div>Record not found.</div>;
+}
+```
+
+## DON'Ts
+
+- **DO NOT** manually construct API URLs. Always use the hooks -- they handle organization scoping, authentication headers, and URL construction automatically.
+- **DO NOT** call `refetch()` immediately after a mutation. Auto cache invalidation handles this. Only use `refetch()` for manual refresh actions (e.g., a "Refresh" button).
+- **DO NOT** mix Lumina hooks with raw `fetch()` or `axios` calls for CRUD operations on Lumina-managed models.

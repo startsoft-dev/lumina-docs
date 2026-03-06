@@ -11,7 +11,7 @@ Every Lumina endpoint supports filtering, sorting, search, pagination, field sel
 
 Define what is queryable on your model using the `HasLumina` mixin properties:
 
-```ts
+```ts title="app/models/post.ts"
 import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import { HasLumina } from '@startsoft/lumina-adonis/mixins/has_lumina'
@@ -45,7 +45,7 @@ Fields **not** listed in these arrays are silently ignored. This is a security f
 
 Filter records by field values:
 
-```bash
+```bash title="terminal"
 # Single filter
 GET /api/posts?filter[status]=published
 
@@ -62,7 +62,7 @@ When a filter value contains commas, the query builder produces a `WHERE col IN 
 
 ### Examples
 
-```bash
+```bash title="terminal"
 # Posts by a specific user
 GET /api/posts?filter[user_id]=42
 
@@ -77,7 +77,7 @@ GET /api/posts?filter[status]=draft,published
 
 Sort records by one or more fields:
 
-```bash
+```bash title="terminal"
 # Ascending
 GET /api/posts?sort=title
 
@@ -104,7 +104,7 @@ The default sort supports the same comma-separated format as the query parameter
 
 Full-text search across configured fields:
 
-```bash
+```bash title="terminal"
 GET /api/posts?search=adonis
 ```
 
@@ -119,7 +119,7 @@ You can search across relationships using dot notation:
 static $allowedSearch = ['title', 'content', 'user.name']
 ```
 
-```bash
+```bash title="terminal"
 # This searches in post.title, post.content, AND user.name
 GET /api/posts?search=john
 ```
@@ -127,7 +127,7 @@ GET /api/posts?search=john
 Dot-notation columns (e.g., `user.name`) are resolved via `whereHas` on the relationship so that the `ILIKE` runs on the related table.
 
 :::tip Combine search with filters
-```bash
+```bash title="terminal"
 # Search for "adonis" only in published posts
 GET /api/posts?search=adonis&filter[status]=published
 ```
@@ -137,7 +137,7 @@ GET /api/posts?search=adonis&filter[status]=published
 
 Control page size and navigate through results:
 
-```bash
+```bash title="terminal"
 # Page 1 with 20 items per page
 GET /api/posts?page=1&per_page=20
 
@@ -158,7 +158,7 @@ X-Total: 195
 
 The response body contains only the data array:
 
-```json
+```json title="Response"
 [
     { "id": 21, "title": "Post 21" },
     { "id": 22, "title": "Post 22" }
@@ -201,7 +201,7 @@ export default class Post extends compose(BaseModel, HasLumina) {
 
 Select only specific fields to reduce payload size:
 
-```bash
+```bash title="terminal"
 # Select specific fields
 GET /api/posts?fields[posts]=id,title,status
 
@@ -221,7 +221,7 @@ The table name or model slug is used as the key in the `fields` parameter. For a
 
 Load related models in a single request:
 
-```bash
+```bash title="terminal"
 # Load single relationship
 GET /api/posts?include=user
 
@@ -238,7 +238,7 @@ Only relationships listed in `$allowedIncludes` can be loaded. Nested includes (
 
 You can get relationship counts or existence checks by appending `Count` or `Exists` to an include name:
 
-```bash
+```bash title="terminal"
 # Get the count of comments for each post
 GET /api/posts?include=commentsCount
 
@@ -247,7 +247,7 @@ GET /api/posts?include=commentsExists
 ```
 
 Response:
-```json
+```json title="Response"
 {
     "id": 1,
     "title": "My Post",
@@ -262,7 +262,7 @@ These suffixes are authorized against the base relationship name (`comments`), s
 
 When loading includes, Lumina checks if the user has `viewAny` permission on the included resource. If not, a 403 is returned:
 
-```bash
+```bash title="terminal"
 # If user doesn't have 'comments.index' permission:
 GET /api/posts?include=comments
 # 403 { "message": "You do not have permission to include comments." }
@@ -276,7 +276,7 @@ This applies to all includes, including nested ones. A request like `?include=co
 
 ## Combined Example
 
-```bash
+```bash title="terminal"
 GET /api/posts?filter[status]=published&sort=-created_at&include=user,comments&fields[posts]=id,title,excerpt&search=adonis&page=1&per_page=20
 ```
 
@@ -299,7 +299,7 @@ X-Total: 47
 ```
 
 **Body:**
-```json
+```json title="Response"
 [
     {
         "id": 42,

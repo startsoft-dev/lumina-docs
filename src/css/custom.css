@@ -190,7 +190,7 @@
 
 /* Code blocks */
 [data-theme='dark'] .prism-code {
-  background: #0d1117 !important;
+  background: #060a10 !important;
   border: 1px solid #30363d;
   border-radius: 8px;
 }
@@ -487,4 +487,349 @@
   border-radius: 4px;
   font-size: 11px;
   font-family: 'JetBrains Mono', monospace;
+}
+
+/* Ask AI — floating chat input */
+.ask-ai {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: calc(100% - 40px);
+  max-width: 800px;
+}
+
+.ask-ai__bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 10px 10px 16px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+}
+
+.ask-ai__bar:focus-within {
+  border-color: #484f58;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.15);
+}
+
+.ask-ai__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e6edf3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+  max-height: 150px;
+  padding: 4px 0;
+}
+
+.ask-ai__input::placeholder {
+  color: #484f58;
+}
+
+.ask-ai__buttons {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ask-ai__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.ask-ai__btn--chatgpt {
+  background: rgba(16, 163, 127, 0.12);
+  color: #10a37f;
+}
+
+.ask-ai__btn--chatgpt:hover {
+  background: rgba(16, 163, 127, 0.25);
+}
+
+.ask-ai__btn--claude {
+  background: rgba(217, 119, 69, 0.12);
+  color: #d97745;
+}
+
+.ask-ai__btn--claude:hover {
+  background: rgba(217, 119, 69, 0.25);
+}
+
+@media (max-width: 480px) {
+  .ask-ai__btn span {
+    display: none;
+  }
+
+  .ask-ai__btn {
+    padding: 8px;
+  }
+}
+
+/* AI Download — navbar trigger */
+.ai-download-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.ai-download-trigger:hover {
+  border-color: #00ffff;
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.06);
+}
+
+@media (max-width: 768px) {
+  .ai-download-trigger span {
+    display: none;
+  }
+}
+
+/* AI Download — modal overlay */
+.ai-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* AI Download — modal */
+.ai-modal {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  padding: 28px;
+  animation: aiModalIn 0.2s ease-out;
+}
+
+@keyframes aiModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ai-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ai-modal__title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #00ffff, #00c8a0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ai-modal__close {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.ai-modal__close:hover {
+  color: #e6edf3;
+}
+
+.ai-modal__desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #8b949e;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+/* AI Download — platform cards */
+.ai-modal__platforms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ai-modal__platform {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.ai-modal__platform:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #484f58;
+}
+
+.ai-modal__platform--selected {
+  border-color: #00ffff;
+  background: rgba(0, 255, 255, 0.06);
+}
+
+.ai-modal__platform--selected:hover {
+  background: rgba(0, 255, 255, 0.08);
+}
+
+.ai-modal__platform-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00ffff;
+}
+
+.ai-modal__platform-unchecked {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #484f58;
+  border-radius: 4px;
+}
+
+.ai-modal__platform--selected .ai-modal__platform-unchecked {
+  border-color: #00ffff;
+}
+
+.ai-modal__platform-icon {
+  flex-shrink: 0;
+  color: #8b949e;
+}
+
+.ai-modal__platform--selected .ai-modal__platform-icon {
+  color: #e6edf3;
+}
+
+.ai-modal__platform-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ai-modal__platform-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.ai-modal__platform-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.ai-modal__platform-count {
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  background: rgba(139, 148, 158, 0.12);
+  color: #8b949e;
+  border-radius: 10px;
+}
+
+/* AI Download — download button */
+.ai-modal__download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #00ffff, #00c8a0);
+  color: #0d1117;
+  border: none;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ai-modal__download:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.3);
+}
+
+.ai-modal__download:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* AI Download — spinner */
+.ai-modal__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(13, 17, 23, 0.3);
+  border-top-color: #0d1117;
+  border-radius: 50%;
+  animation: aiSpinner 0.6s linear infinite;
+}
+
+@keyframes aiSpinner {
+  to {
+    transform: rotate(360deg);
+  }
 }

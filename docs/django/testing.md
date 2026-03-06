@@ -9,7 +9,7 @@ Lumina for Django includes a comprehensive test suite with 93 tests covering all
 
 ## Running Tests
 
-```bash
+```bash title="terminal"
 # Run all tests
 python -m pytest tests/ -v
 
@@ -86,7 +86,7 @@ The test suite uses these models:
 
 ### Fixtures (conftest.py)
 
-```python
+```python title="tests/conftest.py"
 @pytest.fixture
 def auth_client(api_client, user):
     """API client authenticated with a token."""
@@ -99,7 +99,7 @@ def auth_client(api_client, user):
 
 ### Testing CRUD Operations
 
-```python
+```python title="tests/test_crud.py"
 import pytest
 from myapp.models import Post
 
@@ -125,7 +125,7 @@ class TestPostCRUD:
 
 ### Testing Pagination
 
-```python
+```python title="tests/test_pagination.py"
 @pytest.mark.django_db
 def test_pagination_headers(auth_client):
     for i in range(25):
@@ -139,7 +139,7 @@ def test_pagination_headers(auth_client):
 
 ### Testing Search
 
-```python
+```python title="tests/test_search.py"
 @pytest.mark.django_db
 def test_search(auth_client):
     Post.objects.create(title='Django Guide', content='Learn Django')
@@ -151,7 +151,7 @@ def test_search(auth_client):
 
 ### Testing Soft Deletes
 
-```python
+```python title="tests/test_soft_delete.py"
 @pytest.mark.django_db
 def test_soft_delete_and_restore(auth_client):
     post = Post.objects.create(title='Test')
@@ -169,7 +169,7 @@ def test_soft_delete_and_restore(auth_client):
 
 ### Testing Nested Operations
 
-```python
+```python title="tests/test_nested.py"
 @pytest.mark.django_db
 def test_nested_create(auth_client):
     response = auth_client.post('/api/nested', {
@@ -184,7 +184,7 @@ def test_nested_create(auth_client):
 
 ### Testing Audit Trail
 
-```python
+```python title="tests/test_audit_trail.py"
 @pytest.mark.django_db
 def test_audit_trail(auth_client):
     from lumina.models import AuditLog
@@ -201,7 +201,7 @@ def test_audit_trail(auth_client):
 
 Each test file uses a `lumina_urls` fixture to register routes:
 
-```python
+```python title="tests/conftest.py"
 @pytest.fixture
 def lumina_urls(settings):
     from lumina.registry import ModelRegistry

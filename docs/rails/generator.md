@@ -20,7 +20,7 @@ Scaffold models, policies, scopes, and more with interactive CLI commands.
 
 Interactive installer that sets up the entire Lumina framework:
 
-```bash
+```bash title="terminal"
 rails lumina:install
 ```
 
@@ -48,7 +48,7 @@ The installer walks you through:
 
 Interactively scaffold resources:
 
-```bash
+```bash title="terminal"
 rails lumina:generate
 # or
 rails lumina:g
@@ -95,7 +95,7 @@ rails lumina:g
 This generates:
 
 **Model** (`app/models/blog_post.rb`):
-```ruby
+```ruby title="app/models/blog_post.rb"
 class BlogPost < Lumina::LuminaModel
   # Validation (ActiveModel — use allow_nil: true)
   validates :title, length: { maximum: 255 }, allow_nil: true
@@ -115,7 +115,7 @@ end
 ```
 
 **Migration** (`db/migrate/xxxx_create_blog_posts.rb`):
-```ruby
+```ruby title="db/migrate/create_blog_posts.rb"
 class CreateBlogPosts < ActiveRecord::Migration[8.0]
   def change
     create_table :blog_posts do |t|
@@ -134,7 +134,7 @@ end
 ```
 
 **Factory** (`spec/factories/blog_posts.rb` or `test/factories/blog_posts.rb`):
-```ruby
+```ruby title="spec/factories/blog_posts.rb"
 FactoryBot.define do
   factory :blog_post do
     title { Faker::Lorem.sentence }
@@ -147,7 +147,7 @@ end
 ```
 
 **Auto-registration** in `config/initializers/lumina.rb`:
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |c|
   c.model :'blog-posts', 'BlogPost'
 end
@@ -155,7 +155,7 @@ end
 
 ### Generating a Policy
 
-```bash
+```bash title="terminal"
 rails lumina:generate
 # Select: Policy
 # Resource name: BlogPost
@@ -163,7 +163,7 @@ rails lumina:generate
 
 Generates `app/policies/blog_post_policy.rb`:
 
-```ruby
+```ruby title="app/policies/blog_post_policy.rb"
 class BlogPostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'blog-posts'
 
@@ -179,7 +179,7 @@ end
 
 ### Generating a Scope
 
-```bash
+```bash title="terminal"
 rails lumina:generate
 # Select: Scope
 # Resource name: BlogPost
@@ -187,7 +187,7 @@ rails lumina:generate
 
 Generates `app/models/model_scopes/blog_post_scope.rb`:
 
-```ruby
+```ruby title="app/models/model_scopes/blog_post_scope.rb"
 module ModelScopes
   class BlogPostScope
     def self.apply(scope)
@@ -219,7 +219,7 @@ If the model uses the `HasAutoScope` concern, this scope is automatically applie
 
 Generate a complete Postman Collection v2.1 for all registered models:
 
-```bash
+```bash title="terminal"
 rails lumina:export_postman
 ```
 
@@ -237,13 +237,13 @@ This creates a JSON file you can import directly into Postman. The collection in
 
 Generate an invitation link for testing:
 
-```bash
+```bash title="terminal"
 rails invitation:link user@example.com acme-corp
 ```
 
 Options:
 
-```bash
+```bash title="terminal"
 rails invitation:link user@example.com acme-corp --role=editor --create
 ```
 

@@ -11,7 +11,7 @@ Models using Laravel's `SoftDeletes` trait automatically get trash, restore, and
 
 Add the `SoftDeletes` trait to your model and ensure the migration has the `softDeletes` column:
 
-```php
+```php title="app/Models/Post.php"
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Post extends Model
@@ -20,8 +20,7 @@ class Post extends Model
 }
 ```
 
-```php
-// Migration
+```php title="database/migrations/create_posts_table.php"
 Schema::create('posts', function (Blueprint $table) {
     $table->id();
     $table->string('title');
@@ -52,11 +51,11 @@ Schema::create('posts', function (Blueprint $table) {
 
 ### Soft Delete
 
-```bash
+```bash title="terminal"
 DELETE /api/posts/1
 ```
 
-```json
+```json title="Response"
 {
     "id": 1,
     "title": "My Post",
@@ -66,7 +65,7 @@ DELETE /api/posts/1
 
 ### List Trashed
 
-```bash
+```bash title="terminal"
 GET /api/posts/trashed?page=1&per_page=10
 ```
 
@@ -78,7 +77,7 @@ X-Per-Page: 10
 X-Total: 15
 ```
 
-```json
+```json title="Response"
 [
     {
         "id": 1,
@@ -95,11 +94,11 @@ X-Total: 15
 
 ### Restore
 
-```bash
+```bash title="terminal"
 POST /api/posts/1/restore
 ```
 
-```json
+```json title="Response"
 {
     "id": 1,
     "title": "My Post",
@@ -109,11 +108,11 @@ POST /api/posts/1/restore
 
 ### Force Delete
 
-```bash
+```bash title="terminal"
 DELETE /api/posts/1/force-delete
 ```
 
-```json
+```json title="Response"
 {
     "message": "Resource permanently deleted."
 }
@@ -123,7 +122,7 @@ DELETE /api/posts/1/force-delete
 
 Each soft-delete action has its own policy method, mapped to specific permissions:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     protected $resourceSlug = 'posts';
@@ -152,7 +151,7 @@ class PostPolicy extends ResourcePolicy
 
 Set up different levels of soft-delete access per role:
 
-```php
+```php title="database/seeders/RoleSeeder.php"
 // Roles and their permissions
 $admin = Role::create([
     'name' => 'Admin',
@@ -197,7 +196,7 @@ Force delete permanently removes the record from the database. There is no way t
 
 Override policy methods for custom behavior:
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     protected $resourceSlug = 'posts';

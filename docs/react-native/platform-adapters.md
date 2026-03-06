@@ -17,7 +17,7 @@ Replaces `localStorage` with platform-appropriate storage:
 | User data | `localStorage` | AsyncStorage |
 | Org slug | `localStorage` | AsyncStorage |
 
-```typescript
+```typescript title="src/lib/lumina-rn/storage.ts"
 import { storage, storageHelpers } from '../lib/lumina-rn/storage';
 
 // Basic operations
@@ -42,7 +42,7 @@ Platform-aware Axios instance with automatic:
 - **401 handling** — clears token and redirects to login
 - **30-second timeout**
 
-```typescript
+```typescript title="src/lib/lumina-rn/api-client.ts"
 import { apiClient } from '../lib/lumina-rn/api-client';
 
 // Direct API calls (if needed)
@@ -57,7 +57,7 @@ Adapted from the web `AuthProvider` for React Native:
 - Uses **SecureStore** instead of `localStorage` for tokens
 - Handles **AppState** changes (background/foreground)
 
-```tsx
+```tsx title="App.tsx"
 import { AuthProvider, useAuth } from '../lib/lumina-rn';
 
 function App() {

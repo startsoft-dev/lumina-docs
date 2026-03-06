@@ -20,7 +20,7 @@ When a request hits a `store` or `update` endpoint, Lumina:
 5. On failure, returns a `422` response with field-level errors
 6. On success, proceeds with the operation using only the validated fields
 
-```php
+```php title="app/Models/Post.php"
 use Illuminate\Database\Eloquent\Model;
 use Lumina\LaravelApi\Traits\HasValidation;
 use Lumina\LaravelApi\Traits\HidableColumns;
@@ -53,7 +53,7 @@ Validation runs automatically. You do not need to call any validation method you
 
 Define the validation constraints for **all** fields on the model. These rules specify the type and format of each field.
 
-```php
+```php title="app/Models/Post.php"
 protected $validationRules = [
     'title'        => 'string|max:255',
     'content'      => 'string',
@@ -77,7 +77,7 @@ Keep rules focused on **type and format constraints** (e.g., `string|max:255`). 
 
 Which fields are accepted on `store` and `update` is determined by the policy's `permittedAttributesForCreate()` and `permittedAttributesForUpdate()` methods. This is where role-based field access lives.
 
-```php
+```php title="app/Policies/PostPolicy.php"
 class PostPolicy extends ResourcePolicy
 {
     public function permittedAttributesForCreate(?Authenticatable $user): array
@@ -102,7 +102,7 @@ class PostPolicy extends ResourcePolicy
 
 When a user submits fields they are not permitted to set, the API returns a **403 Forbidden**:
 
-```json
+```json title="Response"
 {
     "message": "You are not allowed to set the following field(s): status, is_published"
 }
@@ -118,7 +118,7 @@ For full documentation on attribute permissions, including `permittedAttributesF
 
 Define custom messages using the standard Laravel `field.rule` format:
 
-```php
+```php title="app/Models/Post.php"
 protected $validationRulesMessages = [
     'title.required'   => 'Every post needs a title.',
     'title.max'        => 'Title cannot exceed 255 characters.',
@@ -137,7 +137,7 @@ Define messages for the rules most likely to fail -- especially `required` and f
 
 When validation fails, the API returns a `422 Unprocessable Entity` response with field-level errors:
 
-```json
+```json title="Response"
 {
     "errors": {
         "title": ["Every post needs a title."],
@@ -154,7 +154,7 @@ Here is a full `Post` model and policy with role-based field permissions for thr
 
 ### Model
 
-```php
+```php title="app/Models/Post.php"
 <?php
 
 namespace App\Models;
@@ -207,7 +207,7 @@ class Post extends Model
 
 ### Policy
 
-```php
+```php title="app/Policies/PostPolicy.php"
 <?php
 
 namespace App\Policies;

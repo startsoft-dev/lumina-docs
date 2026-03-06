@@ -11,7 +11,7 @@ Lumina supports soft deletes out of the box. When enabled on a model, the standa
 
 Set the `$softDeletes` static property on your model:
 
-```ts
+```ts title="app/models/post.ts"
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
@@ -39,7 +39,7 @@ export default class Post extends compose(BaseModel, HasLumina) {
 
 Your database migration must include the `deleted_at` column:
 
-```ts
+```ts title="database/migrations/create_posts_table.ts"
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
@@ -71,13 +71,13 @@ The standard `DELETE /api/posts/:id` endpoint performs a soft delete (sets `dele
 
 ### Trashed Endpoint
 
-```bash
+```bash title="terminal"
 GET /api/posts/trashed
 ```
 
 Lists all soft-deleted records. Supports the same query parameters as the index endpoint (filters, sorts, search, includes, pagination, fields). The query uses Lucid's `onlyTrashed()` scope to return only records where `deleted_at` is not null.
 
-```bash
+```bash title="terminal"
 # List trashed posts with sorting
 GET /api/posts/trashed?sort=-deleted_at
 
@@ -90,7 +90,7 @@ GET /api/posts/trashed?page=1&per_page=10
 
 ### Restore Endpoint
 
-```bash
+```bash title="terminal"
 POST /api/posts/:id/restore
 ```
 
@@ -100,7 +100,7 @@ If the model has a `restore()` instance method, Lumina calls it. Otherwise, it m
 
 ### Force Delete Endpoint
 
-```bash
+```bash title="terminal"
 DELETE /api/posts/:id/force-delete
 ```
 
@@ -112,7 +112,7 @@ If the model has a `forceDelete()` instance method, Lumina calls it. Otherwise, 
 
 Each soft-delete action has its own policy method:
 
-```ts
+```ts title="app/policies/post_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class PostPolicy extends ResourcePolicy {
@@ -141,7 +141,7 @@ These methods are already implemented on `ResourcePolicy`, so you only need to o
 
 If you want soft deletes but do not want certain endpoints (e.g., you want to prevent force deletion via the API), use `$exceptActions`:
 
-```ts
+```ts title="app/models/post.ts"
 export default class Post extends compose(BaseModel, HasLumina) {
   static $softDeletes = true
 
@@ -164,7 +164,7 @@ The `ResourcesController` calls `logRestore()` after restoring and `logForceDele
 
 If a request hits a trashed, restore, or force-delete endpoint on a model that does **not** have `$softDeletes = true`, Lumina returns a `404` response:
 
-```json
+```json title="Response"
 { "message": "This resource does not support soft deletes" }
 ```
 

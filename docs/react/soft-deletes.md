@@ -14,7 +14,7 @@ Hooks for the full soft-delete lifecycle — list trashed items, restore them, o
 
 Fetch soft-deleted records. Accepts the same query options as `useModelIndex` (filters, sorts, pagination, search, includes).
 
-```tsx
+```tsx title="src/hooks/useModelTrashed.ts"
 import { useModelTrashed } from '@startsoft/lumina';
 
 const { data: response, isLoading } = useModelTrashed('posts', {
@@ -34,7 +34,7 @@ const pagination = response?.pagination;
 
 Restore a soft-deleted record. Clears the `deleted_at` timestamp and makes the record visible again.
 
-```tsx
+```tsx title="src/hooks/useModelRestore.ts"
 import { useModelRestore } from '@startsoft/lumina';
 
 const restore = useModelRestore('posts');
@@ -56,7 +56,7 @@ restore.mutate(postId, {
 
 Permanently delete a record from the database. This cannot be undone.
 
-```tsx
+```tsx title="src/hooks/useModelForceDelete.ts"
 import { useModelForceDelete } from '@startsoft/lumina';
 
 const forceDelete = useModelForceDelete('posts');
@@ -81,7 +81,7 @@ A full trash management interface with restore and permanent delete:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/TrashManager.tsx"
 import { useState } from 'react';
 import {
   useModelTrashed,
@@ -194,7 +194,7 @@ function TrashManager() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/TrashManager.tsx"
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
 import {
@@ -331,7 +331,7 @@ The regular `useModelDelete` hook performs a soft delete (moves to trash). Combi
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/PostActions.tsx"
 import { useModelDelete, useModelTrashed, useModelRestore } from '@startsoft/lumina';
 
 function PostActions({ post }) {
@@ -359,7 +359,7 @@ function PostActions({ post }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/PostActions.tsx"
 import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { useModelDelete, useModelTrashed, useModelRestore } from '@startsoft/lumina';
@@ -395,7 +395,7 @@ A common pattern is to show active items and trashed items in separate tabs:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/pages/PostsPage.tsx"
 function PostsPage() {
   const [tab, setTab] = useState('active');
 
@@ -413,7 +413,7 @@ function PostsPage() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/pages/PostsPage.tsx"
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 

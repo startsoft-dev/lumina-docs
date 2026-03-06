@@ -14,7 +14,7 @@ Lumina provides a complete authentication and organization management flow for R
 
 The primary hook for authentication state and actions. It reads the API token from `localStorage`, exposes login/logout functions, and manages the active organization.
 
-```tsx
+```tsx title="src/hooks/useAuth.ts"
 const { token, isAuthenticated, login, logout, setOrganization } = useAuth();
 ```
 
@@ -32,7 +32,7 @@ const { token, isAuthenticated, login, logout, setOrganization } = useAuth();
 
 The `login` function returns a `LoginResult` object describing the outcome of the authentication attempt:
 
-```tsx
+```tsx title="src/types.ts"
 interface LoginResult {
   success: boolean;
   user?: any;
@@ -68,7 +68,7 @@ A full login page with loading state and error handling:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/pages/LoginPage.tsx"
 import { useAuth } from '@startsoft/lumina';
 import { useState } from 'react';
 
@@ -126,7 +126,7 @@ function LoginPage() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/pages/LoginPage.tsx"
 import { useAuth } from '@startsoft/lumina';
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
@@ -197,7 +197,7 @@ function LoginPage() {
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/LogoutButton.tsx"
 function LogoutButton() {
   const { logout } = useAuth();
   return <button onClick={logout}>Log Out</button>;
@@ -207,7 +207,7 @@ function LogoutButton() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/LogoutButton.tsx"
 import { TouchableOpacity, Text } from 'react-native';
 
 function LogoutButton() {
@@ -237,7 +237,7 @@ Returns the current organization slug. The hook resolves the slug using the foll
 1. **URL params** -- Looks for an `:organization` param in a `/orgs/:organization/*` route pattern.
 2. **localStorage fallback** -- Falls back to the `organization_slug` key in `localStorage`.
 
-```tsx
+```tsx title="src/hooks/useOrganization.ts"
 import { useOrganization } from '@startsoft/lumina';
 
 const organization = useOrganization();
@@ -250,12 +250,12 @@ The organization slug is automatically included in all API requests made by Lumi
 
 ### Example with Route
 
-```tsx
+```tsx title="src/hooks/useOrganization.ts"
 // URL: /orgs/acme-corp/dashboard
 const org = useOrganization(); // 'acme-corp'
 ```
 
-```tsx
+```tsx title="src/hooks/useOrganization.ts"
 // URL: /orgs/my-startup/settings
 const org = useOrganization(); // 'my-startup'
 ```
@@ -270,7 +270,7 @@ When using React Router, make sure your routes follow the `/orgs/:organization/*
 
 Fetches the current organization's full data from the API, with support for eager-loading related resources via the `includes` option. This is built on top of React Query, so it returns the standard `{ data, isLoading, error }` pattern.
 
-```tsx
+```tsx title="src/hooks/useOwner.ts"
 const { data: organization, isLoading, error } = useOwner({
   includes: ['users', 'roles'],
 });
@@ -285,7 +285,7 @@ const { data: organization, isLoading, error } = useOwner({
 
 ### Response Shape
 
-```tsx
+```tsx title="Response"
 // Example response:
 {
   id: 1,
@@ -307,7 +307,7 @@ const { data: organization, isLoading, error } = useOwner({
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/OrgDashboard.tsx"
 function OrgDashboard() {
   const { data: org, isLoading } = useOwner({ includes: ['users'] });
 
@@ -333,7 +333,7 @@ function OrgDashboard() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/OrgDashboard.tsx"
 import { View, Text, FlatList, ActivityIndicator } from 'react-native';
 
 function OrgDashboard() {
@@ -373,7 +373,7 @@ Use the `includes` parameter to avoid N+1 queries. Load all the relationships yo
 
 Checks whether a given organization slug already exists. This is particularly useful for registration and organization creation flows where you need to validate slug availability in real time.
 
-```tsx
+```tsx title="src/hooks/useOrganizationExists.ts"
 const { exists, isLoading, organization } = useOrganizationExists('acme-corp');
 ```
 
@@ -390,7 +390,7 @@ const { exists, isLoading, organization } = useOrganizationExists('acme-corp');
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/CreateOrgForm.tsx"
 function CreateOrgForm() {
   const [slug, setSlug] = useState('');
   const { exists, isLoading } = useOrganizationExists(slug);
@@ -416,7 +416,7 @@ function CreateOrgForm() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/CreateOrgForm.tsx"
 import { useState } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import { useOrganizationExists } from '@startsoft/lumina';
@@ -462,7 +462,7 @@ Combine `useAuth` and `useOrganization` to guard routes that require both authen
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/ProtectedRoute.tsx"
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
   const organization = useOrganization();
@@ -492,7 +492,7 @@ function ProtectedRoute({ children }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/ProtectedRoute.tsx"
 import { useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth, useOrganization } from '@startsoft/lumina';
@@ -537,7 +537,7 @@ Allow users to switch between organizations they belong to:
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/components/OrgSwitcher.tsx"
 function OrgSwitcher({ organizations }) {
   const { setOrganization } = useAuth();
 
@@ -561,7 +561,7 @@ function OrgSwitcher({ organizations }) {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/components/OrgSwitcher.tsx"
 import { Text, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '@startsoft/lumina';
@@ -606,7 +606,7 @@ A complete example wiring login, organization selection, and protected content t
 <Tabs>
 <TabItem value="web" label="React (Web)" default>
 
-```tsx
+```tsx title="src/App.tsx"
 import { LuminaProvider, useAuth, useOrganization, useOwner } from '@startsoft/lumina';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -652,7 +652,7 @@ function Dashboard() {
 </TabItem>
 <TabItem value="native" label="React Native">
 
-```tsx
+```tsx title="src/App.tsx"
 import { LuminaProvider, useAuth, useOrganization, useOwner } from '@startsoft/lumina';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';

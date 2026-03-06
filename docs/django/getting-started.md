@@ -9,13 +9,13 @@ Lumina for Django automatically generates full CRUD REST API endpoints for your 
 
 ## Installation
 
-```bash
+```bash title="terminal"
 pip install lumina-django
 ```
 
 Or add to your `requirements.txt`:
 
-```
+```text title="requirements.txt"
 lumina-django>=0.1.0
 ```
 
@@ -97,7 +97,7 @@ urlpatterns = [
 
 ### 6. Run Migrations
 
-```bash
+```bash title="terminal"
 python manage.py migrate
 ```
 
@@ -127,7 +127,7 @@ class Post(LuminaModel):
 `LuminaModel` extends `django.db.models.Model` and includes `SoftDeleteMixin`, `AuditTrailMixin`, `HasValidationMixin`, and `HidableFieldsMixin` out of the box. Open the base class to see all available properties with type hints, defaults, and examples.
 
 For additional features, add mixins manually:
-```python
+```python title="blog/models.py"
 from lumina.models import LuminaModel
 from lumina.mixins import BelongsToOrganizationMixin, HasUuidMixin
 

@@ -11,7 +11,7 @@ Models using the [discard](https://github.com/jhawthorn/discard) gem automatical
 
 Add the `discard` gem's `has_discard` to your model and ensure the migration has a `discarded_at` column:
 
-```ruby
+```ruby title="app/models/post.rb"
 class Post < ApplicationRecord
   include Lumina::HasLumina
   include Lumina::HasValidation
@@ -20,8 +20,7 @@ class Post < ApplicationRecord
 end
 ```
 
-```ruby
-# Migration
+```ruby title="db/migrate/create_posts.rb"
 class CreatePosts < ActiveRecord::Migration[8.0]
   def change
     create_table :posts do |t|
@@ -61,11 +60,11 @@ Lumina auto-detects the `discarded_at` or `deleted_at` column on your model and 
 
 ### Soft Delete
 
-```bash
+```bash title="terminal"
 DELETE /api/posts/1
 ```
 
-```json
+```json title="Response"
 {
     "id": 1,
     "title": "My Post",
@@ -75,7 +74,7 @@ DELETE /api/posts/1
 
 ### List Trashed
 
-```bash
+```bash title="terminal"
 GET /api/posts/trashed?page=1&per_page=10
 ```
 
@@ -87,7 +86,7 @@ X-Per-Page: 10
 X-Total: 15
 ```
 
-```json
+```json title="Response"
 [
     {
         "id": 1,
@@ -104,11 +103,11 @@ X-Total: 15
 
 ### Restore
 
-```bash
+```bash title="terminal"
 POST /api/posts/1/restore
 ```
 
-```json
+```json title="Response"
 {
     "id": 1,
     "title": "My Post",
@@ -118,11 +117,11 @@ POST /api/posts/1/restore
 
 ### Force Delete
 
-```bash
+```bash title="terminal"
 DELETE /api/posts/1/force-delete
 ```
 
-```json
+```json title="Response"
 {
     "message": "Resource permanently deleted."
 }
@@ -132,7 +131,7 @@ DELETE /api/posts/1/force-delete
 
 Each soft-delete action has its own policy method, mapped to specific permissions:
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 
@@ -157,8 +156,7 @@ end
 
 Set up different levels of soft-delete access per role:
 
-```ruby
-# db/seeds.rb
+```ruby title="db/seeds.rb"
 admin = Role.create!(
   name: 'Admin',
   slug: 'admin',
@@ -202,7 +200,7 @@ Force delete permanently removes the record from the database. There is no way t
 
 Override policy methods for custom behavior:
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 

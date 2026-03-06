@@ -13,7 +13,7 @@ All hooks have identical signatures to the [React Client hooks](/docs/react/crud
 
 ### Query Hooks
 
-```typescript
+```typescript title="Query Hooks"
 useModelIndex<T>(model, options?, queryOptions?)
 useModelShow<T>(model, id, options?, queryOptions?)
 useModelTrashed<T>(model, options?, queryOptions?)
@@ -22,7 +22,7 @@ useModelAudit<T>(model, id, options?)
 
 ### Mutation Hooks
 
-```typescript
+```typescript title="Mutation Hooks"
 useModelStore<T>(model, options?)
 useModelUpdate<T>(model, options?)
 useModelDelete<T>(model, options?)
@@ -32,7 +32,7 @@ useModelForceDelete<T>(model, options?)
 
 ## Example: Full CRUD Screen
 
-```tsx
+```tsx title="src/screens/PostsScreen.tsx"
 import { View, FlatList, Text, Button, Alert } from 'react-native';
 import {
   useModelIndex,
@@ -86,7 +86,7 @@ function PostsScreen() {
 
 ## Auth Hook
 
-```tsx
+```tsx title="src/screens/ProfileScreen.tsx"
 import { useAuth } from '../lib/lumina-rn';
 
 function ProfileScreen() {

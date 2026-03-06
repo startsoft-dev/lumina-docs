@@ -23,7 +23,7 @@ When a store or update request is received, Lumina follows this process:
 
 Define per-field type constraints using VineJS schema builders on your model:
 
-```ts
+```ts title="app/models/post.ts"
 import vine from '@vinejs/vine'
 import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
 
@@ -50,8 +50,7 @@ Do not add `.optional()` or `.nullable()` — presence is controlled by the poli
 
 Field permissions are defined on the **policy**, not the model. See [Policies — Attribute Permissions](./policies#attribute-permissions) for full details.
 
-```ts
-// app/policies/post_policy.ts
+```ts title="app/policies/post_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class PostPolicy extends ResourcePolicy {
@@ -78,7 +77,7 @@ By default, all `ResourcePolicy` attribute permission methods return `['*']` (al
 
 If the user submits a field that is **not** in their permitted list, the controller returns a **403 Forbidden** response:
 
-```json
+```json title="Response"
 {
   "message": "Forbidden: you are not allowed to set the following fields: status, priority"
 }
@@ -90,7 +89,7 @@ This is different from validation errors (422) — forbidden fields mean the use
 
 When VineJS format validation fails, the controller returns a `422 Unprocessable Entity` response:
 
-```json
+```json title="Response"
 {
   "errors": {
     "title": ["The title field must have a maximum length of 255"],
@@ -103,8 +102,7 @@ Each field key maps to an array of error messages from VineJS.
 
 ## Complete Example
 
-```ts
-// app/models/article.ts
+```ts title="app/models/article.ts"
 import { DateTime } from 'luxon'
 import { column } from '@adonisjs/lucid/orm'
 import vine from '@vinejs/vine'
@@ -146,8 +144,7 @@ export default class Article extends LuminaModel {
 }
 ```
 
-```ts
-// app/policies/article_policy.ts
+```ts title="app/policies/article_policy.ts"
 import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
 
 export default class ArticlePolicy extends ResourcePolicy {

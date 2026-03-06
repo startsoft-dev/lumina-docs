@@ -15,13 +15,13 @@ Install Lumina for AdonisJS and go from zero to a full REST API in under 5 minut
 
 ## Installation
 
-```bash
+```bash title="terminal"
 npm install @startsoft/lumina-adonis
 ```
 
 Then run the AdonisJS configure command:
 
-```bash
+```bash title="terminal"
 node ace configure @startsoft/lumina-adonis
 ```
 
@@ -37,8 +37,7 @@ The configure command will:
 
 After installation, your config file is at `config/lumina.ts`:
 
-```ts
-// config/lumina.ts
+```ts title="config/lumina.ts"
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({
@@ -48,17 +47,18 @@ export default defineConfig({
     comments: () => import('#models/comment'),
   },
 
-  // Models that don't require authentication
-  public: [
-    'posts', // These endpoints skip auth middleware
-  ],
+  // Route groups -- controls URL prefixes, middleware, and model access
+  routeGroups: {
+    default: {
+      prefix: '',          // Routes at /api/{slug}
+      middleware: [],
+      models: '*',         // All registered models
+    },
+  },
 
   // Multi-tenancy settings
   multiTenant: {
-    enabled: false,                       // Enable organization scoping
-    useSubdomain: false,                  // true = subdomain, false = URL prefix
     organizationIdentifierColumn: 'id',   // 'id', 'slug', or 'uuid'
-    middleware: null,                      // Custom middleware class
   },
 
   // Invitation system
@@ -88,7 +88,7 @@ The `defineConfig()` function merges your values with sensible defaults, so you 
 
 Add these to your `.env` file as needed:
 
-```env
+```env title=".env"
 # Invitation expiration (days)
 INVITATION_EXPIRES_DAYS=7
 ```
@@ -97,8 +97,7 @@ INVITATION_EXPIRES_DAYS=7
 
 Create a Lucid model extending `LuminaModel`:
 
-```ts
-// app/models/post.ts
+```ts title="app/models/post.ts"
 import { DateTime } from 'luxon'
 import { column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
@@ -172,7 +171,7 @@ export default class Post extends compose(LuminaModel, HasAuditTrail, BelongsToO
 
 Register it in `config/lumina.ts`:
 
-```ts
+```ts title="config/lumina.ts"
 models: {
   posts: () => import('#models/post'),
 },
@@ -192,12 +191,14 @@ That is all you need. You now have a full REST API for posts:
 | `DELETE` | `/api/posts/:id/force-delete` | Permanent delete |
 
 :::tip Multi-Tenant Routes
-When multi-tenancy is enabled with URL prefix mode, all routes are prefixed with `:organization`:
+When using a `tenant` route group with a parameterized prefix, all tenant routes are prefixed with `:organization`:
 
 ```
 GET /api/:organization/posts
 POST /api/:organization/posts
 ```
+
+See [Route Groups](./route-groups) for configuration details.
 :::
 
 ## Authentication Endpoints
@@ -214,7 +215,7 @@ Lumina also provides auth routes out of the box:
 
 ## Run Migrations
 
-```bash
+```bash title="terminal"
 node ace migration:run
 ```
 
@@ -224,6 +225,7 @@ This will create the necessary tables for audit logs, invitations, and any model
 
 - [Request Lifecycle](./request-lifecycle) -- how requests flow through the pipeline
 - [Model Configuration](./models) -- mixins, properties, relationships
+- [Route Groups](./route-groups) -- multi-tenant, admin, public, and custom route groups
 - [Validation](./validation) -- VineJS schemas and policy-driven field permissions
 - [Querying](./querying) -- filters, sorts, search, pagination, includes
 - [Policies](./policies) -- role-based authorization and permissions

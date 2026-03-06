@@ -19,7 +19,7 @@ During `php artisan lumina:install`, select **Yes** when asked about multi-tenan
 
 Or configure it manually in `config/lumina.php`:
 
-```php
+```php title="config/lumina.php"
 'route_groups' => [
     'tenant' => [
         'prefix' => '{organization}',
@@ -59,7 +59,7 @@ The middleware:
 
 The organization identifier is part of the URL path:
 
-```bash
+```bash title="terminal"
 GET /api/acme-corp/posts       # Using slug
 GET /api/1/posts               # Using id
 GET /api/abc-123-def/posts     # Using uuid
@@ -67,7 +67,7 @@ GET /api/abc-123-def/posts     # Using uuid
 
 Uses `ResolveOrganizationFromRoute` middleware. The identifier column is configurable:
 
-```php
+```php title="config/lumina.php"
 'organization_identifier_column' => 'slug',  // matches organizations.slug column
 ```
 
@@ -75,14 +75,14 @@ Uses `ResolveOrganizationFromRoute` middleware. The identifier column is configu
 
 The organization is extracted from the subdomain:
 
-```bash
+```bash title="terminal"
 GET https://acme-corp.yourapp.com/api/posts
 GET https://other-org.yourapp.com/api/posts
 ```
 
 Uses `ResolveOrganizationFromSubdomain` middleware. Enable it:
 
-```php
+```php title="config/lumina.php"
 'multi_tenant' => [
     'enabled' => true,
     'use_subdomain' => true,
@@ -97,7 +97,7 @@ The subdomain middleware automatically skips these common subdomains: `www`, `ap
 
 Add `BelongsToOrganization` to scope a model's data per organization:
 
-```php
+```php title="app/Models/Post.php"
 use Lumina\LaravelApi\Traits\BelongsToOrganization;
 
 class Post extends Model
@@ -110,7 +110,7 @@ class Post extends Model
 
 Migration:
 
-```php
+```php title="database/migrations/create_posts_table.php"
 Schema::create('posts', function (Blueprint $table) {
     $table->id();
     $table->string('title');
@@ -126,16 +126,14 @@ Now `GET /api/acme-corp/posts` only returns posts where `organization_id` matche
 
 ### Nested Organization Ownership
 
-Not all models have a direct `organization_id` column. For nested models, use the `$owner` static property to define the path to the organization:
+Not all models have a direct `organization_id` column. Lumina **auto-detects** the path to the organization by introspecting `BelongsTo` relationships. As long as your model's `belongsTo` chain eventually reaches a model with `organization_id`, scoping works automatically — no extra configuration needed.
 
-```php
+```php title="app/Models/Comment.php"
 class Comment extends Model
 {
     use BelongsToOrganization;
 
-    // Comment → Post → Blog → Organization
-    public static string $owner = 'post.blog';
-
+    // Comment → Post → Blog → Organization (auto-detected)
     protected $fillable = ['content', 'post_id', 'user_id'];
 
     public function post()
@@ -145,14 +143,12 @@ class Comment extends Model
 }
 ```
 
-```php
+```php title="app/Models/Post.php"
 class Post extends Model
 {
     use BelongsToOrganization;
 
-    // Post → Blog → Organization
-    public static string $owner = 'blog';
-
+    // Post → Blog → Organization (auto-detected)
     public function blog()
     {
         return $this->belongsTo(Blog::class);
@@ -160,12 +156,12 @@ class Post extends Model
 }
 ```
 
-```php
+```php title="app/Models/Blog.php"
 class Blog extends Model
 {
     use BelongsToOrganization;
 
-    // Blog has organization_id directly — no $owner needed
+    // Blog has organization_id directly
     protected $fillable = ['name', 'slug', 'organization_id'];
 
     public function organization()
@@ -175,13 +171,14 @@ class Blog extends Model
 }
 ```
 
+
 ## Per-Organization Roles
 
 Users have roles scoped to each organization. A user can be **admin** in one organization and **viewer** in another.
 
 ### Setting Up Roles
 
-```php
+```php title="database/seeders/RoleSeeder.php"
 // Create roles
 $admin = Role::create([
     'name' => 'Admin',
@@ -207,7 +204,7 @@ $viewer = Role::create([
 
 ### Assigning Users to Organizations
 
-```php
+```php title="database/seeders/RoleSeeder.php"
 use App\Models\UserRole;
 
 // User is admin in Acme Corp
@@ -227,7 +224,7 @@ UserRole::create([
 
 ### Checking Permissions
 
-```php
+```php title="app/Models/User.php"
 // User is admin in Acme Corp
 $user->hasPermission('posts.store', $acmeCorp);  // true
 $user->hasPermission('posts.destroy', $acmeCorp); // true (admin has *)
@@ -243,7 +240,7 @@ $user->hasPermission('posts.index', $otherOrg);   // true
 
 If a user tries to access an organization they don't belong to:
 
-```bash
+```bash title="terminal"
 curl -H "Authorization: Bearer TOKEN" /api/other-org/posts
 # → 404 { "message": "Organization not found" }
 ```
@@ -256,7 +253,7 @@ Returning 404 instead of 403 prevents leaking information about organization exi
 
 Requests without authentication to non-public endpoints:
 
-```bash
+```bash title="terminal"
 curl /api/acme-corp/posts
 # → 401 { "message": "Unauthenticated." }
 ```
@@ -265,8 +262,7 @@ curl /api/acme-corp/posts
 
 Models listed in the `public` config skip authentication:
 
-```php
-// config/lumina.php
+```php title="config/lumina.php"
 'public' => ['posts'],  // /api/{org}/posts doesn't require auth
 ```
 
@@ -276,8 +272,7 @@ Here's a complete multi-tenant setup from scratch:
 
 ### 1. Enable in Config
 
-```php
-// config/lumina.php
+```php title="config/lumina.php"
 return [
     'models' => [
         'posts'    => \App\Models\Post::class,
@@ -292,8 +287,7 @@ return [
 
 ### 2. Create Models
 
-```php
-// app/Models/Post.php
+```php title="app/Models/Post.php"
 class Post extends Model
 {
     use SoftDeletes, HasValidation, BelongsToOrganization, HasAuditTrail;
@@ -322,8 +316,7 @@ class Post extends Model
 
 ### 3. Seed Roles
 
-```php
-// database/seeders/RoleSeeder.php
+```php title="database/seeders/RoleSeeder.php"
 class RoleSeeder extends Seeder
 {
     public function run(): void
@@ -343,7 +336,7 @@ class RoleSeeder extends Seeder
 
 ### 4. Create Organization & Assign Users
 
-```php
+```php title="database/seeders/RoleSeeder.php"
 $org = Organization::create(['name' => 'Acme Corp', 'slug' => 'acme-corp']);
 
 // Admin user
@@ -363,7 +356,7 @@ UserRole::create([
 
 ### 5. Use the API
 
-```bash
+```bash title="terminal"
 # Admin: full access
 curl -H "Authorization: Bearer ADMIN_TOKEN" \
   -X POST /api/acme-corp/posts \

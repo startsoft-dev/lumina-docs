@@ -1,0 +1,221 @@
+---
+description: "Validation conventions for Lumina models including role-based field access"
+globs: "app/Models/**/*.php"
+alwaysApply: false
+---
+
+# Lumina Validation Patterns
+
+## Base Validation Rules
+
+Define `$validationRules` on the model with standard Laravel validation syntax. These rules apply to both store and update operations:
+
+```php
+protected $validationRules = [
+    'title' => 'required|string|max:255',
+    'body' => 'required|string',
+    'status' => 'in:draft,published,archived',
+    'priority' => 'integer|between:1,5',
+    'category_id' => 'exists:categories,id',
+];
+```
+
+## Simple Format for Store/Update Rules
+
+`$validationRulesStore` and `$validationRulesUpdate` use a **simple format** -- just field names, not full rule definitions. They control which fields from `$validationRules` are active and add presence modifiers:
+
+```php
+// These field names reference keys from $validationRules
+protected $validationRulesStore = [
+    'title',       // Uses the 'required|string|max:255' rule from $validationRules
+    'body',        // Uses the 'required|string' rule from $validationRules
+    'category_id', // Uses the 'exists:categories,id' rule from $validationRules
+];
+
+protected $validationRulesUpdate = [
+    'title',       // Same base rule, but applied on update
+];
+```
+
+## Presence Modifiers
+
+Prefix field names with `required:`, `nullable:`, or `sometimes:` to override the presence behavior:
+
+```php
+protected $validationRulesStore = [
+    'title',              // Inherits presence from $validationRules (required)
+    'required:body',      // Explicitly required on store
+    'nullable:subtitle',  // Allowed to be null on store
+    'sometimes:priority', // Only validated if present in the request
+];
+
+protected $validationRulesUpdate = [
+    'sometimes:title',    // Only validated if included in the update payload
+    'nullable:body',      // Can be set to null on update
+];
+```
+
+## Full Override with Pipe
+
+To completely replace the base rule for a specific operation, use the pipe `|` syntax:
+
+```php
+protected $validationRulesStore = [
+    'title',
+    'slug|required|string|unique:articles,slug', // Full override: ignores $validationRules for this field
+];
+
+protected $validationRulesUpdate = [
+    'slug|sometimes|string|unique:articles,slug,{id}', // Different override for update
+];
+```
+
+## Custom Validation Messages
+
+```php
+protected $validationRulesMessages = [
+    'title.required' => 'A title is required for every article.',
+    'body.required' => 'The article body cannot be empty.',
+    'status.in' => 'Status must be one of: draft, published, archived.',
+    'category_id.exists' => 'The selected category does not exist.',
+];
+```
+
+## Role-Based Validation
+
+For models where different roles can edit different fields, implement the `HasRoleBasedValidation` contract. Validation rules are keyed by role slug, and the `*` wildcard serves as a fallback for any role not explicitly listed:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Lumina\LaravelApi\Traits\HasValidation;
+use Lumina\LaravelApi\Traits\HidableColumns;
+use Lumina\LaravelApi\Traits\BelongsToOrganization;
+use Lumina\LaravelApi\Contracts\HasRoleBasedValidation;
+
+class Article extends \Illuminate\Database\Eloquent\Model implements HasRoleBasedValidation
+{
+    use HasFactory;
+    use SoftDeletes;
+    use HasValidation;
+    use HidableColumns;
+    use BelongsToOrganization;
+
+    protected $fillable = [
+        'title',
+        'slug',
+        'body',
+        'status',
+        'featured',
+        'author_id',
+        'organization_id',
+    ];
+
+    // Base rules for all fields
+    protected $validationRules = [
+        'title' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|unique:articles,slug',
+        'body' => 'required|string',
+        'status' => 'required|in:draft,published,archived',
+        'featured' => 'boolean',
+    ];
+
+    // Role-based store rules
+    protected $validationRulesStore = [
+        'admin' => [
+            'title',
+            'slug',
+            'body',
+            'status',
+            'featured',   // Admins can set featured on creation
+        ],
+        'editor' => [
+            'title',
+            'slug',
+            'body',
+            'status',
+            // Editors cannot set 'featured' on creation
+        ],
+        '*' => [
+            'title',
+            'body',
+            // Default role: only title and body
+        ],
+    ];
+
+    // Role-based update rules
+    protected $validationRulesUpdate = [
+        'admin' => [
+            'sometimes:title',
+            'sometimes:slug',
+            'sometimes:body',
+            'sometimes:status',
+            'sometimes:featured',
+        ],
+        'editor' => [
+            'sometimes:title',
+            'sometimes:body',
+            'sometimes:status',
+        ],
+        '*' => [
+            'sometimes:title',
+            'sometimes:body',
+        ],
+    ];
+
+    /**
+     * Return the current user's role slug for validation resolution.
+     * This method is required by the HasRoleBasedValidation contract.
+     */
+    public function getRoleSlugForValidation(): string
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return '*';
+        }
+
+        // Use the user's role in the current organization
+        return $user->rolesInOrganization()?->first()?->slug ?? '*';
+    }
+}
+```
+
+## Key Behavior: Unlisted Fields Are Silently Ignored
+
+Fields not listed in `$validationRulesStore` or `$validationRulesUpdate` are **silently ignored** -- they are stripped from the request before processing. They are NOT rejected with a validation error.
+
+This means:
+- If `featured` is not in the `editor` store rules, an editor sending `featured: true` will not get an error -- the field is simply dropped.
+- This is a **security feature**: it prevents role escalation by silently discarding fields a role is not authorized to set.
+
+```php
+// If an editor sends: { title: "Hello", featured: true }
+// Lumina processes: { title: "Hello" }
+// The 'featured' field is silently stripped, not rejected.
+```
+
+## The * Wildcard
+
+The `*` key is a **fallback** for any role not explicitly defined in the role-based arrays:
+
+```php
+protected $validationRulesStore = [
+    'admin' => ['title', 'body', 'status', 'featured'],
+    'editor' => ['title', 'body', 'status'],
+    '*' => ['title', 'body'],  // Any other role (viewer, guest, etc.)
+];
+```
+
+If the authenticated user's role is `viewer` and there is no `viewer` key, the `*` rules apply.
+
+## DON'Ts
+
+- **DO NOT** define full rule strings in `$validationRulesStore` or `$validationRulesUpdate` without the pipe prefix. The simple format expects field names only; use `|` to provide a full override.
+- **DO NOT** assume unlisted fields will cause validation errors. They are silently ignored.
+- **DO NOT** forget to implement `getRoleSlugForValidation()` when using the `HasRoleBasedValidation` contract.
+- **DO NOT** mix simple format and role-based format in the same array. Use one or the other consistently.

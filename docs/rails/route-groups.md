@@ -11,7 +11,7 @@ Route groups allow you to register the same models under multiple URL prefixes, 
 
 Define route groups in `config/initializers/lumina.rb`:
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |config|
   config.route_group :group_name, prefix: 'url-prefix', middleware: [SomeMiddleware], models: :all
 end
@@ -37,7 +37,7 @@ All other group names (e.g., `:driver`, `:admin`, `:default`) are standard authe
 
 ### Simple Non-Tenant App
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |config|
   config.model :posts, 'Post'
   config.model :comments, 'Comment'
@@ -50,7 +50,7 @@ Routes: `GET /api/posts`, `POST /api/posts`, etc.
 
 ### Simple Multi-Tenant App
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |config|
   config.model :posts, 'Post'
   config.model :organizations, 'Organization'
@@ -175,7 +175,7 @@ Lumina uses two permission sources based on the route group context:
 
 Add a `permissions` JSON column to your users table:
 
-```ruby
+```ruby title="db/migrate/add_permissions_to_users.rb"
 class AddPermissionsToUsers < ActiveRecord::Migration[8.0]
   def change
     add_column :users, :permissions, :json
@@ -185,7 +185,7 @@ end
 
 Add the column to your User model's attributes:
 
-```ruby
+```ruby title="app/models/user.rb"
 class User < ApplicationRecord
   include Lumina::HasPermissions
 
@@ -195,7 +195,7 @@ end
 
 ### Assigning Permissions
 
-```ruby
+```ruby title="db/seeds.rb"
 # Driver: can view and manage their trips and trucks
 driver.update!(permissions: ['trips.index', 'trips.show', 'trucks.*'])
 
@@ -255,7 +255,7 @@ If you're upgrading from a previous Lumina version, update your `config/initiali
 
 **Before:**
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |config|
   config.model :posts, 'Post'
   config.public_model :materials
@@ -270,7 +270,7 @@ end
 
 **After:**
 
-```ruby
+```ruby title="config/initializers/lumina.rb"
 Lumina.configure do |config|
   config.model :posts, 'Post'
   config.model :materials, 'Material'

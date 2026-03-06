@@ -44,8 +44,7 @@ Each method in `ResourcePolicy` calls `has_permission?` on the authenticated use
 
 A minimal policy requires no method implementations at all. The base class handles everything:
 
-```ruby
-# app/policies/post_policy.rb
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   # The resource slug used for permission checks
   # If not set, auto-resolved from Lumina.config
@@ -150,7 +149,7 @@ When `has_permission?` is called:
 
 For apps without multi-tenancy, assign permissions directly on the user:
 
-```ruby
+```ruby title="db/seeds.rb"
 # Assign permissions to users
 admin.update!(permissions: ['*'])
 
@@ -169,7 +168,7 @@ viewer.update!(permissions: [
 
 For multi-tenant apps, create roles and assign users to organizations:
 
-```ruby
+```ruby title="db/seeds.rb"
 # 1. Create roles
 admin = Role.create!(name: 'Admin', slug: 'admin', permissions: ['*'])
 editor = Role.create!(name: 'Editor', slug: 'editor', permissions: [
@@ -188,7 +187,7 @@ UserRole.create!(
 
 For hybrid apps with tenant and non-tenant route groups, use both:
 
-```ruby
+```ruby title="db/seeds.rb"
 # User-level permissions for non-tenant routes (e.g., driver app)
 driver.update!(permissions: ['trips.index', 'trips.show', 'trucks.*'])
 
@@ -228,7 +227,7 @@ Two methods control which fields are included in API responses:
 - **`permitted_attributes_for_show(user)`** — a whitelist of fields the user can see. Return `['*']` to allow all fields.
 - **`hidden_attributes_for_show(user)`** — a blacklist of fields to hide. This is merged with the whitelist, so fields listed here are always removed from responses.
 
-```ruby
+```ruby title="app/policies/user_policy.rb"
 class UserPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'users'
 
@@ -265,7 +264,7 @@ Two methods control which fields a user can submit on create and update requests
 
 Return `['*']` to allow all fields, or return a specific list to restrict access.
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 
@@ -289,7 +288,7 @@ end
 
 When a user submits fields they are not permitted to set, the API returns a **403 Forbidden** response that explicitly names the forbidden fields:
 
-```json
+```json title="Response"
 {
     "message": "You are not allowed to set the following field(s): status, is_published"
 }
@@ -303,7 +302,7 @@ Forbidden fields are explicitly rejected with a `403` response, not silently ign
 
 The `has_role?(user, role_slug)` method is available in all policies that extend `Lumina::ResourcePolicy`. It checks whether the given user holds the specified role in the current organization context.
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 
@@ -343,7 +342,7 @@ GET /api/posts?include=comments
 
 Lumina checks whether the user has `comments.index` permission. If the user does not have that permission, the request is rejected with a `403 Forbidden`:
 
-```json
+```json title="Response"
 {
     "message": "You do not have permission to include comments."
 }
@@ -359,7 +358,7 @@ This applies to all includes, including nested ones. A request like `?include=co
 
 In multi-tenant applications, permissions are evaluated per organization. A user can hold different roles in different organizations, and permission checks respect this context.
 
-```ruby
+```ruby title="app/models/user.rb"
 # User is admin in Org A
 user.has_permission?('posts.store', org_a)  # true
 
@@ -377,8 +376,7 @@ This means you do not need to manually pass the organization when using policies
 
 While the base `ResourcePolicy` handles most cases, you can override any policy method to add custom authorization logic. A common pattern is restricting users to only modify their own records:
 
-```ruby
-# app/policies/post_policy.rb
+```ruby title="app/policies/post_policy.rb"
 class PostPolicy < Lumina::ResourcePolicy
   self.resource_slug = 'posts'
 
@@ -397,7 +395,7 @@ In this example, the `update?` method first checks if the user is a superadmin (
 
 You can apply this pattern to any policy method:
 
-```ruby
+```ruby title="app/policies/post_policy.rb"
 # Only allow viewing unpublished posts if user is the author
 def show?
   return false unless super
@@ -427,7 +425,7 @@ Always call `super` in your overrides to preserve the base permission check. Ski
 
 When authorization fails for any reason — missing permission, failed custom logic, or unauthenticated access — Lumina returns a standard error response:
 
-```json
+```json title="Response"
 {
     "message": "This action is unauthorized."
 }
@@ -437,7 +435,7 @@ When authorization fails for any reason — missing permission, failed custom lo
 
 If the user is not authenticated at all and the route requires authentication, the auth middleware returns:
 
-```json
+```json title="Response"
 {
     "message": "Unauthenticated."
 }
