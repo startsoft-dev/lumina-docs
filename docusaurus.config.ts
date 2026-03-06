@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Lumina',
-  tagline: 'Built for the AI era. Automatic REST APIs for Laravel, Rails, AdonisJS & Django.',
+  tagline: 'Built for the AI era. Automatic REST APIs for Laravel, Rails & AdonisJS.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -85,7 +85,6 @@ const config: Config = {
             { label: 'Laravel Server', to: '/docs/server/getting-started' },
             { label: 'Rails Server', to: '/docs/rails/getting-started' },
             { label: 'AdonisJS Server', to: '/docs/adonis-server/getting-started' },
-            { label: 'Django Server', to: '/docs/django/getting-started' },
           ],
         },
         {

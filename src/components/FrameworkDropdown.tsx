@@ -43,7 +43,7 @@ const categories: FrameworkCategory[] = [
       { id: 'laravel', label: 'Laravel', icon: LaravelIcon, href: '/docs/server/getting-started' },
       { id: 'rails', label: 'Rails', icon: RailsIcon, href: '/docs/rails/getting-started' },
       { id: 'adonis', label: 'AdonisJS', icon: AdonisIcon, href: '/docs/adonis-server/getting-started' },
-      { id: 'django', label: 'Django', icon: DjangoIcon, href: '/docs/django/getting-started' },
+      { id: 'django', label: 'Django', icon: DjangoIcon, comingSoon: true },
     ],
   },
   {

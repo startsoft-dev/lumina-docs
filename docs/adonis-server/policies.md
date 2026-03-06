@@ -90,21 +90,54 @@ export default class User extends compose(BaseModel, HasPermissions) {
   @column()
   declare email: string
 
+  @column()
+  declare permissions: string[] | null
+
   @hasMany(() => UserRole)
   declare userRoles: HasMany<typeof UserRole>
 }
 ```
 
-### How Permission Checking Works
+### How Permissions Are Stored
+
+Lumina supports two permission sources, used depending on whether the request is organization-scoped or not:
+
+#### User-level permissions (`users.permissions`)
+
+For non-tenant route groups (e.g., `driver`, `admin`, `default`), permissions are stored directly on the `users` table as a JSON column:
+
+```
+id | name         | email              | permissions (JSON)
+1  | Alice Driver | alice@example.com  | ["trips.index", "trips.show", "trucks.*"]
+2  | Bob Admin    | bob@example.com    | ["*"]
+3  | Carol User   | carol@example.com  | ["posts.index", "posts.show"]
+```
+
+This is the standard permission model and works for all apps, including non-multi-tenant apps.
+
+#### Organization-scoped permissions (`userRoles.permissions`)
+
+For the `tenant` route group, permissions are stored on the `userRoles` join table, scoped per organization:
+
+```
+id | userId | organizationId | permissions (JSON)
+1  | 1      | 1              | ["*"]
+2  | 2      | 1              | ["posts.index", "posts.show", "posts.store"]
+3  | 1      | 2              | ["posts.index", "posts.show"]
+```
+
+This enables multi-tenant permission models where the same user can hold different permissions in different organizations.
+
+#### Resolution
 
 When `hasPermission(permission, organization?)` is called:
 
-1. The `userRoles` relationship is loaded (with the nested `role`) if not already preloaded
-2. Each `UserRole` is filtered by the given organization (if provided)
-3. Each role's `permissions` array is checked for exact matches and wildcard matches
-4. Returns `true` if any permission matches
+1. **Organization present** (tenant route group) → checks `userRoles.permissions` for that organization
+2. **No organization** (any other route group) → checks `users.permissions` directly
 
-The `permissions` property on a `UserRole` can be either a JSON string or a plain array of permission strings:
+This is deterministic — the decision is based on the presence of an organization in the request, which is set by middleware in tenant route groups. There is no fallback chain.
+
+The `permissions` property can be either a JSON string or a plain array of permission strings:
 
 ```json
 ["posts.index", "posts.show", "posts.store", "comments.*"]
@@ -114,7 +147,7 @@ The `permissions` property on a `UserRole` can be either a JSON string or a plai
 
 | Method | Description |
 |---|---|
-| `hasPermission(permission, organization?)` | Returns `true` if the user has the given permission within the specified organization. |
+| `hasPermission(permission, organization?)` | Returns `true` if the user has the given permission. With organization: checks `userRoles.permissions`. Without: checks `users.permissions`. |
 | `getRoleSlugForValidation(organization?)` | Returns the user's role slug within an organization, used for role-based validation rules. |
 
 ## Custom Policies

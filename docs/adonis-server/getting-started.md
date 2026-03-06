@@ -48,17 +48,18 @@ export default defineConfig({
     comments: () => import('#models/comment'),
   },
 
-  // Models that don't require authentication
-  public: [
-    'posts', // These endpoints skip auth middleware
-  ],
+  // Route groups -- controls URL prefixes, middleware, and model access
+  routeGroups: {
+    default: {
+      prefix: '',          // Routes at /api/{slug}
+      middleware: [],
+      models: '*',         // All registered models
+    },
+  },
 
   // Multi-tenancy settings
   multiTenant: {
-    enabled: false,                       // Enable organization scoping
-    useSubdomain: false,                  // true = subdomain, false = URL prefix
     organizationIdentifierColumn: 'id',   // 'id', 'slug', or 'uuid'
-    middleware: null,                      // Custom middleware class
   },
 
   // Invitation system
@@ -192,12 +193,14 @@ That is all you need. You now have a full REST API for posts:
 | `DELETE` | `/api/posts/:id/force-delete` | Permanent delete |
 
 :::tip Multi-Tenant Routes
-When multi-tenancy is enabled with URL prefix mode, all routes are prefixed with `:organization`:
+When using a `tenant` route group with a parameterized prefix, all tenant routes are prefixed with `:organization`:
 
 ```
 GET /api/:organization/posts
 POST /api/:organization/posts
 ```
+
+See [Route Groups](./route-groups) for configuration details.
 :::
 
 ## Authentication Endpoints
@@ -224,6 +227,7 @@ This will create the necessary tables for audit logs, invitations, and any model
 
 - [Request Lifecycle](./request-lifecycle) -- how requests flow through the pipeline
 - [Model Configuration](./models) -- mixins, properties, relationships
+- [Route Groups](./route-groups) -- multi-tenant, admin, public, and custom route groups
 - [Validation](./validation) -- VineJS schemas and policy-driven field permissions
 - [Querying](./querying) -- filters, sorts, search, pagination, includes
 - [Policies](./policies) -- role-based authorization and permissions

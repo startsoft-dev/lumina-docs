@@ -5,21 +5,27 @@ title: Multi-Tenancy
 
 # Multi-Tenancy
 
-Lumina provides built-in multi-tenancy support that isolates data by organization. When enabled, all queries are automatically scoped to the current organization, and new records are tagged with the correct `organization_id`. Two routing strategies are available: URL prefix and subdomain.
+Lumina provides built-in multi-tenancy support that isolates data by organization. When an organization is present in the request context (set by middleware), all queries are automatically scoped to that organization, and new records are tagged with the correct `organization_id`.
+
+Multi-tenancy is configured via [Route Groups](./route-groups). Use a `tenant` route group with organization-resolving middleware to enable org-scoped routing.
 
 ## Configuration
 
-Enable multi-tenancy in `config/lumina.ts`:
+Enable multi-tenancy by adding a `tenant` route group in `config/lumina.ts`:
 
 ```ts
 import { defineConfig } from '@startsoft/lumina-adonis'
 
 export default defineConfig({
+  routeGroups: {
+    tenant: {
+      prefix: ':organization',
+      middleware: ['lumina:resolveOrg'],
+      models: '*',
+    },
+  },
   multiTenant: {
-    enabled: true,
-    useSubdomain: false,                  // false = URL prefix, true = subdomain
-    organizationIdentifierColumn: 'id',   // 'id', 'slug', or 'uuid'
-    middleware: null,                      // Custom middleware class (optional)
+    organizationIdentifierColumn: 'slug',
   },
 })
 ```
@@ -28,16 +34,25 @@ export default defineConfig({
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `enabled` | `boolean` | `false` | Enable or disable multi-tenant mode globally. |
-| `useSubdomain` | `boolean` | `false` | When `true`, resolve the organization from the subdomain. When `false`, resolve from a URL prefix parameter. |
 | `organizationIdentifierColumn` | `string` | `'id'` | The column used to look up the organization. Common values: `'id'`, `'slug'`, `'uuid'`. |
-| `middleware` | `string \| null` | `null` | Override the default middleware with a custom class. |
 
 ## Routing Strategies
 
 ### URL Prefix Mode
 
-When `useSubdomain` is `false` (default), all resource routes include an `:organization` parameter:
+Use a `tenant` route group with a parameterized prefix:
+
+```ts
+routeGroups: {
+  tenant: {
+    prefix: ':organization',
+    middleware: ['lumina:resolveOrg'],
+    models: '*',
+  },
+},
+```
+
+Routes:
 
 ```
 GET    /api/:organization/posts
@@ -51,7 +66,19 @@ The `ResolveOrganizationFromRoute` middleware extracts the `:organization` param
 
 ### Subdomain Mode
 
-When `useSubdomain` is `true`, the organization is resolved from the subdomain portion of the `Host` header:
+Use a `tenant` route group with the subdomain middleware:
+
+```ts
+routeGroups: {
+  tenant: {
+    prefix: '',
+    middleware: ['lumina:resolveOrgSubdomain'],
+    models: '*',
+  },
+},
+```
+
+Routes:
 
 ```
 GET    https://acme.example.com/api/posts
@@ -204,8 +231,7 @@ The `ResourcesController` applies organization scoping using the following order
 ## Auto-Setting Organization on Create
 
 When creating a record via `POST /api/:organization/posts`, the controller automatically adds `organization_id` to the data if:
-- Multi-tenancy is enabled
-- An organization is present in the context
+- An organization is present in the request context (set by middleware)
 - The model has an `organizationId` or `organization_id` column
 
 This happens in the controller layer, independent of the `BelongsToOrganization` mixin. Using both provides defense-in-depth.

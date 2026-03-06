@@ -9,35 +9,20 @@ Every Lumina API request follows a predictable pipeline from route matching to J
 
 ## Request Flow Overview
 
-```
-HTTP Request
-  |
-  v
-Route Match (AdonisJS router)
-  |
-  v
-Auth Middleware (token verification)
-  |
-  v
-Organization Middleware (if multi-tenant)
-  |  - ResolveOrganizationFromRoute (URL prefix mode)
-  |  - ResolveOrganizationFromSubdomain (subdomain mode)
-  |
-  v
-Model Middleware ($middleware, $middlewareActions)
-  |
-  v
-ResourcesController.{action}
-  |  1. Resolve model class from config slug
-  |  2. Authorize via Policy (viewAny, view, create, update, delete)
-  |  3. Authorize includes (viewAny on related models)
-  |  4. Apply organization scope
-  |  5. Run validation (store/update only)
-  |  6. Execute query via LuminaQueryBuilder
-  |  7. Return JSON response
-  |
-  v
-HTTP Response (JSON body + pagination headers)
+```mermaid
+flowchart TD
+    A[HTTP Request] --> B[Route Match - AdonisJS router]
+    B --> C[Auth Middleware - skipped for public group]
+    C --> D[Route Group Middleware]
+    D --> E[Model Middleware]
+    E --> F[ResourcesController]
+    F --> G{Policy Check}
+    G -->|Denied| H[403 Forbidden]
+    G -->|Allowed| I[Organization Scope - tenant group only]
+    I --> J[Validation - store/update only]
+    J --> K[Query Builder]
+    K --> L[Response Serialization]
+    L --> M[JSON Response]
 ```
 
 ## Step-by-Step Breakdown
@@ -57,17 +42,17 @@ When you register a model in `config/lumina.ts`, Lumina generates a set of route
 | Restore | `POST /api/:model/:id/restore` | `restore()` |
 | Force Delete | `DELETE /api/:model/:id/force-delete` | `forceDelete()` |
 
-The model slug is stored in the route metadata via `.defaults('model', slug)`, so the controller knows which model class to resolve.
+The model slug and route group key are stored in the route metadata, so the controller knows which model class to resolve. Routes are named `lumina.{group}.{slug}.{action}` (e.g., `lumina.tenant.posts.index`). See [Route Groups](./route-groups) for details.
 
 ### 2. Auth Middleware
 
-For models not listed in the `public` config array, the AdonisJS auth middleware runs first. It verifies the API token from the `Authorization: Bearer <token>` header and attaches the authenticated user to `ctx.auth.user`.
+For route groups other than `public`, the AdonisJS auth middleware runs first. It verifies the API token from the `Authorization: Bearer <token>` header and attaches the authenticated user to `ctx.auth.user`.
 
-Public models skip this step entirely.
+Routes in the `public` route group skip this step entirely.
 
-### 3. Organization Resolution
+### 3. Route Group Middleware & Organization Resolution
 
-When multi-tenancy is enabled, one of two middleware classes resolves the current organization:
+Middleware defined in the route group config runs next. For the `tenant` route group, this typically includes one of two organization-resolving middleware classes:
 
 - **`ResolveOrganizationFromRoute`** -- Extracts the `:organization` route parameter and looks up the Organization model by the configured identifier column (`id`, `slug`, or `uuid`). Verifies the authenticated user belongs to the organization.
 
@@ -123,7 +108,7 @@ For `?include=` parameters, the controller also checks `viewAny` permission on e
 
 ### 7. Organization Scoping
 
-When multi-tenancy is enabled, the controller applies organization filtering to the query. The scoping strategy follows this order of precedence:
+When an organization is present in the request context (set by middleware in the `tenant` route group), the controller applies organization filtering to the query. Non-tenant route groups skip this step. The scoping strategy follows this order of precedence:
 
 1. **Resource IS the Organization model** -- restrict to the current org's primary key
 2. **Model has `scopeForOrganization` static method** -- delegate to it
