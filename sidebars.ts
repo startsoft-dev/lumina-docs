@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'server/multi-tenancy',
         'server/audit-trail',
         'server/generator',
+        'server/blueprint',
       ],
     },
   ],

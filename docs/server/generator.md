@@ -7,12 +7,17 @@ title: Generator
 
 Scaffold models, policies, scopes, and more with interactive CLI commands.
 
+:::tip Blueprint for Bulk Generation
+For batch generation with **fully working permission methods**, see [Blueprint](./blueprint.md) — define your entire permission matrix in YAML and generate deterministically.
+:::
+
 ## Commands Overview
 
 | Command | Alias | Description |
 |---------|-------|-------------|
 | `lumina:install` | — | Interactive project setup |
 | `lumina:generate` | `lumina:g` | Scaffold resources (models, policies, scopes) |
+| `lumina:blueprint` | — | Generate from YAML specs ([docs](./blueprint.md)) |
 | `lumina:export-postman` | — | Generate Postman collection |
 | `invitation:link` | — | Generate invitation link for testing |
 

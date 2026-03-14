@@ -38,6 +38,7 @@ Lumina is a full-stack library that turns your models into a complete REST API �
 - **Audit Trail** — automatic change logging (who changed what, when)
 - **Nested Operations** — atomic multi-model transactions with cross-references
 - **Invitation System** — invite users to organizations with role assignment
+- **Blueprint Generator** — define permissions in YAML, generate fully working policies, tests, and seeders deterministically
 - **Query Builder** — filters, sorts, search, pagination, includes, field selection
 - **React Native Support** — same hooks with platform-adapted storage and networking
 

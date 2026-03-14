@@ -854,6 +854,41 @@
   color: #8b949e;
 }
 
+/* ===== BLUEPRINT ===== */
+.lp-blueprint-arrow {
+  text-align: center;
+  padding: 16px 0;
+  font-size: 14px;
+  color: #8b949e;
+  letter-spacing: 0.5px;
+}
+
+.lp-blueprint-arrow code {
+  background: rgba(110, 118, 129, 0.15);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #c9d1d9;
+  margin: 0 8px;
+}
+
+.lp-blueprint-files {
+  text-align: center;
+  padding: 16px 0 0;
+  font-size: 14px;
+  color: #8b949e;
+}
+
+.lp-blueprint-files a {
+  color: #58a6ff;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.lp-blueprint-files a:hover {
+  text-decoration: underline;
+}
+
 /* ===== CTA ===== */
 .lp-cta-section {
   padding: 80px 20px;

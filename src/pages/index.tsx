@@ -28,6 +28,7 @@ const FEATURES = [
   {cmd: 'audit', title: 'Audit Trail', desc: 'Automatic change logging for compliance. Track who changed what and when across all resources.', tag: 'compliance'},
   {cmd: 'tenant', title: 'Multi-Tenancy', desc: 'Organization-based data isolation built-in. Subdomain or route-prefix resolution strategies.', tag: 'saas-ready'},
   {cmd: 'generate', title: 'Interactive Generator', desc: 'Scaffold models, migrations, factories, policies, and scopes with a single command in any framework.', tag: 'dx'},
+  {cmd: 'blueprint', title: 'Blueprint Generator', desc: 'Define your permission matrix in YAML and generate fully working policies, tests, and seeders — zero AI tokens, fully deterministic.', tag: 'zero-token'},
   {cmd: 'postman', title: 'Postman Export', desc: 'Auto-generate a complete Postman Collection v2.1 for all your registered API endpoints.', tag: 'api-testing'},
   {cmd: 'invite', title: 'Invitation System', desc: 'Built-in user invitation workflow with email and acceptance flow. Perfect for team-based apps.', tag: 'collaboration'},
 ];
@@ -955,6 +956,75 @@ export default function Home(): ReactNode {
             <p>Generate models, migrations, factories, policies, and scopes — in Laravel, Rails, or AdonisJS</p>
           </div>
           <GeneratorAnimation />
+        </section>
+
+        {/* Blueprint */}
+        <section className="lp-demo-section" id="blueprint">
+          <div className="lp-section-header">
+            <div className="lp-prompt-line">
+              <span className="lp-prompt-symbol">&#10095;</span>
+              <span className="lp-prompt-text">lumina:blueprint</span>
+            </div>
+            <h2>Zero-token code generation</h2>
+            <p>Define your permission matrix in YAML — generate fully working policies, tests, and seeders deterministically</p>
+          </div>
+
+          <div className="lp-code-window">
+            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">.lumina/blueprints/contracts.yaml</span></div>
+            <div className="lp-code-content">
+              <span className="lp-line"><span className="lp-var">model</span>: <span className="lp-cn">Contract</span></span>
+              <span className="lp-line"><span className="lp-var">columns</span>:</span>
+              <span className="lp-line">  <span className="lp-var">title</span>:     {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">filterable</span>: <span className="lp-kw">true</span> {'}'}</span>
+              <span className="lp-line">  <span className="lp-var">total_value</span>: {'{'} <span className="lp-var">type</span>: <span className="lp-str">decimal</span>, <span className="lp-var">nullable</span>: <span className="lp-kw">true</span> {'}'}</span>
+              <span className="lp-line">  <span className="lp-var">status</span>:    {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">default</span>: <span className="lp-str">"draft"</span> {'}'}</span>
+              <span className="lp-line"> </span>
+              <span className="lp-line"><span className="lp-var">permissions</span>:</span>
+              <span className="lp-line">  <span className="lp-var">admin</span>:</span>
+              <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>, <span className="lp-str">store</span>, <span className="lp-str">update</span>, <span className="lp-str">destroy</span>]</span>
+              <span className="lp-line">    <span className="lp-var">show_fields</span>: <span className="lp-str">"*"</span></span>
+              <span className="lp-line">    <span className="lp-var">create_fields</span>: <span className="lp-str">"*"</span></span>
+              <span className="lp-line">  <span className="lp-var">viewer</span>:</span>
+              <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>]</span>
+              <span className="lp-line">    <span className="lp-var">show_fields</span>: [<span className="lp-str">id</span>, <span className="lp-str">title</span>, <span className="lp-str">status</span>]</span>
+              <span className="lp-line">    <span className="lp-var">hidden_fields</span>: [<span className="lp-str">total_value</span>]</span>
+            </div>
+          </div>
+
+          <div className="lp-blueprint-arrow">
+            <span className="lp-output-highlight">&#9660;</span> <code>php artisan lumina:blueprint</code> <span className="lp-output-highlight">&#9660;</span>
+          </div>
+
+          <div className="lp-code-window">
+            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">app/Policies/ContractPolicy.php</span></div>
+            <div className="lp-code-content">
+              <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">ContractPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span></span>
+              <span className="lp-line">{'{'}</span>
+              <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">permittedAttributesForShow</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+              <span className="lp-line">    {'{'}</span>
+              <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'admin'</span>)) {'{'}</span>
+              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'*'</span>];</span>
+              <span className="lp-line">        {'}'}</span>
+              <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'viewer'</span>)) {'{'}</span>
+              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'id'</span>, <span className="lp-str">'title'</span>, <span className="lp-str">'status'</span>];</span>
+              <span className="lp-line">        {'}'}</span>
+              <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
+              <span className="lp-line">    {'}'}</span>
+              <span className="lp-line"> </span>
+              <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenAttributesForShow</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+              <span className="lp-line">    {'{'}</span>
+              <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'viewer'</span>)) {'{'}</span>
+              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'total_value'</span>];</span>
+              <span className="lp-line">        {'}'}</span>
+              <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
+              <span className="lp-line">    {'}'}</span>
+              <span className="lp-line">{'}'}</span>
+            </div>
+          </div>
+
+          <div className="lp-blueprint-files">
+            <span className="lp-output-success">&#10003;</span> Model + Migration + Factory + Scope + Policy + Tests — all from YAML.{' '}
+            <Link to="/docs/server/blueprint">Learn more →</Link>
+          </div>
         </section>
 
         {/* Query Examples */}
