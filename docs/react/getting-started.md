@@ -202,3 +202,4 @@ import type {
 - [Nested Operations](./nested-operations) — atomic multi-model transactions
 - [Invitations](./invitations) — invite users to organizations
 - [Utilities](./utilities) — API client, storage, events, toast
+- [TypeScript](./typescript) — generic hooks and auto-generated types

@@ -185,21 +185,22 @@ rails lumina:generate
 # Resource name: BlogPost
 ```
 
-Generates `app/models/model_scopes/blog_post_scope.rb`:
+Generates `app/models/scopes/blog_post_scope.rb`:
 
-```ruby title="app/models/model_scopes/blog_post_scope.rb"
-module ModelScopes
-  class BlogPostScope
-    def self.apply(scope)
+```ruby title="app/models/scopes/blog_post_scope.rb"
+module Scopes
+  class BlogPostScope < Lumina::ResourceScope
+    # Available methods: user, organization, role
+    def apply(relation)
       # Add your global scope logic
-      # e.g., scope.where(is_visible: true)
-      scope
+      # e.g., relation.where(is_visible: true)
+      relation
     end
   end
 end
 ```
 
-If the model uses the `HasAutoScope` concern, this scope is automatically applied.
+The generated scope extends `Lumina::ResourceScope`, giving you access to `user`, `organization`, and `role` inside the `apply` method for role-based or user-specific filtering. If the model uses the `HasAutoScope` concern (included in `LuminaModel` by default), this scope is automatically applied.
 
 ## Supported Column Types
 

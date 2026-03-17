@@ -2,40 +2,29 @@ import {useState, useEffect, useRef, useCallback} from 'react';
 import type {ReactNode} from 'react';
 import Link from '@docusaurus/Link';
 import Layout from '@theme/Layout';
-import {LaravelIcon, RailsIcon, ReactIcon, AdonisIcon} from '../components/FrameworkIcons';
+import {motion, useInView} from 'framer-motion';
+import {LaravelIcon, RailsIcon, AdonisIcon} from '../components/FrameworkIcons';
 import './landing.css';
 
 const GITHUB_URL = 'https://github.com/startsoft-dev/lumina-server';
 
-const ASCII_LINES = [
-  {text: '  ██╗     ██╗   ██╗███╗   ███╗██╗███╗   ██╗ █████╗ ', color: '#00ffff'},
-  {text: '  ██║     ██║   ██║████╗ ████║██║████╗  ██║██╔══██╗', color: '#00e6c8'},
-  {text: '  ██║     ██║   ██║██╔████╔██║██║██╔██╗ ██║███████║', color: '#64dc64'},
-  {text: '  ██║     ██║   ██║██║╚██╔╝██║██║██║╚██╗██║██╔══██║', color: '#ffdc32'},
-  {text: '  ███████╗╚██████╔╝██║ ╚═╝ ██║██║██║ ╚████║██║  ██║', color: '#ffaa1e'},
-  {text: '  ╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝', color: '#ff7800'},
-];
+// ─── Features (trimmed to 9 most impactful) ────────────────────────────────
 
 const FEATURES = [
   {cmd: 'ai', title: 'AI-Native Architecture', desc: 'Declarative, config-driven models that AI agents can read, scaffold, and extend. Built to be prompted, not hand-coded.', tag: 'ai-ready'},
+  {cmd: 'blueprint', title: 'Blueprint Generator', desc: 'Define your permission matrix in YAML and generate fully working policies, tests, and seeders — zero AI tokens, fully deterministic.', tag: 'zero-token'},
   {cmd: 'crud', title: 'Automatic CRUD API', desc: 'Register a model, get full REST endpoints instantly. Index, show, store, update, delete — zero controller code.', tag: 'zero-boilerplate'},
   {cmd: 'auth', title: 'Built-in Authentication', desc: 'Login, logout, register, password recovery and reset. Token-based auth ready out of the box.', tag: 'security'},
   {cmd: 'policy', title: 'Authorization & Policies', desc: 'Convention-based policies with permission-based access control. Fine-grained resource authorization.', tag: 'access-control'},
   {cmd: 'validate', title: 'Smart Validation', desc: 'Role-based validation rules. Separate rules for store and update. Custom error messages per field.', tag: 'data-integrity'},
   {cmd: 'query', title: 'Advanced Querying', desc: 'Filtering, sorting, search, pagination, field selection, and eager loading — all via query parameters.', tag: 'spatie-query-builder'},
-  {cmd: 'softdelete', title: 'Soft Deletes', desc: 'Automatic trash, restore, and force-delete endpoints. Full soft-delete lifecycle managed for you.', tag: 'data-safety'},
-  {cmd: 'nested', title: 'Nested Operations', desc: 'Multi-model atomic transactions in a single request. Create parent and children together safely.', tag: 'transactions'},
-  {cmd: 'audit', title: 'Audit Trail', desc: 'Automatic change logging for compliance. Track who changed what and when across all resources.', tag: 'compliance'},
   {cmd: 'tenant', title: 'Multi-Tenancy', desc: 'Organization-based data isolation built-in. Subdomain or route-prefix resolution strategies.', tag: 'saas-ready'},
   {cmd: 'generate', title: 'Interactive Generator', desc: 'Scaffold models, migrations, factories, policies, and scopes with a single command in any framework.', tag: 'dx'},
-  {cmd: 'blueprint', title: 'Blueprint Generator', desc: 'Define your permission matrix in YAML and generate fully working policies, tests, and seeders — zero AI tokens, fully deterministic.', tag: 'zero-token'},
-  {cmd: 'postman', title: 'Postman Export', desc: 'Auto-generate a complete Postman Collection v2.1 for all your registered API endpoints.', tag: 'api-testing'},
-  {cmd: 'invite', title: 'Invitation System', desc: 'Built-in user invitation workflow with email and acceptance flow. Perfect for team-based apps.', tag: 'collaboration'},
 ];
 
-type ServerFramework = 'laravel' | 'rails' | 'adonis';
-type ClientFramework = 'react' | 'react-native';
+// ─── Types & Data ───────────────────────────────────────────────────────────
 
+type ServerFramework = 'laravel' | 'rails' | 'adonis';
 type TabDef<T extends string> = {id: T; label: string; icon: React.FC};
 
 const SERVER_TABS: TabDef<ServerFramework>[] = [
@@ -44,10 +33,43 @@ const SERVER_TABS: TabDef<ServerFramework>[] = [
   {id: 'adonis', label: 'AdonisJS', icon: AdonisIcon},
 ];
 
-const CLIENT_TABS: TabDef<ClientFramework>[] = [
-  {id: 'react', label: 'React', icon: ReactIcon},
-  {id: 'react-native', label: 'React Native', icon: ReactIcon},
+const INSTALL_COMMANDS: Record<ServerFramework, string> = {
+  laravel: 'composer require startsoft/lumina',
+  rails: 'bundle add lumina-rails',
+  adonis: 'npm install @startsoft/lumina-adonis',
+};
+
+const MODEL_FILES: Record<ServerFramework, string> = {
+  laravel: 'app/Models/Post.php',
+  rails: 'app/models/post.rb',
+  adonis: 'app/models/post.ts',
+};
+
+const CONFIG_FILES: Record<ServerFramework, string> = {
+  laravel: 'config/lumina.php',
+  rails: 'config/initializers/lumina.rb',
+  adonis: 'config/lumina.ts',
+};
+
+// ─── Blueprint Output Tabs ──────────────────────────────────────────────────
+
+type BlueprintTab = 'policy' | 'model' | 'migration' | 'tests';
+
+const BLUEPRINT_TABS: {id: BlueprintTab; label: string}[] = [
+  {id: 'policy', label: 'Policy'},
+  {id: 'model', label: 'Model'},
+  {id: 'migration', label: 'Migration'},
+  {id: 'tests', label: 'Tests'},
 ];
+
+const BLUEPRINT_FILES: Record<BlueprintTab, string> = {
+  policy: 'app/Policies/ContractPolicy.php',
+  model: 'app/Models/Contract.php',
+  migration: 'database/migrations/create_contracts_table.php',
+  tests: 'tests/Model/ContractTest.php',
+};
+
+// ─── Reusable Components ────────────────────────────────────────────────────
 
 function TerminalDots() {
   return (
@@ -55,358 +77,6 @@ function TerminalDots() {
       <span style={{background: '#ff5f57'}} />
       <span style={{background: '#febc2e'}} />
       <span style={{background: '#28c840'}} />
-    </div>
-  );
-}
-
-function TypedText({text, speed = 40, delay = 0}: {text: string; speed?: number; delay?: number}) {
-  const [displayed, setDisplayed] = useState('');
-  const [started, setStarted] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setStarted(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-
-  useEffect(() => {
-    if (!started) return;
-    if (displayed.length < text.length) {
-      const t = setTimeout(() => setDisplayed(text.slice(0, displayed.length + 1)), speed);
-      return () => clearTimeout(t);
-    }
-  }, [displayed, text, speed, started]);
-
-  return (
-    <>
-      {displayed}
-      {displayed.length < text.length && <span className="lp-cursor" />}
-    </>
-  );
-}
-
-function FwTabButton<T extends string>({tab, active, onChange}: {tab: TabDef<T>; active: boolean; onChange: () => void}) {
-  return (
-    <button
-      className={`lp-fw-tab ${active ? 'lp-fw-tab--active' : ''}`}
-      onClick={onChange}>
-      <tab.icon />
-      {tab.label}
-    </button>
-  );
-}
-
-function FrameworkTabs<T extends string>({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: TabDef<T>[];
-  active: T;
-  onChange: (id: T) => void;
-}) {
-  return (
-    <div className="lp-fw-tabs">
-      {tabs.map((tab) => (
-        <FwTabButton key={tab.id} tab={tab} active={active === tab.id} onChange={() => onChange(tab.id)} />
-      ))}
-    </div>
-  );
-}
-
-function TabbedCodeWindow<T extends string>({
-  tabs,
-  active,
-  onChange,
-  fileName,
-  children,
-}: {
-  tabs: TabDef<T>[];
-  active: T;
-  onChange: (id: T) => void;
-  fileName: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="lp-code-window">
-      <div className="lp-code-window-bar">
-        <TerminalDots />
-        <span className="lp-file-name">{fileName}</span>
-      </div>
-      <FrameworkTabs tabs={tabs} active={active} onChange={onChange} />
-      <div className="lp-code-content">{children}</div>
-    </div>
-  );
-}
-
-const GEN_COLUMNS = [
-  {name: 'name', type: 'string', rule: 'required'},
-  {name: 'price', type: 'decimal(10,2)', rule: 'required'},
-  {name: 'description', type: 'text', rule: 'nullable'},
-  {name: 'category_id', type: 'foreignId', rule: 'constrained'},
-  {name: 'is_active', type: 'boolean', rule: 'default:true'},
-];
-
-const GEN_FILES: Record<ServerFramework, {path: string; label: string}[]> = {
-  laravel: [
-    {path: 'app/Models/Product.php', label: 'Model'},
-    {path: 'database/migrations/create_products_table.php', label: 'Migration'},
-    {path: 'database/factories/ProductFactory.php', label: 'Factory'},
-    {path: 'app/Policies/ProductPolicy.php', label: 'Policy'},
-    {path: 'config/lumina.php', label: 'Config updated'},
-  ],
-  rails: [
-    {path: 'app/models/product.rb', label: 'Model'},
-    {path: 'db/migrate/create_products.rb', label: 'Migration'},
-    {path: 'spec/factories/products.rb', label: 'Factory'},
-    {path: 'app/policies/product_policy.rb', label: 'Policy'},
-    {path: 'config/initializers/lumina.rb', label: 'Config updated'},
-  ],
-  adonis: [
-    {path: 'app/models/product.ts', label: 'Model'},
-    {path: 'database/migrations/create_products.ts', label: 'Migration'},
-    {path: 'database/factories/product_factory.ts', label: 'Factory'},
-    {path: 'app/policies/product_policy.ts', label: 'Policy'},
-    {path: 'config/lumina.ts', label: 'Config updated'},
-  ],
-};
-
-const GEN_COMMANDS: Record<ServerFramework, string> = {
-  laravel: 'php artisan lumina:generate',
-  rails: 'rails lumina:generate',
-  adonis: 'node ace lumina:generate',
-};
-
-const GEN_RESOURCE_OPTIONS = [
-  'Model (with migration and factory)',
-  'Policy',
-  'Scope',
-  'Full resource (all files)',
-];
-
-type GenScreen = 0 | 1 | 2 | 3 | 4 | 5;
-
-function GeneratorAnimation() {
-  const [screen, setScreen] = useState<GenScreen>(0);
-  const [optionSelected, setOptionSelected] = useState(false);
-  const [typedName, setTypedName] = useState('');
-  const [visibleColumns, setVisibleColumns] = useState(0);
-  const [fileProgress, setFileProgress] = useState(0);
-  const [showDone, setShowDone] = useState(false);
-  const [genFramework, setGenFramework] = useState<ServerFramework>('laravel');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const hasStartedRef = useRef(false);
-  const cycleRef = useRef(0);
-
-  const modelName = 'Product';
-  const frameworks: ServerFramework[] = ['laravel', 'rails', 'adonis'];
-
-  const clearTimers = useCallback(() => {
-    timersRef.current.forEach(clearTimeout);
-    timersRef.current = [];
-  }, []);
-
-  const schedule = useCallback((fn: () => void, ms: number) => {
-    const t = setTimeout(fn, ms);
-    timersRef.current.push(t);
-    return t;
-  }, []);
-
-  const runAnimation = useCallback(() => {
-    clearTimers();
-    const fw = frameworks[cycleRef.current % frameworks.length];
-    cycleRef.current++;
-    setGenFramework(fw);
-    setScreen(0);
-    setOptionSelected(false);
-    setTypedName('');
-    setVisibleColumns(0);
-    setFileProgress(0);
-    setShowDone(false);
-
-    const files = GEN_FILES[fw];
-    let t = 0;
-
-    t += 800;
-    schedule(() => setScreen(1), t);
-    t += 1000;
-    schedule(() => setOptionSelected(true), t);
-    t += 1000;
-    schedule(() => setScreen(2), t);
-    for (let i = 0; i < modelName.length; i++) {
-      schedule(() => setTypedName(modelName.slice(0, i + 1)), t + 400 + i * 100);
-    }
-    t += 400 + modelName.length * 100;
-    t += 600;
-    schedule(() => setScreen(3), t);
-    for (let i = 0; i < GEN_COLUMNS.length; i++) {
-      schedule(() => setVisibleColumns(i + 1), t + 400 + i * 400);
-    }
-    t += 400 + GEN_COLUMNS.length * 400;
-    t += 600;
-    schedule(() => setScreen(4), t);
-    t += 1400;
-    schedule(() => setScreen(5), t);
-    for (let i = 0; i < files.length; i++) {
-      schedule(() => setFileProgress(i + 1), t + 600 + i * 400);
-    }
-    t += 600 + files.length * 400;
-    t += 400;
-    schedule(() => setShowDone(true), t);
-    t += 3500;
-    schedule(() => runAnimation(), t);
-  }, [clearTimers, schedule]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasStartedRef.current) {
-          hasStartedRef.current = true;
-          runAnimation();
-        }
-      },
-      {threshold: 0.3},
-    );
-    observer.observe(el);
-
-    return () => {
-      observer.disconnect();
-      clearTimers();
-    };
-  }, [runAnimation, clearTimers]);
-
-  const files = GEN_FILES[genFramework];
-  const cmd = GEN_COMMANDS[genFramework];
-  const fwLabel = SERVER_TABS.find((t) => t.id === genFramework)?.label ?? genFramework;
-
-  return (
-    <div ref={containerRef} className="lp-generator-window">
-      <div className="lp-gen-bar">
-        <TerminalDots />
-        <span className="lp-term-title">{cmd}</span>
-        <span className="lp-gen-fw-badge">{fwLabel}</span>
-      </div>
-      <div className="lp-gen-stage">
-        {screen === 0 && (
-          <div className="lp-gen-screen lp-gen-fade" key={`s0-${genFramework}`}>
-            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
-            <div className="lp-gen-waiting">
-              <span className="lp-output-highlight">{'\u25B6'}</span> Initializing generator...
-            </div>
-          </div>
-        )}
-
-        {screen === 1 && (
-          <div className="lp-gen-screen lp-gen-fade" key={`s1-${genFramework}`}>
-            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
-            <div className="lp-gen-label">What type of resource would you like to generate?</div>
-            <div className="lp-gen-options">
-              {GEN_RESOURCE_OPTIONS.map((opt, i) => (
-                <div
-                  key={i}
-                  className={`lp-gen-option ${i === 0 && optionSelected ? 'lp-gen-option--selected' : ''}`}>
-                  <span className="lp-gen-radio">{i === 0 && optionSelected ? '\u25C9' : '\u25CB'}</span>
-                  {opt}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {screen === 2 && (
-          <div className="lp-gen-screen lp-gen-fade" key={`s2-${genFramework}`}>
-            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
-            <div className="lp-gen-breadcrumb">
-              <span className="lp-output-success">{'\u2713'}</span> Type: <span className="lp-output-highlight">Model (with migration and factory)</span>
-            </div>
-            <div className="lp-gen-label">What is the resource name?</div>
-            <div className="lp-gen-box">
-              {typedName}
-              {typedName.length < modelName.length && <span className="lp-cursor" />}
-            </div>
-          </div>
-        )}
-
-        {screen === 3 && (
-          <div className="lp-gen-screen lp-gen-fade" key={`s3-${genFramework}`}>
-            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
-            <div className="lp-gen-breadcrumb">
-              <span className="lp-output-success">{'\u2713'}</span> Type: <span className="lp-output-highlight">Model</span>
-              {'  '}
-              <span className="lp-output-success">{'\u2713'}</span> Name: <span className="lp-output-highlight">Product</span>
-            </div>
-            <div className="lp-gen-label">Define your columns:</div>
-            <div className="lp-gen-columns">
-              <div className="lp-gen-col-header">
-                <span className="lp-gen-col-name">Column</span>
-                <span className="lp-gen-col-type">Type</span>
-                <span className="lp-gen-col-rule">Modifier</span>
-              </div>
-              {GEN_COLUMNS.slice(0, visibleColumns).map((col, i) => (
-                <div key={i} className="lp-gen-col-row lp-gen-fade">
-                  <span className="lp-gen-col-name"><span className="lp-output-success">+</span> {col.name}</span>
-                  <span className="lp-gen-col-type lp-output-highlight">{col.type}</span>
-                  <span className="lp-gen-col-rule lp-cm">{col.rule}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {screen === 4 && (
-          <div className="lp-gen-screen lp-gen-fade" key={`s4-${genFramework}`}>
-            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
-            <div className="lp-gen-breadcrumb">
-              <span className="lp-output-success">{'\u2713'}</span> Type: <span className="lp-output-highlight">Model</span>
-              {'  '}
-              <span className="lp-output-success">{'\u2713'}</span> Name: <span className="lp-output-highlight">Product</span>
-              {'  '}
-              <span className="lp-output-success">{'\u2713'}</span> Columns: <span className="lp-output-highlight">5 defined</span>
-            </div>
-            <div className="lp-gen-label">Additional options:</div>
-            <div className="lp-gen-toggles">
-              <div className="lp-gen-toggle"><span className="lp-gen-check lp-output-success">[x]</span> Add soft deletes</div>
-              <div className="lp-gen-toggle"><span className="lp-gen-check lp-output-success">[x]</span> Generate policy</div>
-              <div className="lp-gen-toggle"><span className="lp-gen-check lp-output-success">[x]</span> Generate factory &amp; seeder</div>
-              <div className="lp-gen-toggle"><span className="lp-gen-check lp-cm">[x]</span> Add audit trail</div>
-            </div>
-          </div>
-        )}
-
-        {screen === 5 && (
-          <div className="lp-gen-screen lp-gen-fade" key={`s5-${genFramework}`}>
-            <div className="lp-gen-header">+ Lumina :: Generate :: Scaffold your resources +</div>
-            <div className="lp-gen-status-line">
-              <span className="lp-output-highlight">{'\u25B6'}</span> Scaffolding <span className="lp-output-highlight">Product</span> resource...
-            </div>
-            <div className="lp-gen-divider" />
-            {files.slice(0, fileProgress).map((f, i) => (
-              <div key={i} className="lp-gen-file-line lp-gen-fade">
-                <span className="lp-output-success">{'\u2713'}</span>{' '}
-                <span className="lp-cm">{f.label.padEnd(16)}</span>{' '}
-                <span style={{color: '#c9d1d9'}}>{f.path}</span>
-              </div>
-            ))}
-            {showDone && (
-              <>
-                <div className="lp-gen-divider" />
-                <div className="lp-gen-done lp-gen-fade">
-                  <span className="lp-output-success">{'\u2713'} Done!</span> Product resource scaffolded successfully.
-                </div>
-                <div className="lp-gen-done-sub lp-gen-fade">
-                  5 files created.{' '}
-                  {genFramework === 'laravel' && <span>Run <span className="lp-output-highlight">php artisan migrate</span> to apply.</span>}
-                  {genFramework === 'rails' && <span>Run <span className="lp-output-highlight">rails db:migrate</span> to apply.</span>}
-                  {genFramework === 'adonis' && <span>Run <span className="lp-output-highlight">node ace migration:run</span> to apply.</span>}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -425,24 +95,357 @@ function CopyButton({text}: {text: string}) {
   );
 }
 
-const INSTALL_COMMANDS: Record<ServerFramework, string> = {
-  laravel: 'composer require startsoft/lumina',
-  rails: 'bundle add lumina-rails',
-  adonis: 'npm install @startsoft/lumina-adonis',
-};
-
-const CLIENT_INSTALL_COMMANDS: Record<ClientFramework, string> = {
-  react: 'npm install @startsoft/lumina @tanstack/react-query axios',
-  'react-native': 'npm install @startsoft/lumina-rn @tanstack/react-query axios',
-};
-
-function InstallTab<T extends string>({tab, active, onClick}: {tab: TabDef<T>; active: boolean; onClick: () => void}) {
+function FadeIn({children, delay = 0, className}: {children: ReactNode; delay?: number; className?: string}) {
   return (
-    <button className={`lp-install-tab ${active ? 'lp-install-tab--active' : ''}`} onClick={onClick}>
-      <tab.icon /> {tab.label}
+    <motion.div
+      initial={{opacity: 0, y: 30}}
+      whileInView={{opacity: 1, y: 0}}
+      viewport={{once: true, margin: '-80px'}}
+      transition={{duration: 0.6, delay, ease: [0.22, 1, 0.36, 1]}}
+      className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+function FwTabButton<T extends string>({tab, active, onChange}: {tab: TabDef<T>; active: boolean; onChange: () => void}) {
+  return (
+    <button className={`lp-fw-tab ${active ? 'lp-fw-tab--active' : ''}`} onClick={onChange}>
+      <tab.icon />
+      {tab.label}
     </button>
   );
 }
+
+function FrameworkTabs<T extends string>({tabs, active, onChange}: {tabs: TabDef<T>[]; active: T; onChange: (id: T) => void}) {
+  return (
+    <div className="lp-fw-tabs">
+      {tabs.map((tab) => (
+        <FwTabButton key={tab.id} tab={tab} active={active === tab.id} onChange={() => onChange(tab.id)} />
+      ))}
+    </div>
+  );
+}
+
+function TabbedCodeWindow<T extends string>({
+  tabs, active, onChange, fileName, children,
+}: {tabs: TabDef<T>[]; active: T; onChange: (id: T) => void; fileName: string; children: ReactNode}) {
+  return (
+    <div className="lp-code-window">
+      <div className="lp-code-window-bar">
+        <TerminalDots />
+        <span className="lp-file-name">{fileName}</span>
+      </div>
+      <FrameworkTabs tabs={tabs} active={active} onChange={onChange} />
+      <div className="lp-code-content">{children}</div>
+    </div>
+  );
+}
+
+// ─── Animated Terminal (Aceternity-inspired, no sound) ──────────────────────
+
+const TERMINAL_COMMANDS = [
+  'php artisan lumina:blueprint',
+  'php artisan test --filter=ContractTest',
+  'curl -s -X POST localhost:8000/api/acme/contracts -H "Authorization: Bearer $TOKEN" -d \'{"title":"NDA Agreement","status":"draft"}\' | jq .data',
+  'curl -s localhost:8000/api/acme/contracts -H "Authorization: Bearer $TOKEN" | jq .data',
+];
+
+const TERMINAL_OUTPUTS: Record<number, string[]> = {
+  0: [
+    '  Lumina Blueprint v1.0',
+    '  Processing contracts.yaml...',
+    '',
+    '  \u2713 Model        app/Models/Contract.php',
+    '  \u2713 Migration    create_contracts_table.php',
+    '  \u2713 Factory      ContractFactory.php',
+    '  \u2713 Policy       ContractPolicy.php',
+    '  \u2713 Tests        ContractTest.php',
+    '  \u2713 Seeder       UserRoleSeeder.php',
+    '',
+    '  Done. 6 files generated from YAML — zero AI tokens used.',
+  ],
+  1: [
+    '',
+    '  PASS  Tests\\Model\\ContractTest',
+    '  \u2713 admin can access all contract fields',
+    '  \u2713 viewer cannot see total_value',
+    '  \u2713 analyst gets 403 on restricted fields',
+    '  \u2713 owner can perform all CRUD actions',
+    '',
+    '  Tests:    4 passed',
+    '  Time:     0.42s',
+  ],
+  2: [
+    '  {',
+    '    "id": 1,',
+    '    "title": "NDA Agreement",',
+    '    "status": "draft",',
+    '    "organization_id": 42,',
+    '    "created_at": "2026-03-14T10:32:00Z"',
+    '  }',
+  ],
+  3: [
+    '  [',
+    '    {',
+    '      "id": 1,',
+    '      "title": "NDA Agreement",',
+    '      "status": "draft"',
+    '    },',
+    '    {',
+    '      "id": 2,',
+    '      "title": "SaaS License v2",',
+    '      "status": "active"',
+    '    }',
+    '  ]',
+  ],
+};
+
+function AnimatedTerminal() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, {once: true, margin: '-100px'});
+  const [lines, setLines] = useState<{type: 'prompt' | 'command' | 'output'; text: string}[]>([]);
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const animationRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearTimers = useCallback(() => {
+    animationRef.current.forEach(clearTimeout);
+    animationRef.current = [];
+  }, []);
+
+  const schedule = useCallback((fn: () => void, ms: number) => {
+    const t = setTimeout(fn, ms);
+    animationRef.current.push(t);
+    return t;
+  }, []);
+
+  // Cursor blink
+  useEffect(() => {
+    const interval = setInterval(() => setCursorVisible((v) => !v), 530);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-scroll
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    }
+  }, [lines]);
+
+  // Main animation
+  useEffect(() => {
+    if (!isInView) return;
+
+    let t = 400; // initial delay
+    const delayBetweenCommands = 900;
+
+    TERMINAL_COMMANDS.forEach((cmd, cmdIndex) => {
+      // Faster typing for long commands (curl)
+      const typingSpeed = cmd.length > 60 ? 18 : 40;
+
+      // Show prompt
+      const promptTime = t;
+      schedule(() => {
+        setIsTyping(true);
+        setLines((prev) => [...prev, {type: 'prompt', text: ''}]);
+      }, promptTime);
+      t += 200;
+
+      // Type command character by character
+      for (let i = 0; i < cmd.length; i++) {
+        const charTime = t + i * typingSpeed;
+        const partial = cmd.slice(0, i + 1);
+        schedule(() => {
+          setLines((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = {type: 'command', text: partial};
+            return next;
+          });
+        }, charTime);
+      }
+      t += cmd.length * typingSpeed + 300;
+
+      // "Press enter" — stop typing cursor
+      schedule(() => setIsTyping(false), t);
+      t += 200;
+
+      // Show output lines one by one
+      const outputs = TERMINAL_OUTPUTS[cmdIndex] || [];
+      outputs.forEach((outputLine, lineIndex) => {
+        const lineTime = t + lineIndex * 60;
+        schedule(() => {
+          setLines((prev) => [...prev, {type: 'output', text: outputLine}]);
+        }, lineTime);
+      });
+      t += outputs.length * 60 + delayBetweenCommands;
+    });
+
+    return () => clearTimers();
+  }, [isInView, clearTimers, schedule]);
+
+  return (
+    <div ref={containerRef} className="lp-animated-terminal">
+      <div className="lp-at-bar">
+        <TerminalDots />
+        <span className="lp-at-title">terminal</span>
+      </div>
+      <div ref={contentRef} className="lp-at-content">
+        {lines.map((line, i) => {
+          const isLastLine = i === lines.length - 1;
+          const showCursor = isLastLine && isTyping && cursorVisible;
+
+          if (line.type === 'prompt' || line.type === 'command') {
+            return (
+              <div key={i} className="lp-at-line">
+                <span className="lp-at-prompt">$</span>
+                <span className="lp-at-cmd">{highlightBash(line.text)}</span>
+                {showCursor && <span className="lp-at-cursor" />}
+              </div>
+            );
+          }
+
+          return (
+            <div key={i} className="lp-at-line lp-at-output">
+              {highlightOutput(line.text)}
+            </div>
+          );
+        })}
+        {lines.length === 0 && (
+          <div className="lp-at-line">
+            <span className="lp-at-prompt">$</span>
+            {cursorVisible && <span className="lp-at-cursor" />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function highlightBash(text: string): ReactNode {
+  // Tokenize with regex to handle quoted strings, flags, pipe, etc.
+  const tokens = text.match(/"[^"]*"|'[^']*'|-[A-Za-z]+|--[A-Za-z-]+|\||\$[A-Z_]+|[^\s]+|\s+/g) || [];
+  let isFirstWord = true;
+  let isSecondWord = false;
+
+  return tokens.map((token, i) => {
+    // Skip whitespace tokens but render them
+    if (/^\s+$/.test(token)) return <span key={i}>{token}</span>;
+
+    // First non-whitespace = binary
+    if (isFirstWord) {
+      isFirstWord = false;
+      isSecondWord = true;
+      return <span key={i} className="lp-at-binary">{token}</span>;
+    }
+
+    // Second non-whitespace = subcommand (for artisan-style commands)
+    if (isSecondWord) {
+      isSecondWord = false;
+      // For curl, the second token is a flag (-s, -X), not a subcommand
+      if (token.startsWith('-')) {
+        return <span key={i} className="lp-at-flag">{token}</span>;
+      }
+      return <span key={i} className="lp-at-subcmd">{token}</span>;
+    }
+
+    // Pipe operator
+    if (token === '|') return <span key={i} className="lp-at-dim">{token}</span>;
+
+    // After pipe, next word is a binary (jq, grep, etc.)
+    if (i > 0 && tokens[i - 1]?.trim() === '|') {
+      return <span key={i} className="lp-at-binary">{token}</span>;
+    }
+
+    // Flags: -s, -X, -H, -d, --filter
+    if (/^-/.test(token)) return <span key={i} className="lp-at-flag">{token}</span>;
+
+    // Quoted strings
+    if (/^["']/.test(token)) return <span key={i} className="lp-at-string">{token}</span>;
+
+    // Environment variables
+    if (/^\$/.test(token)) return <span key={i} className="lp-at-flag">{token}</span>;
+
+    // URLs / paths
+    if (token.includes('localhost') || token.includes('/')) {
+      return <span key={i} className="lp-at-url">{token}</span>;
+    }
+
+    return <span key={i}>{token}</span>;
+  });
+}
+
+function highlightJson(text: string): ReactNode {
+  // JSON syntax highlighting — jq-style colors
+  const trimmed = text.trimStart();
+  const indent = text.slice(0, text.length - trimmed.length);
+
+  // Brackets / braces only
+  if (/^[\[\]{}],?$/.test(trimmed)) {
+    return <><span>{indent}</span><span className="lp-at-json-brace">{trimmed}</span></>;
+  }
+
+  // Key-value pairs: "key": value
+  const kvMatch = trimmed.match(/^("[\w_]+")\s*:\s*(.+)$/);
+  if (kvMatch) {
+    const [, key, rawVal] = kvMatch;
+    const valTrimmed = rawVal.replace(/,\s*$/, '');
+    const trailing = rawVal.endsWith(',') ? ',' : '';
+
+    let valNode: ReactNode;
+    if (/^"/.test(valTrimmed)) {
+      valNode = <span className="lp-at-json-string">{valTrimmed}</span>;
+    } else if (/^\d/.test(valTrimmed)) {
+      valNode = <span className="lp-at-json-number">{valTrimmed}</span>;
+    } else {
+      valNode = <span>{valTrimmed}</span>;
+    }
+
+    return (
+      <>
+        <span>{indent}</span>
+        <span className="lp-at-json-key">{key}</span>
+        <span className="lp-at-json-brace">: </span>
+        {valNode}
+        <span className="lp-at-json-brace">{trailing}</span>
+      </>
+    );
+  }
+
+  return text;
+}
+
+function highlightOutput(text: string): ReactNode {
+  // JSON detection — lines starting with { [ or containing "key":
+  const trimmed = text.trimStart();
+  if (/^[\[\]{}]/.test(trimmed) || /^\s*"[\w_]+"/.test(text)) {
+    return highlightJson(text);
+  }
+
+  if (text.includes('\u2713')) {
+    const parts = text.split('\u2713');
+    return (
+      <>
+        {parts[0]}
+        <span className="lp-at-success">{'\u2713'}</span>
+        {parts[1]}
+      </>
+    );
+  }
+  if (text.includes('PASS')) {
+    return <span className="lp-at-success">{text}</span>;
+  }
+  if (text.includes('Tests:') || text.includes('Time:')) {
+    return <span className="lp-at-dim">{text}</span>;
+  }
+  if (text.includes('Done.') || text.includes('zero AI tokens')) {
+    return <span className="lp-at-highlight">{text}</span>;
+  }
+  return text;
+}
+
+// ─── Model Code Components (kept from original) ────────────────────────────
 
 function LaravelModelCode() {
   return (
@@ -484,11 +487,8 @@ function RailsModelCode() {
       <span className="lp-line"> </span>
       <span className="lp-line">  <span className="lp-fn">has_discard</span></span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-fn">lumina_validation_rules</span>(</span>
-      <span className="lp-line">    <span className="lp-var">title:</span>  <span className="lp-str">'required|string|max:255'</span>,</span>
-      <span className="lp-line">    <span className="lp-var">body:</span>   <span className="lp-str">'required|string'</span>,</span>
-      <span className="lp-line">    <span className="lp-var">status:</span> <span className="lp-str">'in:draft,published'</span></span>
-      <span className="lp-line">  )</span>
+      <span className="lp-line">  <span className="lp-fn">validates</span> <span className="lp-var">:title</span>,  <span className="lp-var">length:</span> {'{'} <span className="lp-var">maximum:</span> <span className="lp-num">255</span> {'}'}, <span className="lp-var">allow_nil:</span> <span className="lp-kw">true</span></span>
+      <span className="lp-line">  <span className="lp-fn">validates</span> <span className="lp-var">:status</span>, <span className="lp-var">inclusion:</span> {'{'} <span className="lp-var">in:</span> <span className="lp-str">%w[draft published]</span> {'}'}, <span className="lp-var">allow_nil:</span> <span className="lp-kw">true</span></span>
       <span className="lp-line"> </span>
       <span className="lp-line">  <span className="lp-fn">lumina_filters</span>  <span className="lp-var">:status</span>, <span className="lp-var">:user_id</span></span>
       <span className="lp-line">  <span className="lp-fn">lumina_sorts</span>    <span className="lp-var">:created_at</span>, <span className="lp-var">:title</span></span>
@@ -566,507 +566,520 @@ function AdonisConfigCode() {
   );
 }
 
-function LaravelPolicyCode() {
+// ─── Blueprint Generated Code Components ────────────────────────────────────
+
+function BlueprintPolicyCode() {
   return (
     <>
-      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span></span>
+      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">ContractPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span></span>
       <span className="lp-line">{'{'}</span>
-      <span className="lp-line">    <span className="lp-cm">{"// Convention-based CRUD authorization:"}</span></span>
-      <span className="lp-line">    <span className="lp-cm">{"//   viewAny  → checks \"posts.index\""}</span></span>
-      <span className="lp-line">    <span className="lp-cm">{"//   create   → checks \"posts.store\""}</span></span>
-      <span className="lp-line">    <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
-      <span className="lp-line">    <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
-      <span className="lp-line"> </span>
-      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenAttributesForShow</span>(<span className="lp-var">?Authenticatable</span> <span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">permittedAttributesForShow</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
       <span className="lp-line">    {'{'}</span>
-      <span className="lp-line">        <span className="lp-kw">if</span> (!<span className="lp-var">$user</span>?-&gt;<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
-      <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>];</span>
+      <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'admin'</span>)) {'{'}</span>
+      <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'*'</span>];</span>
       <span className="lp-line">        {'}'}</span>
-      <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
+      <span className="lp-line">        <span className="lp-kw">return</span> [<span className="lp-str">'id'</span>, <span className="lp-str">'title'</span>, <span className="lp-str">'status'</span>];</span>
+      <span className="lp-line">    {'}'}</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">permittedAttributesForCreate</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+      <span className="lp-line">    {'{'}</span>
+      <span className="lp-line">        <span className="lp-kw">return</span> [<span className="lp-str">'title'</span>, <span className="lp-str">'total_value'</span>, <span className="lp-str">'status'</span>];</span>
+      <span className="lp-line">    {'}'}</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">permittedAttributesForUpdate</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
+      <span className="lp-line">    {'{'}</span>
+      <span className="lp-line">        <span className="lp-kw">return</span> [<span className="lp-str">'title'</span>, <span className="lp-str">'status'</span>];</span>
       <span className="lp-line">    {'}'}</span>
       <span className="lp-line">{'}'}</span>
     </>
   );
 }
 
-function RailsPolicyCode() {
+function BlueprintModelCode() {
   return (
     <>
-      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-op">&lt;</span> <span className="lp-cn">Lumina::ResourcePolicy</span></span>
-      <span className="lp-line">  <span className="lp-cm"># Convention-based CRUD authorization:</span></span>
-      <span className="lp-line">  <span className="lp-cm">#   viewAny  → checks "posts.index"</span></span>
-      <span className="lp-line">  <span className="lp-cm">#   create   → checks "posts.store"</span></span>
-      <span className="lp-line">  <span className="lp-cm">#   update   → checks "posts.update"</span></span>
-      <span className="lp-line">  <span className="lp-cm">#   delete   → checks "posts.destroy"</span></span>
+      <span className="lp-line"><span className="lp-kw">&lt;?php</span></span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">def</span> <span className="lp-fn">hidden_attributes_for_show</span>(<span className="lp-var">user</span>)</span>
-      <span className="lp-line">    <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>] <span className="lp-kw">unless</span> <span className="lp-var">user</span>&.<span className="lp-fn">has_permission?</span>(<span className="lp-str">'posts.*'</span>)</span>
-      <span className="lp-line">    []</span>
-      <span className="lp-line">  <span className="lp-kw">end</span></span>
-      <span className="lp-line"><span className="lp-kw">end</span></span>
+      <span className="lp-line"><span className="lp-kw">namespace</span> App\Models;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">use</span> Illuminate\Database\Eloquent\<span className="lp-cn">Model</span>;</span>
+      <span className="lp-line"><span className="lp-kw">use</span> Illuminate\Database\Eloquent\<span className="lp-cn">SoftDeletes</span>;</span>
+      <span className="lp-line"><span className="lp-kw">use</span> Lumina\LaravelApi\Traits\<span className="lp-cn">HasValidation</span>;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">Contract</span> <span className="lp-kw">extends</span> <span className="lp-cn">Model</span></span>
+      <span className="lp-line">{'{'}</span>
+      <span className="lp-line">    <span className="lp-kw">use</span> <span className="lp-cn">SoftDeletes</span>, <span className="lp-cn">HasValidation</span>;</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">protected</span> <span className="lp-var">$fillable</span> = [<span className="lp-str">'title'</span>, <span className="lp-str">'total_value'</span>, <span className="lp-str">'status'</span>];</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedFilters</span> = [<span className="lp-str">'status'</span>];</span>
+      <span className="lp-line">    <span className="lp-kw">public static</span> <span className="lp-var">$allowedSorts</span>   = [<span className="lp-str">'created_at'</span>, <span className="lp-str">'title'</span>];</span>
+      <span className="lp-line"> </span>
+      <span className="lp-line">    <span className="lp-kw">protected</span> <span className="lp-var">$validationRules</span> = [</span>
+      <span className="lp-line">        <span className="lp-str">'title'</span>       <span className="lp-op">=&gt;</span> <span className="lp-str">'required|string|max:255'</span>,</span>
+      <span className="lp-line">        <span className="lp-str">'total_value'</span> <span className="lp-op">=&gt;</span> <span className="lp-str">'nullable|decimal:0,2'</span>,</span>
+      <span className="lp-line">        <span className="lp-str">'status'</span>      <span className="lp-op">=&gt;</span> <span className="lp-str">'in:draft,active,expired'</span>,</span>
+      <span className="lp-line">    ];</span>
+      <span className="lp-line">{'}'}</span>
     </>
   );
 }
 
-function AdonisPolicyCode() {
+function BlueprintMigrationCode() {
   return (
     <>
-      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">ResourcePolicy</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina-adonis/policies/resource_policy'</span></span>
+      <span className="lp-line"><span className="lp-kw">&lt;?php</span></span>
       <span className="lp-line"> </span>
-      <span className="lp-line"><span className="lp-kw">export default class</span> <span className="lp-cn">PostPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span> {'{'}</span>
-      <span className="lp-line">  <span className="lp-cm">{"// Convention-based CRUD authorization:"}</span></span>
-      <span className="lp-line">  <span className="lp-cm">{"//   viewAny  → checks \"posts.index\""}</span></span>
-      <span className="lp-line">  <span className="lp-cm">{"//   create   → checks \"posts.store\""}</span></span>
-      <span className="lp-line">  <span className="lp-cm">{"//   update   → checks \"posts.update\""}</span></span>
-      <span className="lp-line">  <span className="lp-cm">{"//   delete   → checks \"posts.destroy\""}</span></span>
-      <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-fn">hiddenAttributesForShow</span>(<span className="lp-var">user</span>: <span className="lp-cn">User</span> | <span className="lp-kw">null</span>): <span className="lp-cn">string</span>[] {'{'}</span>
-      <span className="lp-line">    <span className="lp-kw">if</span> (!<span className="lp-var">user</span>?.<span className="lp-fn">hasPermission</span>(<span className="lp-str">'posts.*'</span>)) {'{'}</span>
-      <span className="lp-line">      <span className="lp-kw">return</span> [<span className="lp-str">'internal_notes'</span>, <span className="lp-str">'revenue'</span>]</span>
+      <span className="lp-line"><span className="lp-kw">return new class extends</span> <span className="lp-cn">Migration</span></span>
+      <span className="lp-line">{'{'}</span>
+      <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">up</span>(): <span className="lp-cn">void</span></span>
+      <span className="lp-line">    {'{'}</span>
+      <span className="lp-line">        <span className="lp-cn">Schema</span>::<span className="lp-fn">create</span>(<span className="lp-str">'contracts'</span>, <span className="lp-kw">function</span> (<span className="lp-cn">Blueprint</span> <span className="lp-var">$table</span>) {'{'}</span>
+      <span className="lp-line">            <span className="lp-var">$table</span>-&gt;<span className="lp-fn">id</span>();</span>
+      <span className="lp-line">            <span className="lp-var">$table</span>-&gt;<span className="lp-fn">string</span>(<span className="lp-str">'title'</span>);</span>
+      <span className="lp-line">            <span className="lp-var">$table</span>-&gt;<span className="lp-fn">decimal</span>(<span className="lp-str">'total_value'</span>, <span className="lp-num">10</span>, <span className="lp-num">2</span>)-&gt;<span className="lp-fn">nullable</span>();</span>
+      <span className="lp-line">            <span className="lp-var">$table</span>-&gt;<span className="lp-fn">string</span>(<span className="lp-str">'status'</span>)-&gt;<span className="lp-fn">default</span>(<span className="lp-str">'draft'</span>);</span>
+      <span className="lp-line">            <span className="lp-var">$table</span>-&gt;<span className="lp-fn">timestamps</span>();</span>
+      <span className="lp-line">            <span className="lp-var">$table</span>-&gt;<span className="lp-fn">softDeletes</span>();</span>
+      <span className="lp-line">        {'}'});</span>
       <span className="lp-line">    {'}'}</span>
-      <span className="lp-line">    <span className="lp-kw">return</span> []</span>
-      <span className="lp-line">  {'}'}</span>
-      <span className="lp-line">{'}'}</span>
+      <span className="lp-line">{'}'};
+</span>
     </>
   );
 }
 
-function ReactClientCode() {
+function BlueprintTestCode() {
   return (
     <>
-      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-fn">useModelIndex</span>, <span className="lp-fn">useModelStore</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina'</span></span>
+      <span className="lp-line"><span className="lp-fn">it</span>(<span className="lp-str">'shows only permitted fields for viewer'</span>, <span className="lp-kw">function</span> () {'{'}</span>
+      <span className="lp-line">    <span className="lp-var">$user</span> = <span className="lp-fn">createUserWithRole</span>(<span className="lp-str">'viewer'</span>, <span className="lp-var">$org</span>);</span>
+      <span className="lp-line">    <span className="lp-var">$contract</span> = <span className="lp-cn">Contract</span>::<span className="lp-fn">factory</span>()-&gt;<span className="lp-fn">create</span>();</span>
       <span className="lp-line"> </span>
-      <span className="lp-line"><span className="lp-kw">function</span> <span className="lp-cn">PostsList</span>() {'{'}</span>
-      <span className="lp-line">  <span className="lp-kw">const</span> {'{'} <span className="lp-var">data</span>, <span className="lp-var">isLoading</span> {'}'} = <span className="lp-fn">useModelIndex</span>(<span className="lp-str">'posts'</span>, {'{'}</span>
-      <span className="lp-line">    <span className="lp-var">sort</span>: <span className="lp-str">'-created_at'</span>,</span>
-      <span className="lp-line">    <span className="lp-var">includes</span>: [<span className="lp-str">'user'</span>],</span>
-      <span className="lp-line">    <span className="lp-var">perPage</span>: <span className="lp-num">20</span>,</span>
-      <span className="lp-line">  {'}'})</span>
+      <span className="lp-line">    <span className="lp-var">$response</span> = <span className="lp-var">$this</span>-&gt;<span className="lp-fn">actingAs</span>(<span className="lp-var">$user</span>)</span>
+      <span className="lp-line">        -&gt;<span className="lp-fn">getJson</span>(<span className="lp-str">"/api/{'{'}<span className="lp-var">$org-&gt;slug</span>{'}'}/contracts/{'{'}<span className="lp-var">$contract-&gt;id</span>{'}'}"</span>);</span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">const</span> <span className="lp-var">createPost</span> = <span className="lp-fn">useModelStore</span>(<span className="lp-str">'posts'</span>)</span>
+      <span className="lp-line">    <span className="lp-var">$response</span>-&gt;<span className="lp-fn">assertOk</span>();</span>
+      <span className="lp-line">    <span className="lp-var">$data</span> = <span className="lp-var">$response</span>-&gt;<span className="lp-fn">json</span>();</span>
+      <span className="lp-line">    <span className="lp-var">$this</span>-&gt;<span className="lp-fn">assertArrayHasKey</span>(<span className="lp-str">'title'</span>, <span className="lp-var">$data</span>);</span>
+      <span className="lp-line">    <span className="lp-var">$this</span>-&gt;<span className="lp-fn">assertArrayNotHasKey</span>(<span className="lp-str">'total_value'</span>, <span className="lp-var">$data</span>); <span className="lp-cm">// hidden!</span></span>
+      <span className="lp-line">{'}'});</span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">if</span> (<span className="lp-var">isLoading</span>) <span className="lp-kw">return</span> &lt;<span className="lp-cn">Spinner</span> /&gt;</span>
+      <span className="lp-line"><span className="lp-fn">it</span>(<span className="lp-str">'returns 403 when viewer tries to update'</span>, <span className="lp-kw">function</span> () {'{'}</span>
+      <span className="lp-line">    <span className="lp-var">$user</span> = <span className="lp-fn">createUserWithRole</span>(<span className="lp-str">'viewer'</span>, <span className="lp-var">$org</span>);</span>
+      <span className="lp-line">    <span className="lp-var">$contract</span> = <span className="lp-cn">Contract</span>::<span className="lp-fn">factory</span>()-&gt;<span className="lp-fn">create</span>();</span>
       <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">return</span> (</span>
-      <span className="lp-line">    &lt;<span className="lp-cn">div</span>&gt;</span>
-      <span className="lp-line">      {'{'}data?.data.<span className="lp-fn">map</span>(post =&gt; (</span>
-      <span className="lp-line">        &lt;<span className="lp-cn">Card</span> <span className="lp-var">key</span>={'{'}post.id{'}'}&gt;{'{'}post.title{'}'}&lt;/<span className="lp-cn">Card</span>&gt;</span>
-      <span className="lp-line">      )){'}'}</span>
-      <span className="lp-line">    &lt;/<span className="lp-cn">div</span>&gt;</span>
-      <span className="lp-line">  )</span>
-      <span className="lp-line">{'}'}</span>
+      <span className="lp-line">    <span className="lp-var">$this</span>-&gt;<span className="lp-fn">actingAs</span>(<span className="lp-var">$user</span>)</span>
+      <span className="lp-line">        -&gt;<span className="lp-fn">putJson</span>(<span className="lp-str">"/api/contracts/{'{'}<span className="lp-var">$contract-&gt;id</span>{'}'}"</span>, [<span className="lp-str">'title'</span> <span className="lp-op">=&gt;</span> <span className="lp-str">'x'</span>])</span>
+      <span className="lp-line">        -&gt;<span className="lp-fn">assertForbidden</span>();</span>
+      <span className="lp-line">{'}'});</span>
     </>
   );
 }
 
-function ReactNativeClientCode() {
-  return (
-    <>
-      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-cn">View</span>, <span className="lp-cn">FlatList</span>, <span className="lp-cn">Text</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'react-native'</span></span>
-      <span className="lp-line"><span className="lp-kw">import</span> {'{'} <span className="lp-fn">useModelIndex</span>, <span className="lp-fn">useModelStore</span> {'}'} <span className="lp-kw">from</span> <span className="lp-str">'@startsoft/lumina-rn'</span></span>
-      <span className="lp-line"> </span>
-      <span className="lp-line"><span className="lp-kw">function</span> <span className="lp-cn">PostsScreen</span>() {'{'}</span>
-      <span className="lp-line">  <span className="lp-kw">const</span> {'{'} <span className="lp-var">data</span>, <span className="lp-var">isLoading</span> {'}'} = <span className="lp-fn">useModelIndex</span>(<span className="lp-str">'posts'</span>, {'{'}</span>
-      <span className="lp-line">    <span className="lp-var">sort</span>: <span className="lp-str">'-created_at'</span>,</span>
-      <span className="lp-line">    <span className="lp-var">perPage</span>: <span className="lp-num">20</span>,</span>
-      <span className="lp-line">  {'}'})</span>
-      <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">const</span> <span className="lp-var">createPost</span> = <span className="lp-fn">useModelStore</span>(<span className="lp-str">'posts'</span>)</span>
-      <span className="lp-line"> </span>
-      <span className="lp-line">  <span className="lp-kw">return</span> (</span>
-      <span className="lp-line">    &lt;<span className="lp-cn">View</span> <span className="lp-var">style</span>={'{'}{'{'} <span className="lp-var">flex</span>: <span className="lp-num">1</span> {'}'}{'}'}{'&gt;'}</span>
-      <span className="lp-line">      &lt;<span className="lp-cn">FlatList</span></span>
-      <span className="lp-line">        <span className="lp-var">data</span>={'{'}data?.data{'}'}</span>
-      <span className="lp-line">        <span className="lp-var">keyExtractor</span>={'{'}<span className="lp-var">item</span> =&gt; String(item.id){'}'}</span>
-      <span className="lp-line">        <span className="lp-var">renderItem</span>={'{'}({'{'} <span className="lp-var">item</span> {'}'}) =&gt; (</span>
-      <span className="lp-line">          &lt;<span className="lp-cn">Text</span>&gt;{'{'}item.title{'}'}&lt;/<span className="lp-cn">Text</span>&gt;</span>
-      <span className="lp-line">        ){'}'}</span>
-      <span className="lp-line">      /&gt;</span>
-      <span className="lp-line">    &lt;/<span className="lp-cn">View</span>&gt;</span>
-      <span className="lp-line">  )</span>
-      <span className="lp-line">{'}'}</span>
-    </>
-  );
-}
-
-const CONFIG_FILES: Record<ServerFramework, string> = {
-  laravel: 'config/lumina.php',
-  rails: 'config/initializers/lumina.rb',
-  adonis: 'config/lumina.ts',
-};
-
-const POLICY_FILES: Record<ServerFramework, string> = {
-  laravel: 'app/Policies/PostPolicy.php',
-  rails: 'app/policies/post_policy.rb',
-  adonis: 'app/policies/post_policy.ts',
-};
-
-const MODEL_FILES: Record<ServerFramework, string> = {
-  laravel: 'app/Models/Post.php',
-  rails: 'app/models/post.rb',
-  adonis: 'app/models/post.ts',
-};
+// ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function Home(): ReactNode {
   const [serverFw, setServerFw] = useState<ServerFramework>('laravel');
-  const [clientFw, setClientFw] = useState<ClientFramework>('react');
-  const [policyFw, setPolicyFw] = useState<ServerFramework>('laravel');
   const [installFw, setInstallFw] = useState<ServerFramework>('laravel');
-  const [installClientFw, setInstallClientFw] = useState<ClientFramework>('react');
+  const [blueprintTab, setBlueprintTab] = useState<BlueprintTab>('policy');
 
   return (
     <Layout
-      title="Automatic REST API for Laravel, Rails & AdonisJS"
-      description="Lumina — automatic REST API generation for Laravel, Rails, and AdonisJS. React & React Native client included. Built for the AI era.">
+      title="The AI-Ready API Framework"
+      description="Lumina — the AI-ready API framework. Define permissions in YAML, generate fully working policies, tests, and seeders. Zero AI tokens. Laravel, Rails, AdonisJS.">
       <div className="lp">
-        {/* Hero */}
+        {/* ═══════════ HERO ═══════════ */}
         <section className="lp-hero">
-          <div className="lp-ascii-logo" aria-label="LUMINA">
-            {ASCII_LINES.map((line, i) => (
-              <span key={i} style={{display: 'block', color: line.color}}>{line.text}</span>
-            ))}
-          </div>
+          <div className="lp-hero-grid" />
+          <div className="lp-hero-glow" />
 
-          <div className="lp-hero-prompt">
-            <span className="lp-prompt-symbol">&#10095;</span>
-            <span className="lp-prompt-path">~/my-app</span>
-            <span className="lp-prompt-text">
-              <TypedText text="composer require startsoft/lumina" speed={35} delay={500} />
-            </span>
-          </div>
+          <div className="lp-hero-inner">
+            <div className="lp-hero-content">
+              <motion.div
+                className="lp-badge"
+                initial={{opacity: 0, scale: 0.9}}
+                animate={{opacity: 1, scale: 1}}
+                transition={{duration: 0.5, delay: 0.1}}>
+                AI-READY FRAMEWORK
+              </motion.div>
 
-          <div className="lp-hero-output">
-            <div className="lp-output-line">
-              <span className="lp-output-success">&#10003;</span> Package installed successfully.
-            </div>
-            <div className="lp-output-line">
-              <span className="lp-output-highlight">&#9656;</span> Your REST API is ready.
-            </div>
-          </div>
+              <motion.h1
+                className="lp-hero-headline"
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.6, delay: 0.2}}>
+                Ship APIs in minutes.{' '}
+                <span className="lp-hero-accent">Zero AI tokens.</span>
+              </motion.h1>
 
-          <h1 className="lp-hero-tagline">Built for the AI era.</h1>
-          <p className="lp-hero-description">
-            The API framework AI agents can scaffold, understand, and extend.
-            Automatic REST generation for <strong>Laravel</strong>, <strong>Rails</strong>, and <strong>AdonisJS</strong> with
-            first-class <strong>React</strong> and <strong>React Native</strong> clients — designed to be prompted, not hand-coded.
-          </p>
+              <motion.p
+                className="lp-hero-sub"
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.6, delay: 0.35}}>
+                Define your permission matrix in YAML. Generate fully working policies, tests, and seeders — deterministically. For Laravel, Rails, and AdonisJS.
+              </motion.p>
 
-          <div className="lp-framework-logos">
-            <span className="lp-fw-logo"><LaravelIcon /> Laravel</span>
-            <span className="lp-fw-logo-sep">/</span>
-            <span className="lp-fw-logo"><RailsIcon /> Rails</span>
-            <span className="lp-fw-logo-sep">/</span>
-            <span className="lp-fw-logo"><AdonisIcon /> AdonisJS</span>
-            <span className="lp-fw-logo-sep">+</span>
-            <span className="lp-fw-logo"><ReactIcon /> React</span>
-            <span className="lp-fw-logo-sep">/</span>
-            <span className="lp-fw-logo"><ReactIcon /> React Native</span>
-          </div>
-
-          <div className="lp-hero-buttons">
-            <Link className="lp-btn-primary" to="/docs/server/getting-started">
-              &#9656; Get Started
-            </Link>
-            <Link className="lp-btn-secondary" href={GITHUB_URL}>
-              &#9733; Star on GitHub
-            </Link>
-          </div>
-        </section>
-
-        {/* Install */}
-        <section className="lp-install-section">
-          <div className="lp-install-group">
-            <div className="lp-install-label">Server</div>
-            <div className="lp-install-tabs">
-              {SERVER_TABS.map((t) => (
-                <InstallTab key={t.id} tab={t} active={installFw === t.id} onClick={() => setInstallFw(t.id)} />
-              ))}
-            </div>
-            <div className="lp-install-box">
-              <span className="lp-dollar">$</span>
-              <code>{INSTALL_COMMANDS[installFw]}</code>
-              <CopyButton text={INSTALL_COMMANDS[installFw]} />
-            </div>
-          </div>
-          <div className="lp-install-group" style={{marginTop: 24}}>
-            <div className="lp-install-label">Client</div>
-            <div className="lp-install-tabs">
-              {CLIENT_TABS.map((t) => (
-                <InstallTab key={t.id} tab={t} active={installClientFw === t.id} onClick={() => setInstallClientFw(t.id)} />
-              ))}
-            </div>
-            <div className="lp-install-box">
-              <span className="lp-dollar">$</span>
-              <code>{CLIENT_INSTALL_COMMANDS[installClientFw]}</code>
-              <CopyButton text={CLIENT_INSTALL_COMMANDS[installClientFw]} />
-            </div>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section className="lp-features-section" id="features">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">lumina --list-features</span>
-            </div>
-            <h2>Everything you need, built-in</h2>
-            <p>Ship your API in minutes, not days — in any framework</p>
-          </div>
-          <div className="lp-features-grid">
-            {FEATURES.map((f) => (
-              <div className="lp-feature-card" key={f.cmd}>
-                <div className="lp-card-prompt">
-                  <span className="lp-chevron">&#10095;</span>
-                  <span className="lp-cmd">{f.cmd}</span>
+              <motion.div
+                className="lp-hero-install"
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.6, delay: 0.5}}>
+                <div className="lp-install-tabs-mini">
+                  {SERVER_TABS.map((t) => (
+                    <button
+                      key={t.id}
+                      className={`lp-install-tab-mini ${installFw === t.id ? 'lp-install-tab-mini--active' : ''}`}
+                      onClick={() => setInstallFw(t.id)}>
+                      <t.icon /> {t.label}
+                    </button>
+                  ))}
                 </div>
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
-                <span className="lp-feature-tag">{f.tag}</span>
+                <div className="lp-install-bar">
+                  <span className="lp-dollar">$</span>
+                  <code>{INSTALL_COMMANDS[installFw]}</code>
+                  <CopyButton text={INSTALL_COMMANDS[installFw]} />
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="lp-hero-buttons"
+                initial={{opacity: 0, y: 20}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.6, delay: 0.6}}>
+                <Link className="lp-btn-primary" to="/docs/server/getting-started">
+                  Get Started
+                </Link>
+                <Link className="lp-btn-secondary" href={GITHUB_URL}>
+                  &#9733; Star on GitHub
+                </Link>
+              </motion.div>
+            </div>
+
+            <motion.div
+              className="lp-hero-terminal"
+              initial={{opacity: 0, x: 40}}
+              animate={{opacity: 1, x: 0}}
+              transition={{duration: 0.8, delay: 0.4}}>
+              <AnimatedTerminal />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ═══════════ AI CHAT SIMULATION ═══════════ */}
+        <section className="lp-aichat-section">
+          <FadeIn>
+            <div className="lp-section-header">
+              <span className="lp-section-badge">AI-POWERED</span>
+              <h2>Describe what you need. AI writes the Blueprint.</h2>
+              <p>Use Claude or any AI agent to generate production-ready Blueprint YAML from plain English.</p>
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={0.15}>
+            <div className="lp-aichat-window lp-glow">
+              <div className="lp-aichat-bar">
+                <TerminalDots />
+                <span className="lp-aichat-bar-title">Claude Code</span>
               </div>
+              <div className="lp-aichat-messages">
+                {/* User message 1 */}
+                <motion.div
+                  className="lp-aichat-msg lp-aichat-msg--user"
+                  initial={{opacity: 0, y: 16}}
+                  whileInView={{opacity: 1, y: 0}}
+                  viewport={{once: true, margin: '-60px'}}
+                  transition={{duration: 0.5, delay: 0.3}}>
+                  Create a Contract model with title, total_value, and status. Admins can create all fields but only update title and status. Viewers can only see id, title, and status.
+                </motion.div>
+
+                {/* AI response with YAML */}
+                <motion.div
+                  className="lp-aichat-msg lp-aichat-msg--ai"
+                  initial={{opacity: 0, y: 16}}
+                  whileInView={{opacity: 1, y: 0}}
+                  viewport={{once: true, margin: '-60px'}}
+                  transition={{duration: 0.5, delay: 0.7}}>
+                  <div className="lp-aichat-msg-header">
+                    <span className="lp-aichat-avatar">&#9672;</span>
+                    Claude
+                  </div>
+                  <div className="lp-aichat-skill">using skill <code>blueprint-creator</code></div>
+                  Here&apos;s the Blueprint for your Contract resource:
+                  <div className="lp-aichat-yaml">
+                    <span className="lp-line"><span className="lp-var">model</span>: <span className="lp-cn">Contract</span></span>
+                    <span className="lp-line"><span className="lp-var">columns</span>:</span>
+                    <span className="lp-line">  <span className="lp-var">title</span>:     {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">filterable</span>: <span className="lp-kw">true</span> {'}'}</span>
+                    <span className="lp-line">  <span className="lp-var">total_value</span>: {'{'} <span className="lp-var">type</span>: <span className="lp-str">decimal</span>, <span className="lp-var">nullable</span>: <span className="lp-kw">true</span> {'}'}</span>
+                    <span className="lp-line">  <span className="lp-var">status</span>:    {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">default</span>: <span className="lp-str">"draft"</span> {'}'}</span>
+                    <span className="lp-line"> </span>
+                    <span className="lp-line"><span className="lp-var">permissions</span>:</span>
+                    <span className="lp-line">  <span className="lp-var">admin</span>:</span>
+                    <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>, <span className="lp-str">store</span>, <span className="lp-str">update</span>, <span className="lp-str">destroy</span>]</span>
+                    <span className="lp-line">    <span className="lp-var">show_fields</span>: <span className="lp-str">"*"</span></span>
+                    <span className="lp-line">    <span className="lp-var">create_fields</span>: [<span className="lp-str">title</span>, <span className="lp-str">total_value</span>, <span className="lp-str">status</span>]</span>
+                    <span className="lp-line">    <span className="lp-var">update_fields</span>: [<span className="lp-str">title</span>, <span className="lp-str">status</span>]</span>
+                    <span className="lp-line">  <span className="lp-var">viewer</span>:</span>
+                    <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>]</span>
+                    <span className="lp-line">    <span className="lp-var">show_fields</span>: [<span className="lp-str">id</span>, <span className="lp-str">title</span>, <span className="lp-str">status</span>]</span>
+                  </div>
+                </motion.div>
+
+                {/* User message 2 */}
+                <motion.div
+                  className="lp-aichat-msg lp-aichat-msg--user"
+                  initial={{opacity: 0, y: 16}}
+                  whileInView={{opacity: 1, y: 0}}
+                  viewport={{once: true, margin: '-60px'}}
+                  transition={{duration: 0.5, delay: 1.1}}>
+                  Now generate the code.
+                </motion.div>
+
+                {/* AI response - running blueprint */}
+                <motion.div
+                  className="lp-aichat-msg lp-aichat-msg--ai"
+                  initial={{opacity: 0, y: 16}}
+                  whileInView={{opacity: 1, y: 0}}
+                  viewport={{once: true, margin: '-60px'}}
+                  transition={{duration: 0.5, delay: 1.5}}>
+                  <div className="lp-aichat-msg-header">
+                    <span className="lp-aichat-avatar">&#9672;</span>
+                    Claude
+                  </div>
+                  Running <code className="lp-aichat-inline-code">php artisan lumina:blueprint</code> for you:
+                  <div className="lp-aichat-terminal">
+                    <span className="lp-line"><span className="lp-cm">$</span> php artisan lumina:blueprint</span>
+                    <span className="lp-line"> </span>
+                    <span className="lp-line">  Lumina Blueprint v1.0</span>
+                    <span className="lp-line">  Processing contracts.yaml...</span>
+                    <span className="lp-line"> </span>
+                    <span className="lp-line">  <span className="lp-at-success">✓</span> Model        app/Models/Contract.php</span>
+                    <span className="lp-line">  <span className="lp-at-success">✓</span> Migration    create_contracts_table.php</span>
+                    <span className="lp-line">  <span className="lp-at-success">✓</span> Factory      ContractFactory.php</span>
+                    <span className="lp-line">  <span className="lp-at-success">✓</span> Policy       ContractPolicy.php</span>
+                    <span className="lp-line">  <span className="lp-at-success">✓</span> Tests        ContractTest.php</span>
+                    <span className="lp-line">  <span className="lp-at-success">✓</span> Seeder       UserRoleSeeder.php</span>
+                    <span className="lp-line"> </span>
+                    <span className="lp-line">  <span className="lp-at-highlight">Done. 6 files generated from YAML — zero AI tokens used.</span></span>
+                  </div>
+                  <div className="lp-aichat-meta">
+                    <a href="#blueprint">See the generated code ↓</a>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </FadeIn>
+        </section>
+
+        {/* ═══════════ BLUEPRINT SHOWCASE ═══════════ */}
+        <section className="lp-blueprint-section" id="blueprint">
+          <FadeIn>
+            <div className="lp-section-header">
+              <span className="lp-section-badge">ZERO-TOKEN GENERATION</span>
+              <h2>From YAML to production code</h2>
+              <p>Define your permission matrix once. Generate policies, tests, and seeders — fully deterministic, no AI needed.</p>
+            </div>
+          </FadeIn>
+
+          <div className="lp-blueprint-showcase">
+            <FadeIn delay={0.1} className="lp-blueprint-col">
+              <div className="lp-code-window lp-glow">
+                <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">.lumina/blueprints/contracts.yaml</span></div>
+                <div className="lp-code-content">
+                  <span className="lp-line"><span className="lp-var">model</span>: <span className="lp-cn">Contract</span></span>
+                  <span className="lp-line"><span className="lp-var">columns</span>:</span>
+                  <span className="lp-line">  <span className="lp-var">title</span>:     {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">filterable</span>: <span className="lp-kw">true</span> {'}'}</span>
+                  <span className="lp-line">  <span className="lp-var">total_value</span>: {'{'} <span className="lp-var">type</span>: <span className="lp-str">decimal</span>, <span className="lp-var">nullable</span>: <span className="lp-kw">true</span> {'}'}</span>
+                  <span className="lp-line">  <span className="lp-var">status</span>:    {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">default</span>: <span className="lp-str">"draft"</span> {'}'}</span>
+                  <span className="lp-line"> </span>
+                  <span className="lp-line"><span className="lp-var">permissions</span>:</span>
+                  <span className="lp-line">  <span className="lp-var">admin</span>:</span>
+                  <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>, <span className="lp-str">store</span>, <span className="lp-str">update</span>, <span className="lp-str">destroy</span>]</span>
+                  <span className="lp-line">    <span className="lp-var">show_fields</span>: <span className="lp-str">"*"</span></span>
+                  <span className="lp-line">    <span className="lp-var">create_fields</span>: [<span className="lp-str">title</span>, <span className="lp-str">total_value</span>, <span className="lp-str">status</span>]</span>
+                  <span className="lp-line">    <span className="lp-var">update_fields</span>: [<span className="lp-str">title</span>, <span className="lp-str">status</span>]</span>
+                  <span className="lp-line">  <span className="lp-var">viewer</span>:</span>
+                  <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>]</span>
+                  <span className="lp-line">    <span className="lp-var">show_fields</span>: [<span className="lp-str">id</span>, <span className="lp-str">title</span>, <span className="lp-str">status</span>]</span>
+                </div>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={0.2} className="lp-blueprint-arrow-col">
+              <div className="lp-blueprint-flow">
+                <code>lumina:blueprint</code>
+                <span className="lp-flow-arrow">&#8594;</span>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={0.3} className="lp-blueprint-col">
+              <div className="lp-code-window lp-glow">
+                <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">{BLUEPRINT_FILES[blueprintTab]}</span></div>
+                <div className="lp-bp-tabs">
+                  {BLUEPRINT_TABS.map((tab) => (
+                    <button
+                      key={tab.id}
+                      className={`lp-bp-tab ${blueprintTab === tab.id ? 'lp-bp-tab--active' : ''}`}
+                      onClick={() => setBlueprintTab(tab.id)}>
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="lp-code-content">
+                  {blueprintTab === 'policy' && <BlueprintPolicyCode />}
+                  {blueprintTab === 'model' && <BlueprintModelCode />}
+                  {blueprintTab === 'migration' && <BlueprintMigrationCode />}
+                  {blueprintTab === 'tests' && <BlueprintTestCode />}
+                </div>
+              </div>
+            </FadeIn>
+          </div>
+
+          <FadeIn delay={0.4}>
+            <section className="lp-metrics">
+              <div className="lp-metric">
+                <span className="lp-metric-value">0</span>
+                <span className="lp-metric-label">AI tokens used</span>
+              </div>
+              <div className="lp-metric-sep" />
+              <div className="lp-metric">
+                <span className="lp-metric-value">15+</span>
+                <span className="lp-metric-label">Built-in features</span>
+              </div>
+              <div className="lp-metric-sep" />
+              <div className="lp-metric">
+                <span className="lp-metric-value">3</span>
+                <span className="lp-metric-label">Frameworks supported</span>
+              </div>
+            </section>
+            <div className="lp-blueprint-files">
+              <span className="lp-bf-item"><span className="lp-bf-check">&#10003;</span> Model</span>
+              <span className="lp-bf-item"><span className="lp-bf-check">&#10003;</span> Migration</span>
+              <span className="lp-bf-item"><span className="lp-bf-check">&#10003;</span> Factory</span>
+              <span className="lp-bf-item"><span className="lp-bf-check">&#10003;</span> Policy</span>
+              <span className="lp-bf-item"><span className="lp-bf-check">&#10003;</span> Tests</span>
+              <span className="lp-bf-item"><span className="lp-bf-check">&#10003;</span> Seeders</span>
+            </div>
+            <div className="lp-blueprint-link">
+              All from YAML — zero AI tokens.{' '}
+              <Link to="/docs/server/blueprint">Learn more &#8594;</Link>
+            </div>
+          </FadeIn>
+        </section>
+
+        {/* ═══════════ FEATURES ═══════════ */}
+        <section className="lp-features-section" id="features">
+          <FadeIn>
+            <div className="lp-section-header">
+              <span className="lp-section-badge">BUILT-IN</span>
+              <h2>Everything you need, out of the box</h2>
+              <p>Ship your API in minutes, not days — in any framework</p>
+            </div>
+          </FadeIn>
+
+          <div className="lp-features-grid">
+            {FEATURES.map((f, i) => (
+              <FadeIn key={f.cmd} delay={i * 0.05}>
+                <div className="lp-feature-card">
+                  <div className="lp-card-prompt">
+                    <span className="lp-chevron">&#10095;</span>
+                    <span className="lp-cmd">{f.cmd}</span>
+                  </div>
+                  <h3>{f.title}</h3>
+                  <p>{f.desc}</p>
+                  <span className="lp-feature-tag">{f.tag}</span>
+                </div>
+              </FadeIn>
             ))}
           </div>
         </section>
 
-        {/* Code Demo — Server Model */}
+        {/* ═══════════ CODE DEMO ═══════════ */}
         <section className="lp-demo-section" id="demo">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">cat models/Post</span>
+          <FadeIn>
+            <div className="lp-section-header">
+              <span className="lp-section-badge">HOW IT WORKS</span>
+              <h2>Register a model, get a full API</h2>
+              <p>Same concept, your preferred language</p>
             </div>
-            <h2>Register a model, get a full API</h2>
-            <p>Same concept, your preferred language</p>
-          </div>
+          </FadeIn>
 
-          <TabbedCodeWindow
-            tabs={SERVER_TABS}
-            active={serverFw}
-            onChange={setServerFw}
-            fileName={MODEL_FILES[serverFw]}>
-            {serverFw === 'laravel' && <LaravelModelCode />}
-            {serverFw === 'rails' && <RailsModelCode />}
-            {serverFw === 'adonis' && <AdonisModelCode />}
-          </TabbedCodeWindow>
+          <FadeIn delay={0.1}>
+            <div className="lp-demo-steps">
+              <div className="lp-step">
+                <div className="lp-step-badge">1</div>
+                <span>Define your model</span>
+              </div>
+              <div className="lp-step-arrow">&#8594;</div>
+              <div className="lp-step">
+                <div className="lp-step-badge">2</div>
+                <span>Register in config</span>
+              </div>
+              <div className="lp-step-arrow">&#8594;</div>
+              <div className="lp-step">
+                <div className="lp-step-badge">3</div>
+                <span>Full REST API</span>
+              </div>
+            </div>
+          </FadeIn>
 
-          <TabbedCodeWindow
-            tabs={SERVER_TABS}
-            active={serverFw}
-            onChange={setServerFw}
-            fileName={CONFIG_FILES[serverFw]}>
-            {serverFw === 'laravel' && <LaravelConfigCode />}
-            {serverFw === 'rails' && <RailsConfigCode />}
-            {serverFw === 'adonis' && <AdonisConfigCode />}
-          </TabbedCodeWindow>
+          <FadeIn delay={0.2}>
+            <TabbedCodeWindow
+              tabs={SERVER_TABS}
+              active={serverFw}
+              onChange={setServerFw}
+              fileName={MODEL_FILES[serverFw]}>
+              {serverFw === 'laravel' && <LaravelModelCode />}
+              {serverFw === 'rails' && <RailsModelCode />}
+              {serverFw === 'adonis' && <AdonisModelCode />}
+            </TabbedCodeWindow>
+          </FadeIn>
+
+          <FadeIn delay={0.3}>
+            <TabbedCodeWindow
+              tabs={SERVER_TABS}
+              active={serverFw}
+              onChange={setServerFw}
+              fileName={CONFIG_FILES[serverFw]}>
+              {serverFw === 'laravel' && <LaravelConfigCode />}
+              {serverFw === 'rails' && <RailsConfigCode />}
+              {serverFw === 'adonis' && <AdonisConfigCode />}
+            </TabbedCodeWindow>
+          </FadeIn>
+
+          <FadeIn delay={0.4}>
+            <div className="lp-endpoints-terminal">
+              <div className="lp-term-bar"><TerminalDots /><span className="lp-term-title">auto-generated endpoints</span></div>
+              <div className="lp-endpoints-content">
+                <div className="lp-ep"><span className="lp-m lp-get">GET</span><span className="lp-ep-path">/api/posts</span><span className="lp-ep-desc"># list with filters, sorts, includes</span></div>
+                <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/posts</span><span className="lp-ep-desc"># create with validation</span></div>
+                <div className="lp-ep"><span className="lp-m lp-get">GET</span><span className="lp-ep-path">/api/posts/{'{id}'}</span><span className="lp-ep-desc"># show with relationships</span></div>
+                <div className="lp-ep"><span className="lp-m lp-put">PUT</span><span className="lp-ep-path">/api/posts/{'{id}'}</span><span className="lp-ep-desc"># update with validation</span></div>
+                <div className="lp-ep"><span className="lp-m lp-del">DELETE</span><span className="lp-ep-path">/api/posts/{'{id}'}</span><span className="lp-ep-desc"># soft delete</span></div>
+                <hr className="lp-ep-sep" />
+                <div className="lp-ep"><span className="lp-m lp-get">GET</span><span className="lp-ep-path">/api/posts/trashed</span><span className="lp-ep-desc"># list soft-deleted</span></div>
+                <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/posts/{'{id}'}/restore</span><span className="lp-ep-desc"># restore</span></div>
+                <div className="lp-ep"><span className="lp-m lp-del">DELETE</span><span className="lp-ep-path">/api/posts/{'{id}'}/force-delete</span><span className="lp-ep-desc"># permanent delete</span></div>
+              </div>
+            </div>
+          </FadeIn>
         </section>
 
-        {/* Endpoints */}
-        <section className="lp-endpoints-section" id="endpoints">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">lumina routes --resource=posts</span>
-            </div>
-            <h2>Auto-generated endpoints</h2>
-            <p>All of these come free, for every registered model — regardless of framework</p>
-          </div>
-          <div className="lp-endpoints-terminal">
-            <div className="lp-term-bar"><TerminalDots /><span className="lp-term-title">api routes</span></div>
-            <div className="lp-endpoints-content">
-              <div className="lp-ep"><span className="lp-m lp-get">GET</span><span className="lp-ep-path">/api/posts</span><span className="lp-ep-desc"># list with filters, sorts, includes</span></div>
-              <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/posts</span><span className="lp-ep-desc"># create with validation</span></div>
-              <div className="lp-ep"><span className="lp-m lp-get">GET</span><span className="lp-ep-path">/api/posts/{'{id}'}</span><span className="lp-ep-desc"># show with relationships</span></div>
-              <div className="lp-ep"><span className="lp-m lp-put">PUT</span><span className="lp-ep-path">/api/posts/{'{id}'}</span><span className="lp-ep-desc"># update with validation</span></div>
-              <div className="lp-ep"><span className="lp-m lp-del">DELETE</span><span className="lp-ep-path">/api/posts/{'{id}'}</span><span className="lp-ep-desc"># soft delete</span></div>
-              <hr className="lp-ep-sep" />
-              <div className="lp-ep"><span className="lp-m lp-get">GET</span><span className="lp-ep-path">/api/posts/trashed</span><span className="lp-ep-desc"># list soft-deleted</span></div>
-              <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/posts/{'{id}'}/restore</span><span className="lp-ep-desc"># restore</span></div>
-              <div className="lp-ep"><span className="lp-m lp-del">DELETE</span><span className="lp-ep-path">/api/posts/{'{id}'}/force-delete</span><span className="lp-ep-desc"># permanent delete</span></div>
-              <hr className="lp-ep-sep" />
-              <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/auth/login</span><span className="lp-ep-desc"># authenticate</span></div>
-              <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/auth/register</span><span className="lp-ep-desc"># register</span></div>
-              <div className="lp-ep"><span className="lp-m lp-post">POST</span><span className="lp-ep-path">/api/auth/logout</span><span className="lp-ep-desc"># logout</span></div>
-            </div>
-          </div>
-        </section>
-
-        {/* Policies */}
-        <section className="lp-demo-section" id="policies">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">cat policies/PostPolicy</span>
-            </div>
-            <h2>Role-based authorization, built-in</h2>
-            <p>Convention-based policies with wildcard permissions and org-scoping</p>
-          </div>
-
-          <TabbedCodeWindow
-            tabs={SERVER_TABS}
-            active={policyFw}
-            onChange={setPolicyFw}
-            fileName={POLICY_FILES[policyFw]}>
-            {policyFw === 'laravel' && <LaravelPolicyCode />}
-            {policyFw === 'rails' && <RailsPolicyCode />}
-            {policyFw === 'adonis' && <AdonisPolicyCode />}
-          </TabbedCodeWindow>
-
-          <div className="lp-code-window" style={{marginTop: 20}}>
-            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">roles &amp; permissions</span></div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-cm"># Permission format: {'{resource}'}.{'{action}'}</span></span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-var">admin</span>    → <span className="lp-str">"*"</span>                 <span className="lp-cm"># full access to everything</span></span>
-              <span className="lp-line"><span className="lp-var">editor</span>   → <span className="lp-str">"posts.*"</span>            <span className="lp-cm"># all actions on posts</span></span>
-              <span className="lp-line"><span className="lp-var">viewer</span>   → <span className="lp-str">"posts.index"</span>, <span className="lp-str">"posts.show"</span>  <span className="lp-cm"># read-only</span></span>
-              <span className="lp-line"><span className="lp-var">writer</span>   → <span className="lp-str">"posts.store"</span>, <span className="lp-str">"posts.update"</span> <span className="lp-cm"># create &amp; edit</span></span>
-            </div>
-          </div>
-        </section>
-
-        {/* Client SDK */}
-        <section className="lp-demo-section" id="client">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">cat components/PostsList</span>
-            </div>
-            <h2>First-class client SDKs</h2>
-            <p>Type-safe hooks for React and React Native — works with any Lumina backend</p>
-          </div>
-
-          <TabbedCodeWindow
-            tabs={CLIENT_TABS}
-            active={clientFw}
-            onChange={setClientFw}
-            fileName={clientFw === 'react' ? 'src/components/PostsList.tsx' : 'src/screens/PostsScreen.tsx'}>
-            {clientFw === 'react' && <ReactClientCode />}
-            {clientFw === 'react-native' && <ReactNativeClientCode />}
-          </TabbedCodeWindow>
-        </section>
-
-        {/* Generator */}
-        <section className="lp-generator-section">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">lumina:generate</span>
-            </div>
-            <h2>Interactive scaffolding</h2>
-            <p>Generate models, migrations, factories, policies, and scopes — in Laravel, Rails, or AdonisJS</p>
-          </div>
-          <GeneratorAnimation />
-        </section>
-
-        {/* Blueprint */}
-        <section className="lp-demo-section" id="blueprint">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">lumina:blueprint</span>
-            </div>
-            <h2>Zero-token code generation</h2>
-            <p>Define your permission matrix in YAML — generate fully working policies, tests, and seeders deterministically</p>
-          </div>
-
-          <div className="lp-code-window">
-            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">.lumina/blueprints/contracts.yaml</span></div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-var">model</span>: <span className="lp-cn">Contract</span></span>
-              <span className="lp-line"><span className="lp-var">columns</span>:</span>
-              <span className="lp-line">  <span className="lp-var">title</span>:     {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">filterable</span>: <span className="lp-kw">true</span> {'}'}</span>
-              <span className="lp-line">  <span className="lp-var">total_value</span>: {'{'} <span className="lp-var">type</span>: <span className="lp-str">decimal</span>, <span className="lp-var">nullable</span>: <span className="lp-kw">true</span> {'}'}</span>
-              <span className="lp-line">  <span className="lp-var">status</span>:    {'{'} <span className="lp-var">type</span>: <span className="lp-str">string</span>, <span className="lp-var">default</span>: <span className="lp-str">"draft"</span> {'}'}</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-var">permissions</span>:</span>
-              <span className="lp-line">  <span className="lp-var">admin</span>:</span>
-              <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>, <span className="lp-str">store</span>, <span className="lp-str">update</span>, <span className="lp-str">destroy</span>]</span>
-              <span className="lp-line">    <span className="lp-var">show_fields</span>: <span className="lp-str">"*"</span></span>
-              <span className="lp-line">    <span className="lp-var">create_fields</span>: <span className="lp-str">"*"</span></span>
-              <span className="lp-line">  <span className="lp-var">viewer</span>:</span>
-              <span className="lp-line">    <span className="lp-var">actions</span>: [<span className="lp-str">index</span>, <span className="lp-str">show</span>]</span>
-              <span className="lp-line">    <span className="lp-var">show_fields</span>: [<span className="lp-str">id</span>, <span className="lp-str">title</span>, <span className="lp-str">status</span>]</span>
-              <span className="lp-line">    <span className="lp-var">hidden_fields</span>: [<span className="lp-str">total_value</span>]</span>
-            </div>
-          </div>
-
-          <div className="lp-blueprint-arrow">
-            <span className="lp-output-highlight">&#9660;</span> <code>php artisan lumina:blueprint</code> <span className="lp-output-highlight">&#9660;</span>
-          </div>
-
-          <div className="lp-code-window">
-            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">app/Policies/ContractPolicy.php</span></div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-kw">class</span> <span className="lp-cn">ContractPolicy</span> <span className="lp-kw">extends</span> <span className="lp-cn">ResourcePolicy</span></span>
-              <span className="lp-line">{'{'}</span>
-              <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">permittedAttributesForShow</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
-              <span className="lp-line">    {'{'}</span>
-              <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'admin'</span>)) {'{'}</span>
-              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'*'</span>];</span>
-              <span className="lp-line">        {'}'}</span>
-              <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'viewer'</span>)) {'{'}</span>
-              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'id'</span>, <span className="lp-str">'title'</span>, <span className="lp-str">'status'</span>];</span>
-              <span className="lp-line">        {'}'}</span>
-              <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
-              <span className="lp-line">    {'}'}</span>
-              <span className="lp-line"> </span>
-              <span className="lp-line">    <span className="lp-kw">public function</span> <span className="lp-fn">hiddenAttributesForShow</span>(<span className="lp-var">$user</span>): <span className="lp-cn">array</span></span>
-              <span className="lp-line">    {'{'}</span>
-              <span className="lp-line">        <span className="lp-kw">if</span> (<span className="lp-var">$this</span>-&gt;<span className="lp-fn">hasRole</span>(<span className="lp-var">$user</span>, <span className="lp-str">'viewer'</span>)) {'{'}</span>
-              <span className="lp-line">            <span className="lp-kw">return</span> [<span className="lp-str">'total_value'</span>];</span>
-              <span className="lp-line">        {'}'}</span>
-              <span className="lp-line">        <span className="lp-kw">return</span> [];</span>
-              <span className="lp-line">    {'}'}</span>
-              <span className="lp-line">{'}'}</span>
-            </div>
-          </div>
-
-          <div className="lp-blueprint-files">
-            <span className="lp-output-success">&#10003;</span> Model + Migration + Factory + Scope + Policy + Tests — all from YAML.{' '}
-            <Link to="/docs/server/blueprint">Learn more →</Link>
-          </div>
-        </section>
-
-        {/* Query Examples */}
-        <section className="lp-demo-section">
-          <div className="lp-section-header">
-            <div className="lp-prompt-line">
-              <span className="lp-prompt-symbol">&#10095;</span>
-              <span className="lp-prompt-text">curl /api/posts?...</span>
-            </div>
-            <h2>Powerful querying, out of the box</h2>
-            <p>Filter, sort, include, search — all via query parameters. Same API surface, every framework.</p>
-          </div>
-          <div className="lp-code-window">
-            <div className="lp-code-window-bar"><TerminalDots /><span className="lp-file-name">terminal</span></div>
-            <div className="lp-code-content">
-              <span className="lp-line"><span className="lp-cm"># Filter by status</span></span>
-              <span className="lp-line"><span className="lp-kw">GET</span> <span className="lp-str">/api/posts?filter[status]=published</span></span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-cm"># Sort descending by date</span></span>
-              <span className="lp-line"><span className="lp-kw">GET</span> <span className="lp-str">/api/posts?sort=-created_at</span></span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-cm"># Eager load relationships</span></span>
-              <span className="lp-line"><span className="lp-kw">GET</span> <span className="lp-str">/api/posts?include=user,comments</span></span>
-              <span className="lp-line"> </span>
-              <span className="lp-line"><span className="lp-cm"># Combine everything</span></span>
-              <span className="lp-line"><span className="lp-kw">GET</span> <span className="lp-str">/api/posts?filter[status]=published&amp;sort=-created_at&amp;include=user&amp;per_page=20</span></span>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
+        {/* ═══════════ CTA ═══════════ */}
         <section className="lp-cta-section">
-          <h2>Stop writing boilerplate.</h2>
-          <p>Install Lumina and ship your API today — in Laravel, Rails, or AdonisJS.</p>
-          <div className="lp-cta-buttons">
-            <Link className="lp-btn-primary" to="/docs/server/getting-started">
-              Read the Docs
-            </Link>
-            <Link className="lp-btn-secondary" href={GITHUB_URL}>
-              &#9733; Star on GitHub
-            </Link>
-          </div>
+          <FadeIn>
+            <h2>Stop writing boilerplate. Start shipping.</h2>
+            <p>Install Lumina and ship your API today — in Laravel, Rails, or AdonisJS.</p>
+            <div className="lp-cta-buttons">
+              <Link className="lp-btn-primary" to="/docs/server/getting-started">
+                Read the Docs
+              </Link>
+              <Link className="lp-btn-secondary" href={GITHUB_URL}>
+                &#9733; Star on GitHub
+              </Link>
+            </div>
+          </FadeIn>
         </section>
       </div>
     </Layout>

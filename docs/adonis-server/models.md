@@ -397,6 +397,47 @@ export default class User extends LuminaModel {
 3. **Policy-level hidden columns** via the `hiddenAttributesForShow()` method on the model's policy: per-user dynamic hiding
 4. **Policy-level whitelist** via the `permittedAttributesForShow()` method: only listed attributes are returned
 
+#### Computed Attributes
+
+You can add virtual (computed) attributes to API responses using Lucid's `@computed()` decorator. These attributes are not database columns — they are calculated at runtime and included in the serialized output.
+
+```ts title="app/models/contract.ts"
+import LuminaModel from '@startsoft/lumina-adonis/models/lumina_model'
+import { column, computed } from '@adonisjs/lucid/orm'
+import { DateTime } from 'luxon'
+
+export default class Contract extends LuminaModel {
+  @column()
+  declare expiryDate: DateTime
+
+  @computed()
+  get daysUntilExpiry() {
+    if (!this.expiryDate) return null
+    return Math.floor(this.expiryDate.diff(DateTime.now(), 'days').days)
+  }
+
+  @computed()
+  get riskScore() {
+    return this.calculateRisk()
+  }
+}
+```
+
+Computed attributes work seamlessly with HidableColumns — they can be hidden via policy just like database columns:
+
+```ts title="app/policies/contract_policy.ts"
+import { ResourcePolicy } from '@startsoft/lumina-adonis/policies/resource_policy'
+
+export default class ContractPolicy extends ResourcePolicy {
+  hiddenAttributesForShow(user: any): string[] {
+    if (this.hasRole(user, 'admin')) return []
+    return ['risk_score'] // Only admins see the risk score
+  }
+}
+```
+
+You can also use `permittedAttributesForShow()` to whitelist which attributes (including computed ones) each role can see. Both blacklist and whitelist policies apply to computed attributes — the controller serializes all responses through `serializeWithHidden` automatically.
+
 ## Registration
 
 Models are registered in `config/lumina.ts`. The key becomes the URL slug and the permission prefix:

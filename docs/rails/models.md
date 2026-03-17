@@ -31,7 +31,7 @@ end
 | `Lumina::HasLumina` | Query builder DSL (filters, sorts, includes, etc.) |
 | `Lumina::HasValidation` | Role-based field allowlisting and validation |
 | `Lumina::HidableColumns` | Dynamic column hiding from API responses |
-| `Lumina::HasAutoScope` | Auto-discovery of `ModelScopes::{Model}Scope` classes |
+| `Lumina::HasAutoScope` | Auto-discovery of `Scopes::{Model}Scope` classes (with `Lumina::ResourceScope` base) |
 
 You no longer need to manually `include` these concerns on every model.
 
@@ -357,22 +357,84 @@ Hidden columns are resolved per request based on the current user. The policy's 
 For policy-based column hiding (showing different fields to different users), see the [Policies](./policies) page.
 :::
 
+#### Computed Attributes
+
+You can add virtual (computed) attributes to API responses by overriding `as_json` on your model. These attributes are not database columns — they are calculated at runtime and included in the serialized output.
+
+```ruby title="app/models/contract.rb"
+class Contract < Lumina::LuminaModel
+  def days_until_expiry
+    return nil unless expiry_date
+    (expiry_date - Date.current).to_i
+  end
+
+  def risk_score
+    calculate_risk
+  end
+
+  def as_json(options = {})
+    super.merge(
+      'days_until_expiry' => days_until_expiry,
+      'risk_score' => risk_score
+    )
+  end
+end
+```
+
+Computed attributes work seamlessly with HidableColumns — they can be hidden via policy just like database columns:
+
+```ruby title="app/policies/contract_policy.rb"
+class ContractPolicy < Lumina::ResourcePolicy
+  def hidden_attributes_for_show(user)
+    return [] if has_role?(user, 'admin')
+    ['risk_score'] # Only admins see the risk score
+  end
+end
+```
+
+You can also use `permitted_attributes_for_show` to whitelist which attributes (including computed ones) each role can see. Both blacklist and whitelist policies apply to computed attributes — the controller's `as_lumina_json` method handles this automatically.
+
 ---
 
 ### HasAutoScope
 
-Automatically applies a global scope to the model based on a naming convention. When this concern is used, Lumina looks for a scope class at `ModelScopes::{ModelName}Scope` and applies it if found. No manual registration is needed.
+Automatically applies a global scope to the model based on a naming convention. When this concern is used, Lumina looks for a scope class at `Scopes::{ModelName}Scope` (or `ModelScopes::{ModelName}Scope` as fallback) and applies it if found. No manual registration is needed.
 
 ```ruby title="app/models/post.rb"
 class Post < Lumina::LuminaModel
-  # HasAutoScope is already included — automatically loads ModelScopes::PostScope (if it exists)
+  # HasAutoScope is already included — automatically loads Scopes::PostScope (if it exists)
 end
 ```
 
-Create the corresponding scope class:
+#### ResourceScope Base Class (Recommended)
 
-```ruby title="app/models/model_scopes/post_scope.rb"
-module ModelScopes
+Extend `Lumina::ResourceScope` to get access to the current `user`, `organization`, and `role` inside your scope. This enables role-based or user-specific query filtering:
+
+```ruby title="app/models/scopes/post_scope.rb"
+module Scopes
+  class PostScope < Lumina::ResourceScope
+    def apply(relation)
+      if role == "viewer"
+        relation.where(published: true)
+      else
+        relation
+      end
+    end
+  end
+end
+```
+
+Available methods inside `apply`:
+- **`user`** — the current authenticated user (or `nil`)
+- **`organization`** — the current organization (or `nil`)
+- **`role`** — shortcut for the user's role slug in the current org (or `nil`)
+
+#### Legacy Class-Method Scopes
+
+You can also use a plain class with `self.apply` as a class method. This approach doesn't provide access to user/org context:
+
+```ruby title="app/models/scopes/post_scope.rb"
+module Scopes
   class PostScope
     def self.apply(scope)
       scope.where(is_visible: true)
@@ -381,7 +443,7 @@ module ModelScopes
 end
 ```
 
-With this in place, every query for `Post` automatically includes `WHERE is_visible = true`. This is useful for soft-visibility flags, status filtering, or any default constraint you want applied globally.
+With either approach, every query for `Post` automatically includes the scope filter. This is useful for soft-visibility flags, status filtering, role-based access, or any default constraint you want applied globally.
 
 :::tip
 The scope is only applied if the class exists. You can safely add the `HasAutoScope` concern to any model without creating the scope class until you need it.

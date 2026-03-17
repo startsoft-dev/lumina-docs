@@ -1,11 +1,21 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useDoc } from '@docusaurus/plugin-content-docs/client';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
-function buildSkillUrl(editUrl: string): string {
-  return editUrl
-    .replace('github.com', 'raw.githubusercontent.com')
-    .replace('/tree/', '/')
-    .replace('/docs/', '/static/skills/');
+/**
+ * Determines the tech stack from the doc's edit URL path.
+ * Returns 'server' | 'adonis-server' | 'rails' | null
+ */
+function getStackFromEditUrl(editUrl: string): string | null {
+  if (editUrl.includes('/docs/adonis-server/')) return 'adonis-server';
+  if (editUrl.includes('/docs/rails/')) return 'rails';
+  // Default to server (Laravel) for all other doc pages
+  if (editUrl.includes('/docs/')) return 'server';
+  return null;
+}
+
+function buildSkillUrl(baseUrl: string, stack: string): string {
+  return `${baseUrl}skills/${stack}/SKILL.md`;
 }
 
 function buildRawUrl(editUrl: string): string {
@@ -40,8 +50,10 @@ export default function AskAI(): React.ReactNode {
   const [question, setQuestion] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { metadata } = useDoc();
+  const baseUrl = useBaseUrl('/');
 
-  const skillUrl = metadata.editUrl ? buildSkillUrl(metadata.editUrl) : '';
+  const stack = metadata.editUrl ? getStackFromEditUrl(metadata.editUrl) : null;
+  const skillUrl = stack ? buildSkillUrl(baseUrl, stack) : '';
   const rawUrl = metadata.editUrl ? buildRawUrl(metadata.editUrl) : '';
 
   const autoResize = useCallback(() => {

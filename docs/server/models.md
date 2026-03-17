@@ -388,6 +388,53 @@ Hidden columns are cached per user for performance. If you change visibility rul
 For policy-based field visibility (showing different fields to different users), see [Policies — Attribute Permissions](./policies#attribute-permissions).
 :::
 
+#### Computed Attributes
+
+You can add virtual (computed) attributes to API responses using Laravel's `$appends` and Accessor pattern. These attributes are not database columns — they are calculated at runtime and included in the serialized output.
+
+```php title="app/Models/Contract.php"
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
+class Contract extends LuminaModel
+{
+    protected $appends = ['days_until_expiry', 'risk_score'];
+
+    protected function daysUntilExpiry(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->expiry_date
+                ? now()->diffInDays($this->expiry_date, false)
+                : null
+        );
+    }
+
+    protected function riskScore(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->calculateRisk()
+        );
+    }
+}
+```
+
+Computed attributes work seamlessly with HidableColumns — they can be hidden via policy just like database columns:
+
+```php title="app/Policies/ContractPolicy.php"
+class ContractPolicy extends ResourcePolicy
+{
+    public function hiddenAttributesForShow(?Authenticatable $user): array
+    {
+        if ($this->hasRole($user, 'admin')) {
+            return [];
+        }
+
+        return ['risk_score']; // Only admins see the risk score
+    }
+}
+```
+
+You can also use `permittedAttributesForShow()` to whitelist which attributes (including computed ones) each role can see.
+
 ---
 
 ### HasAutoScope
