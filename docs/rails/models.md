@@ -357,11 +357,9 @@ Hidden columns are resolved per request based on the current user. The policy's 
 For policy-based column hiding (showing different fields to different users), see the [Policies](./policies) page.
 :::
 
-#### Computed Attributes with `as_lumina_json`
+#### Computed Attributes with `lumina_computed_attributes`
 
-Override `as_lumina_json` in your model to add virtual (computed) attributes to API responses. These attributes are not database columns — they are calculated at runtime and merged into the serialized output.
-
-The current user is resolved automatically from `RequestStore` — no need to pass it as a parameter.
+Override `lumina_computed_attributes` in your model to add virtual (computed) attributes to API responses. These attributes are not database columns — they are calculated at runtime and merged into the serialized output.
 
 ```ruby title="app/models/contract.rb"
 class Contract < Lumina::LuminaModel
@@ -374,18 +372,22 @@ class Contract < Lumina::LuminaModel
     calculate_risk
   end
 
-  def as_lumina_json
-    super.merge(
+  def lumina_computed_attributes
+    {
       'days_until_expiry' => days_until_expiry,
       'risk_score' => risk_score
-    )
+    }
   end
 end
 ```
 
-`super` returns the base JSON hash (with hidden columns already excluded). Then `.merge` adds your custom attributes on top. The controller calls `as_lumina_json` automatically when rendering responses — you don't need to call it yourself.
+The returned hash is merged into the JSON response **before** policy filtering is applied. This means computed attributes are always subject to policy-level blacklist and whitelist — just like database columns. The controller calls `as_lumina_json` automatically when rendering responses.
 
-Computed attributes added via `as_lumina_json` are subject to policy-level blacklist and whitelist, just like database columns:
+:::warning
+Do **not** override `as_lumina_json` directly. Use `lumina_computed_attributes` instead. Overriding `as_lumina_json` with `super.merge(...)` would add attributes **after** policy filtering, bypassing `hidden_attributes_for_show` and `permitted_attributes_for_show` — a security risk.
+:::
+
+Computed attributes can be controlled per-role via policy:
 
 ```ruby title="app/policies/contract_policy.rb"
 class ContractPolicy < Lumina::ResourcePolicy

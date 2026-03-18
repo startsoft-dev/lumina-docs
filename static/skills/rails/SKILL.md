@@ -429,9 +429,9 @@ Controls column visibility across three layers:
 2. **Model-level** via `lumina_additional_hidden`
 3. **Policy-level** via `hidden_attributes_for_show()` / `permitted_attributes_for_show()`
 
-#### `as_lumina_json` — Adding Computed Attributes
+#### `lumina_computed_attributes` — Adding Computed Attributes
 
-Override `as_lumina_json` in your model to add virtual attributes to API responses. The current user is resolved automatically from `RequestStore` — no parameter needed:
+Override `lumina_computed_attributes` to add virtual attributes to API responses. These are merged BEFORE policy filtering, so they respect `hidden_attributes_for_show` and `permitted_attributes_for_show`:
 
 ```ruby
 class Contract < Lumina::LuminaModel
@@ -439,15 +439,13 @@ class Contract < Lumina::LuminaModel
     (expiry_date - Date.current).to_i if expiry_date
   end
 
-  def as_lumina_json
-    super.merge(
-      'days_until_expiry' => days_until_expiry
-    )
+  def lumina_computed_attributes
+    { 'days_until_expiry' => days_until_expiry }
   end
 end
 ```
 
-`super` returns the base JSON hash (hidden columns excluded), `.merge` adds custom attributes. Computed attributes are subject to policy blacklist/whitelist just like DB columns. The controller calls `as_lumina_json` automatically.
+**IMPORTANT:** Do NOT override `as_lumina_json` directly — `super.merge(...)` adds attributes AFTER policy filtering, bypassing security. Always use `lumina_computed_attributes`.
 
 ### Model Registration
 
@@ -2798,7 +2796,7 @@ A: Lumina validates using `Model.new(params)`. Without `allow_nil: true`, nil at
 A: Use `lumina_additional_hidden` on the model for always-hidden. For per-user hiding, use policy's `hidden_attributes_for_show` and `permitted_attributes_for_show`.
 
 **Q: How do I add computed/virtual attributes to API responses?**
-A: Override `as_lumina_json` in your model: `def as_lumina_json; super.merge('my_attr' => my_method); end`. The user is resolved automatically from `RequestStore` — no parameter needed. Computed attributes are subject to policy blacklist/whitelist.
+A: Override `lumina_computed_attributes` in your model: `def lumina_computed_attributes; { 'my_attr' => my_method }; end`. These are merged BEFORE policy filtering so they respect blacklist/whitelist. Do NOT override `as_lumina_json` directly — `super.merge` bypasses policy security.
 
 **Q: How do I exclude certain CRUD actions?**
 A: `lumina_except_actions :store, :update, :destroy` makes a read-only resource.
