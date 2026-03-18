@@ -357,9 +357,11 @@ Hidden columns are resolved per request based on the current user. The policy's 
 For policy-based column hiding (showing different fields to different users), see the [Policies](./policies) page.
 :::
 
-#### Computed Attributes
+#### Computed Attributes with `as_lumina_json`
 
-You can add virtual (computed) attributes to API responses by overriding `as_json` on your model. These attributes are not database columns — they are calculated at runtime and included in the serialized output.
+Override `as_lumina_json` in your model to add virtual (computed) attributes to API responses. These attributes are not database columns — they are calculated at runtime and merged into the serialized output.
+
+The current user is resolved automatically from `RequestStore` — no need to pass it as a parameter.
 
 ```ruby title="app/models/contract.rb"
 class Contract < Lumina::LuminaModel
@@ -372,7 +374,7 @@ class Contract < Lumina::LuminaModel
     calculate_risk
   end
 
-  def as_json(options = {})
+  def as_lumina_json
     super.merge(
       'days_until_expiry' => days_until_expiry,
       'risk_score' => risk_score
@@ -381,7 +383,9 @@ class Contract < Lumina::LuminaModel
 end
 ```
 
-Computed attributes work seamlessly with HidableColumns — they can be hidden via policy just like database columns:
+`super` returns the base JSON hash (with hidden columns already excluded). Then `.merge` adds your custom attributes on top. The controller calls `as_lumina_json` automatically when rendering responses — you don't need to call it yourself.
+
+Computed attributes added via `as_lumina_json` are subject to policy-level blacklist and whitelist, just like database columns:
 
 ```ruby title="app/policies/contract_policy.rb"
 class ContractPolicy < Lumina::ResourcePolicy
@@ -392,7 +396,7 @@ class ContractPolicy < Lumina::ResourcePolicy
 end
 ```
 
-You can also use `permitted_attributes_for_show` to whitelist which attributes (including computed ones) each role can see. Both blacklist and whitelist policies apply to computed attributes — the controller's `as_lumina_json` method handles this automatically.
+You can also use `permitted_attributes_for_show` to whitelist which attributes (including computed ones) each role can see.
 
 ---
 

@@ -429,6 +429,26 @@ Controls column visibility across three layers:
 2. **Model-level** via `lumina_additional_hidden`
 3. **Policy-level** via `hidden_attributes_for_show()` / `permitted_attributes_for_show()`
 
+#### `as_lumina_json` — Adding Computed Attributes
+
+Override `as_lumina_json` in your model to add virtual attributes to API responses. The current user is resolved automatically from `RequestStore` — no parameter needed:
+
+```ruby
+class Contract < Lumina::LuminaModel
+  def days_until_expiry
+    (expiry_date - Date.current).to_i if expiry_date
+  end
+
+  def as_lumina_json
+    super.merge(
+      'days_until_expiry' => days_until_expiry
+    )
+  end
+end
+```
+
+`super` returns the base JSON hash (hidden columns excluded), `.merge` adds custom attributes. Computed attributes are subject to policy blacklist/whitelist just like DB columns. The controller calls `as_lumina_json` automatically.
+
 ### Model Registration
 
 Models are registered in `config/initializers/lumina.rb`. The key becomes the URL slug and permission prefix:
@@ -2776,6 +2796,9 @@ A: Lumina validates using `Model.new(params)`. Without `allow_nil: true`, nil at
 
 **Q: How do I hide sensitive columns?**
 A: Use `lumina_additional_hidden` on the model for always-hidden. For per-user hiding, use policy's `hidden_attributes_for_show` and `permitted_attributes_for_show`.
+
+**Q: How do I add computed/virtual attributes to API responses?**
+A: Override `as_lumina_json` in your model: `def as_lumina_json; super.merge('my_attr' => my_method); end`. The user is resolved automatically from `RequestStore` — no parameter needed. Computed attributes are subject to policy blacklist/whitelist.
 
 **Q: How do I exclude certain CRUD actions?**
 A: `lumina_except_actions :store, :update, :destroy` makes a read-only resource.
