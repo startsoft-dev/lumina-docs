@@ -597,6 +597,25 @@ class User extends LuminaModel
 }
 ```
 
+#### `luminaComputedAttributes()` — Adding Computed Attributes
+
+Override `luminaComputedAttributes()` to add virtual attributes to API responses. These are merged BEFORE policy filtering, so they respect `hiddenAttributesForShow()` and `permittedAttributesForShow()`:
+
+```php
+class Contract extends LuminaModel
+{
+    public function luminaComputedAttributes(): array
+    {
+        return [
+            'days_until_expiry' => $this->expiry_date?->diffInDays(now()),
+            'risk_score' => $this->calculateRisk(),
+        ];
+    }
+}
+```
+
+**IMPORTANT:** Do NOT override `asLuminaJson()` directly — merging attributes after `parent::asLuminaJson()` adds them AFTER policy filtering, bypassing security. Always use `luminaComputedAttributes()`.
+
 ### HasAutoScope Trait
 
 Auto-applies `App\Models\Scopes\{ModelName}Scope` if it exists:
@@ -2934,6 +2953,10 @@ A: Yes. Run `php artisan lumina:generate` (or `lumina:g`). It interactively crea
 It auto-registers the model in your config file.
 
 ### Model Configuration
+
+**Q: How do I add computed/virtual attributes to API responses?**
+
+A: Override `luminaComputedAttributes()` in your model: `public function luminaComputedAttributes(): array { return ['my_attr' => $this->myMethod()]; }`. These are merged BEFORE policy filtering so they respect blacklist/whitelist. Do NOT override `asLuminaJson()` directly — merging after `parent::asLuminaJson()` bypasses policy security.
 
 **Q: How do I exclude a CRUD action from being generated?**
 

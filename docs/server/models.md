@@ -388,36 +388,30 @@ Hidden columns are cached per user for performance. If you change visibility rul
 For policy-based field visibility (showing different fields to different users), see [Policies — Attribute Permissions](./policies#attribute-permissions).
 :::
 
-#### Computed Attributes
+#### Computed Attributes with `luminaComputedAttributes()`
 
-You can add virtual (computed) attributes to API responses using Laravel's `$appends` and Accessor pattern. These attributes are not database columns — they are calculated at runtime and included in the serialized output.
+Override `luminaComputedAttributes()` in your model to add virtual (computed) attributes to API responses. These attributes are not database columns — they are calculated at runtime and merged into the serialized output.
 
 ```php title="app/Models/Contract.php"
-use Illuminate\Database\Eloquent\Casts\Attribute;
-
 class Contract extends LuminaModel
 {
-    protected $appends = ['days_until_expiry', 'risk_score'];
-
-    protected function daysUntilExpiry(): Attribute
+    public function luminaComputedAttributes(): array
     {
-        return Attribute::make(
-            get: fn () => $this->expiry_date
-                ? now()->diffInDays($this->expiry_date, false)
-                : null
-        );
-    }
-
-    protected function riskScore(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->calculateRisk()
-        );
+        return [
+            'days_until_expiry' => $this->expiry_date?->diffInDays(now()),
+            'risk_score' => $this->calculateRisk(),
+        ];
     }
 }
 ```
 
-Computed attributes work seamlessly with HidableColumns — they can be hidden via policy just like database columns:
+The returned array is merged into the JSON response **before** policy filtering is applied. This means computed attributes are always subject to policy-level blacklist and whitelist — just like database columns. The controller calls `asLuminaJson()` automatically when rendering responses.
+
+:::warning
+Do **not** override `asLuminaJson()` directly. Use `luminaComputedAttributes()` instead. Overriding `asLuminaJson()` with `parent::asLuminaJson() + [...]` would add attributes **after** policy filtering, bypassing `hiddenAttributesForShow()` and `permittedAttributesForShow()` — a security risk.
+:::
+
+Computed attributes can be controlled per-role via policy:
 
 ```php title="app/Policies/ContractPolicy.php"
 class ContractPolicy extends ResourcePolicy

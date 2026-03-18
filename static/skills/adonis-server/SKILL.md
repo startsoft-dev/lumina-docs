@@ -359,6 +359,25 @@ Layers of hidden columns (applied in order):
 3. **Policy-level blacklist** via `hiddenAttributesForShow()`
 4. **Policy-level whitelist** via `permittedAttributesForShow()`
 
+##### `luminaComputedAttributes()` — Adding Computed Attributes
+
+Override `luminaComputedAttributes()` to add virtual attributes to API responses. These are merged BEFORE policy filtering, so they respect `hiddenAttributesForShow()` and `permittedAttributesForShow()`:
+
+```ts
+import { differenceInDays } from 'date-fns'
+
+export default class Contract extends LuminaModel {
+  luminaComputedAttributes(): Record<string, any> {
+    return {
+      days_until_expiry: this.expiryDate ? differenceInDays(this.expiryDate.toJSDate(), new Date()) : null,
+      risk_score: this.calculateRisk(),
+    }
+  }
+}
+```
+
+**IMPORTANT:** Do NOT override `serializeWithHidden()` directly — spreading attributes after `super.serializeWithHidden()` adds them AFTER policy filtering, bypassing security. Always use `luminaComputedAttributes()`.
+
 #### HasAutoScope
 
 Auto-discovery of scope classes. **Included in LuminaModel.**
@@ -2710,6 +2729,9 @@ A: No. Only declare what differs from defaults. Defaults: empty arrays, `true` f
 
 **Q: How do I register a model with a custom URL slug?**
 A: The key becomes the slug: `'blog-posts': () => import('#models/blog_post')` creates `/api/blog-posts`.
+
+**Q: How do I add computed/virtual attributes to API responses?**
+A: Override `luminaComputedAttributes()` in your model: `luminaComputedAttributes(): Record<string, any> { return { my_attr: this.myMethod() } }`. These are merged BEFORE policy filtering so they respect blacklist/whitelist. Do NOT override `serializeWithHidden()` directly — spreading after `super.serializeWithHidden()` bypasses policy security.
 
 **Q: Can I exclude specific CRUD actions?**
 A: Yes: `static $exceptActions = ['store', 'update', 'destroy']`
